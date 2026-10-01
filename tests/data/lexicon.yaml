@@ -1,0 +1,65 @@
+# Pinyin and per-language glosses for components and characters (draft, for review).
+# Format:  <char>: {pinyin: ..., gloss: {en: ..., fr: ...}}
+# Characters in chars.yaml already carry pinyin and an English meaning; this file adds
+# other languages and covers the components that have no entry of their own.
+日: {pinyin: rì,    gloss: {en: sun, fr: soleil}}
+寺: {pinyin: sì,    gloss: {en: temple, fr: temple}}
+亻: {pinyin: rén,   gloss: {en: person, fr: personne}}
+乍: {pinyin: zhà,   gloss: {en: suddenly, fr: soudain}}
+忄: {pinyin: xīn,   gloss: {en: heart, fr: cœur}}
+每: {pinyin: měi,   gloss: {en: every, fr: chaque}}
+土: {pinyin: tǔ,    gloss: {en: earth, fr: terre}}
+寸: {pinyin: cùn,   gloss: {en: inch, fr: pouce}}
+木: {pinyin: mù,    gloss: {en: tree, fr: arbre}}
+目: {pinyin: mù,    gloss: {en: eye, fr: œil}}
+心: {pinyin: xīn,   gloss: {en: heart, fr: cœur}}
+艹: {pinyin: cǎo,   gloss: {en: grass, fr: herbe}}
+氵: {pinyin: shuǐ,  gloss: {en: water, fr: eau}}
+喿: {pinyin: sào,   gloss: {en: chirping, fr: gazouillis}}
+口: {pinyin: kǒu,   gloss: {en: mouth, fr: bouche}}
+爫: {pinyin: zhǎo,  gloss: {en: claw, fr: griffe}}
+冖: {pinyin: mì,    gloss: {en: cover, fr: couvercle}}
+夊: {pinyin: suī,   gloss: {en: walk slowly, fr: marcher lentement}}
+彳: {pinyin: chì,   gloss: {en: step, fr: pas}}
+亍: {pinyin: chù,   gloss: {en: halt, fr: arrêt}}
+囗: {pinyin: wéi,   gloss: {en: enclosure, fr: enclos}}
+或: {pinyin: huò,   gloss: {en: perhaps, fr: peut-être}}
+冂: {pinyin: jiōng, gloss: {en: border, fr: frontière}}
+一: {pinyin: yī,    gloss: {en: one, fr: un}}
+匚: {pinyin: fāng,  gloss: {en: box, fr: boîte}}
+乂: {pinyin: yì,    gloss: {en: cut, fr: faucher}}
+疒: {pinyin: nè,    gloss: {en: sickness, fr: maladie}}
+丙: {pinyin: bǐng,  gloss: {en: third, fr: troisième}}
+勹: {pinyin: bāo,   gloss: {en: wrap, fr: envelopper}}
+辶: {pinyin: chuò,  gloss: {en: walk, fr: marcher}}
+斤: {pinyin: jīn,   gloss: {en: axe, fr: hache}}
+甲: {pinyin: jiǎ,   gloss: {en: shell, fr: carapace}}
+禸: {pinyin: róu,   gloss: {en: track, fr: trace}}
+巛: {pinyin: chuān, gloss: {en: stream, fr: rivière}}
+工: {pinyin: gōng,  gloss: {en: work, fr: travail}}
+气: {pinyin: qì,    gloss: {en: vapor, fr: vapeur}}
+水: {pinyin: shuǐ,  gloss: {en: water, fr: eau}}
+人: {pinyin: rén,   gloss: {en: person, fr: personne}}
+犬: {pinyin: quǎn,  gloss: {en: dog, fr: chien}}
+時: {gloss: {fr: temps}}
+作: {gloss: {fr: faire}}
+悔: {gloss: {fr: regret}}
+想: {gloss: {fr: penser}}
+藻: {gloss: {fr: algue}}
+品: {gloss: {fr: objet}}
+森: {gloss: {fr: forêt}}
+晶: {gloss: {fr: cristal}}
+淼: {gloss: {fr: vaste étendue d'eau}}
+众: {gloss: {fr: foule}}
+哭: {gloss: {fr: pleurer}}
+愛: {gloss: {fr: amour}}
+衍: {gloss: {fr: se répandre}}
+國: {gloss: {fr: pays}}
+同: {gloss: {fr: pareil}}
+区: {gloss: {fr: district}}
+病: {gloss: {fr: maladie}}
+句: {gloss: {fr: phrase}}
+近: {gloss: {fr: proche}}
+禺: {gloss: {fr: région}}
+巠: {pinyin: jīng, gloss: {en: light, fr: léger}}
+氢: {gloss: {fr: hydrogène}}

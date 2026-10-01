@@ -1,0 +1,5 @@
+# Test configuration. The primary font is deliberately small so a fallback is needed.
+primary: Droid Sans Fallback
+fallbacks: [AR PL UMing CN]
+components:
+  "{demo}": {svg: glyphs/demo.svg}   # a placeholder component with no Unicode code point

@@ -1,0 +1,229 @@
+# ZiNets-LaTeX M0 test set: 21 hand-drafted decompositions (DRAFT, needs review).
+# Format: see docs/DEV/claude/spec.md
+#   leaf   : {c: <component>, pos: <position>}
+#   branch : {op: <operator>, pos: <position>, parts: [...]}   (root has no pos)
+# `ids` is the compact form; it must equal the string produced from `tree`.
+# `review:` marks entries whose decomposition I am not sure of.
+
+- char: 時
+  pinyin: shí
+  meaning: time
+  ids: "⿰日寺"
+  tree:
+    op: ⿰
+    parts: [{c: 日, pos: 左}, {c: 寺, pos: 右}]
+  role: {日: semantic, 寺: phonetic}
+
+- char: 作
+  pinyin: zuò
+  meaning: to make, to do
+  ids: "⿰亻乍"
+  tree:
+    op: ⿰
+    parts: [{c: 亻, pos: 左}, {c: 乍, pos: 右}]
+  role: {亻: semantic, 乍: phonetic}
+  decision: 乍 is a leaf here (an elemental component from the paper) and is placed 右. ⿰ has only 左 and 右, so "mid" is not used.
+
+- char: 悔
+  pinyin: huǐ
+  meaning: regret
+  ids: "⿰忄每"
+  tree:
+    op: ⿰
+    parts: [{c: 忄, pos: 左}, {c: 每, pos: 右}]
+  role: {忄: semantic, 每: phonetic}
+
+- char: 寺
+  pinyin: sì
+  meaning: temple
+  ids: "⿱土寸"
+  tree:
+    op: ⿱
+    parts: [{c: 土, pos: 上}, {c: 寸, pos: 下}]
+
+- char: 想
+  pinyin: xiǎng
+  meaning: to think
+  ids: "⿱⿰木目心"
+  tree:
+    op: ⿱
+    parts:
+      - op: ⿰
+        pos: 上
+        parts: [{c: 木, pos: 左}, {c: 目, pos: 右}]
+      - {c: 心, pos: 下}
+
+- char: 藻
+  pinyin: zǎo
+  meaning: algae
+  ids: "⿱艹⿰氵喿(⿱品(∴口口口)木)"
+  tree:
+    op: ⿱
+    parts:
+      - {c: 艹, pos: 上}
+      - op: ⿰
+        pos: 下
+        parts:
+          - {c: 氵, pos: 左}
+          - c: 喿
+            op: ⿱
+            pos: 右
+            parts:
+              - c: 品
+                op: ∴
+                pos: 上
+                parts: [{c: 口, pos: 上}, {c: 口, pos: 左下}, {c: 口, pos: 右下}]
+              - {c: 木, pos: 下}
+  role: {艹: semantic, 氵: semantic}
+  decision: 喿 (U+55BF) is kept as a named node, reversing the earlier skip. 品 is named too, and expanded with ∴.
+
+- char: 品
+  pinyin: pǐn
+  meaning: goods, article
+  ids: "∴口口口"
+  tree:
+    op: ∴
+    parts: [{c: 口, pos: 上}, {c: 口, pos: 左下}, {c: 口, pos: 右下}]
+
+- char: 森
+  pinyin: sēn
+  meaning: forest
+  ids: "∴木木木"
+  tree:
+    op: ∴
+    parts: [{c: 木, pos: 上}, {c: 木, pos: 左下}, {c: 木, pos: 右下}]
+
+- char: 晶
+  pinyin: jīng
+  meaning: crystal
+  ids: "∴日日日"
+  tree:
+    op: ∴
+    parts: [{c: 日, pos: 上}, {c: 日, pos: 左下}, {c: 日, pos: 右下}]
+
+- char: 淼
+  pinyin: miǎo
+  meaning: vast water
+  ids: "∴水水水"
+  tree:
+    op: ∴
+    parts: [{c: 水, pos: 上}, {c: 水, pos: 左下}, {c: 水, pos: 右下}]
+
+- char: 众
+  pinyin: zhòng
+  meaning: crowd
+  ids: "∴人人人"
+  tree:
+    op: ∴
+    parts: [{c: 人, pos: 上}, {c: 人, pos: 左下}, {c: 人, pos: 右下}]
+
+- char: 哭
+  pinyin: kū
+  meaning: to cry
+  ids: "∵口口犬"
+  tree:
+    op: ∵
+    parts: [{c: 口, pos: 左上}, {c: 口, pos: 右上}, {c: 犬, pos: 下}]
+  note: inverted triangle (∵), two mouths over 犬.
+
+- char: 愛
+  pinyin: ài
+  meaning: love
+  ids: "⿳爫冖⿻心夊"
+  tree:
+    op: ⿳
+    parts:
+      - {c: 爫, pos: 上}
+      - {c: 冖, pos: 中}
+      - op: ⿻
+        pos: 下
+        parts: [{c: 心, pos: 中}, {c: 夊, pos: 中}]
+  decision: keep the traditional form 愛, whose 心 is semantically meaningful. Bottom is overlay 心 + 夊.
+
+- char: 衍
+  pinyin: yǎn
+  meaning: to spread
+  ids: "⿲彳氵亍"
+  tree:
+    op: ⿲
+    parts: [{c: 彳, pos: 左}, {c: 氵, pos: 中}, {c: 亍, pos: 右}]
+  note: 行 is split into 彳 and 亍 around the inserted 氵.
+
+- char: 國
+  pinyin: guó
+  meaning: country
+  ids: "⿴囗或"
+  tree:
+    op: ⿴
+    parts: [{c: 囗, pos: 中外}, {c: 或, pos: 中内}]
+
+- char: 同
+  pinyin: tóng
+  meaning: same
+  ids: "⿵冂⿱一口"
+  tree:
+    op: ⿵
+    parts:
+      - {c: 冂, pos: 中外}
+      - op: ⿱
+        pos: 中内
+        parts: [{c: 一, pos: 上}, {c: 口, pos: 下}]
+
+- char: 区
+  pinyin: qū
+  meaning: district
+  ids: "⿷匚乂"
+  tree:
+    op: ⿷
+    parts: [{c: 匚, pos: 中外}, {c: 乂, pos: 中内}]
+
+- char: 病
+  pinyin: bìng
+  meaning: illness
+  ids: "⿸疒丙"
+  tree:
+    op: ⿸
+    parts: [{c: 疒, pos: 左上}, {c: 丙, pos: 中内}]
+
+- char: 句
+  pinyin: jù
+  meaning: sentence
+  ids: "⿹勹口"
+  tree:
+    op: ⿹
+    parts: [{c: 勹, pos: 右上}, {c: 口, pos: 中内}]
+  review: ⿹ (upper-right surround) is the Unicode choice, but 勹 usually sits at upper-left. Check against your DB.
+
+- char: 近
+  pinyin: jìn
+  meaning: near
+  ids: "⿺辶斤"
+  tree:
+    op: ⿺
+    parts: [{c: 辶, pos: 左下}, {c: 斤, pos: 中内}]
+
+- char: 禺
+  pinyin: yù
+  meaning: "region (paper: force carrier)"
+  ids: "⿱甲禸"
+  tree:
+    op: ⿱
+    parts: [{c: 甲, pos: 上}, {c: 禸, pos: 下}]
+  note: 甲 (top) + 禸 (bottom), read as interlocking / coupling. Reviewed by the author; the top is 甲, not 日.
+
+- char: 巠
+  pinyin: jīng
+  meaning: "underground stream (paper: force carrier)"
+  ids: "⿱巛工"
+  tree:
+    op: ⿱
+    parts: [{c: 巛, pos: 上}, {c: 工, pos: 下}]
+
+- char: 氢
+  pinyin: qīng
+  meaning: hydrogen
+  ids: "⿵气巠"
+  tree:
+    op: ⿵
+    parts: [{c: 气, pos: 中外}, {c: 巠, pos: 中内}]
+  decision: 巠 stays one unit. Semantically it carries 轻 (light), so 氢 is the lightest element. Its own entry is above.

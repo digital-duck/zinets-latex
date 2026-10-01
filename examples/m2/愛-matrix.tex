@@ -1,0 +1,29 @@
+\documentclass[border=6pt,varwidth]{standalone}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\setCJKmainfont{Noto Serif CJK SC}
+\xeCJKDeclareCharClass{CJK}{"2234,"2235}  % the triangle operators
+\usepackage{tikz}
+\begin{document}
+\definecolor{zi-border}{RGB}{44,62,80}
+\definecolor{zi-accent}{RGB}{231,76,60}
+\definecolor{zi-muted}{RGB}{127,140,141}
+\definecolor{zi-default}{RGB}{248,249,250}
+\definecolor{zi-semantic}{RGB}{214,234,248}
+\definecolor{zi-phonetic}{RGB}{252,228,214}
+\definecolor{zi-force}{RGB}{226,240,217}
+\begin{tikzpicture}[every node/.style={inner sep=0pt, outer sep=0pt, align=center}]
+  \draw[draw=zi-border!70, fill=zi-default, thick] (0.000,0.000) rectangle (4.400,4.400);
+  \draw[draw=zi-border!70, fill=zi-default, ] (0.030,2.963) rectangle (4.370,4.370);
+  \node[] at (2.200,3.667) {\fontsize{24.8pt}{24.8pt}\selectfont 爫};
+  \draw[draw=zi-border!70, fill=zi-default, ] (0.030,1.497) rectangle (4.370,2.903);
+  \node[] at (2.200,2.200) {\fontsize{24.8pt}{24.8pt}\selectfont 冖};
+  \draw[draw=zi-border!70, thin] (0.030,0.030) rectangle (4.370,1.437);
+  \draw[draw=zi-border!70, fill=zi-default, ] (0.060,0.060) rectangle (4.340,1.407);
+  \node[] at (2.200,0.733) {\fontsize{23.8pt}{23.8pt}\selectfont 心};
+  \begin{scope}[opacity=0.55, text opacity=0.55]
+  \draw[draw=zi-border!70, fill=zi-default, ] (0.060,0.060) rectangle (4.340,1.407);
+  \node[] at (2.200,0.733) {\fontsize{23.8pt}{23.8pt}\selectfont 夊};
+  \end{scope}
+\end{tikzpicture}
+\end{document}

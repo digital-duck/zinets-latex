@@ -1,0 +1,48 @@
+\documentclass[border=6pt,varwidth]{standalone}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\setCJKmainfont{Noto Serif CJK SC}
+\xeCJKDeclareCharClass{CJK}{"2234,"2235}  % the triangle operators
+\usepackage{tikz}
+\begin{document}
+\definecolor{zi-border}{RGB}{44,62,80}
+\definecolor{zi-accent}{RGB}{231,76,60}
+\definecolor{zi-muted}{RGB}{127,140,141}
+\definecolor{zi-default}{RGB}{248,249,250}
+\definecolor{zi-semantic}{RGB}{214,234,248}
+\definecolor{zi-phonetic}{RGB}{252,228,214}
+\definecolor{zi-force}{RGB}{226,240,217}
+\begin{tikzpicture}[
+  zinode/.style={draw=zi-border, rounded corners=1.5pt, inner sep=3pt, minimum height=0.65cm, minimum width=0.65cm, font=\large},
+  zipos/.style={font=\tiny, text=zi-muted, fill=white, inner sep=1pt}
+]
+  \node[zinode, line width=0.9pt, draw=zi-accent, fill=zi-default, font=\LARGE\bfseries] (n0) at (0.00,-1.06) {藻};
+  \node[zinode, fill=zi-semantic] (n1) at (2.40,0.00) {艹};
+  \node[zinode, fill=zi-default] (n2) at (2.40,-2.12) {{\large ⿰}};
+  \node[zinode, fill=zi-semantic] (n3) at (4.80,-0.85) {氵};
+  \node[zinode, fill=zi-default] (n4) at (4.80,-3.40) {喿\,{\small ⿱}};
+  \node[zinode, fill=zi-default] (n5) at (7.20,-2.55) {品\,{\small ∴}};
+  \node[zinode, fill=zi-default] (n6) at (9.60,-1.70) {口};
+  \node[zinode, fill=zi-default] (n7) at (9.60,-2.55) {口};
+  \node[zinode, fill=zi-default] (n8) at (9.60,-3.40) {口};
+  \node[zinode, fill=zi-default] (n9) at (7.20,-4.25) {木};
+  \draw[draw=zi-border!60] (n0.east) -- ++(0.75,0) |- (n1.west);
+  \node[zipos, anchor=east] at ([xshift=-0.06cm]n1.west) {上};
+  \draw[draw=zi-border!60] (n0.east) -- ++(0.75,0) |- (n2.west);
+  \node[zipos, anchor=east] at ([xshift=-0.06cm]n2.west) {下};
+  \draw[draw=zi-border!60] (n2.east) -- ++(0.75,0) |- (n3.west);
+  \node[zipos, anchor=east] at ([xshift=-0.06cm]n3.west) {左};
+  \draw[draw=zi-border!60] (n2.east) -- ++(0.75,0) |- (n4.west);
+  \node[zipos, anchor=east] at ([xshift=-0.06cm]n4.west) {右};
+  \draw[draw=zi-border!60] (n4.east) -- ++(0.75,0) |- (n5.west);
+  \node[zipos, anchor=east] at ([xshift=-0.06cm]n5.west) {上};
+  \draw[draw=zi-border!60] (n5.east) -- ++(0.75,0) |- (n6.west);
+  \node[zipos, anchor=east] at ([xshift=-0.06cm]n6.west) {上};
+  \draw[draw=zi-border!60] (n5.east) -- ++(0.75,0) |- (n7.west);
+  \node[zipos, anchor=east] at ([xshift=-0.06cm]n7.west) {左下};
+  \draw[draw=zi-border!60] (n5.east) -- ++(0.75,0) |- (n8.west);
+  \node[zipos, anchor=east] at ([xshift=-0.06cm]n8.west) {右下};
+  \draw[draw=zi-border!60] (n4.east) -- ++(0.75,0) |- (n9.west);
+  \node[zipos, anchor=east] at ([xshift=-0.06cm]n9.west) {下};
+\end{tikzpicture}
+\end{document}

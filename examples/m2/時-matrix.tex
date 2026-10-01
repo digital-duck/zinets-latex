@@ -1,0 +1,22 @@
+\documentclass[border=6pt,varwidth]{standalone}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\setCJKmainfont{Noto Serif CJK SC}
+\xeCJKDeclareCharClass{CJK}{"2234,"2235}  % the triangle operators
+\usepackage{tikz}
+\begin{document}
+\definecolor{zi-border}{RGB}{44,62,80}
+\definecolor{zi-accent}{RGB}{231,76,60}
+\definecolor{zi-muted}{RGB}{127,140,141}
+\definecolor{zi-default}{RGB}{248,249,250}
+\definecolor{zi-semantic}{RGB}{214,234,248}
+\definecolor{zi-phonetic}{RGB}{252,228,214}
+\definecolor{zi-force}{RGB}{226,240,217}
+\begin{tikzpicture}[every node/.style={inner sep=0pt, outer sep=0pt, align=center}]
+  \draw[draw=zi-border!70, fill=zi-default, thick] (0.000,0.000) rectangle (4.400,4.400);
+  \draw[draw=zi-border!70, fill=zi-semantic, ] (0.030,0.030) rectangle (2.170,4.370);
+  \node[] at (1.100,2.200) {\fontsize{37.8pt}{37.8pt}\selectfont 日};
+  \draw[draw=zi-border!70, fill=zi-phonetic, ] (2.230,0.030) rectangle (4.370,4.370);
+  \node[] at (3.300,2.200) {\fontsize{37.8pt}{37.8pt}\selectfont 寺};
+\end{tikzpicture}
+\end{document}

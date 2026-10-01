@@ -1,0 +1,56 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{zitex}[2026/10/01 zitex: Chinese character decompositions (XeLaTeX)]
+%
+% Thin by design: all parsing and layout is done by the Python tool.
+%   zitex build chars.yaml --scan main.tex -o zitex-out
+% writes one snippet per character and style; this package only \input's them.
+%
+%   \zi[style=tree|matrix|formula|math, lang=fr]{藻}
+%   \zitree{藻}  \zimatrix{藻}  \ziformula{藻}  \zimath{藻}
+%   \zitexsetlang{fr}   \zitexsetpath{zitex-out}
+%
+% The default CJK font is Noto Serif CJK SC. Call \setCJKmainfont again to change it.
+\RequirePackage{fontspec}
+\RequirePackage{xeCJK}
+\RequirePackage{amsmath}
+\RequirePackage{graphicx}
+\RequirePackage{tikz}
+\RequirePackage{xkeyval}
+
+\setCJKmainfont{Noto Serif CJK SC}
+% the triangle operators U+2234 and U+2235 must be typeset with the CJK font
+\xeCJKDeclareCharClass{CJK}{"2234,"2235}
+
+\newcommand\zitexpath{zitex-out}
+\newcommand\zitexlang{en}
+\newcommand\zitexsetpath[1]{\renewcommand\zitexpath{#1}}
+\newcommand\zitexsetlang[1]{\renewcommand\zitexlang{#1}}
+
+\def\zitex@math{math}
+\def\zitex@formula{formula}
+
+\define@key{zitex}{style}{\def\zitex@style{#1}}
+\define@key{zitex}{lang}{\def\zitex@lang{#1}}
+
+% Language only matters for the styles that print glosses.
+\newcommand\zitex@name[1]{%
+  #1-\zitex@style
+  \ifx\zitex@style\zitex@math -\zitex@lang\fi
+  \ifx\zitex@style\zitex@formula -\zitex@lang\fi}
+
+\newcommand\zi[2][]{%
+  \begingroup
+    \def\zitex@style{tree}%
+    \let\zitex@lang\zitexlang
+    \setkeys{zitex}{#1}%
+    \edef\zitex@file{\zitexpath/\zitex@name{#2}.tex}%
+    \IfFileExists{\zitex@file}%
+      {\input{\zitex@file}}%
+      {\PackageWarning{zitex}{Missing \zitex@file; run `zitex build`}\textbf{[#2]}}%
+  \endgroup}
+
+\newcommand\zitree[2][]{\zi[style=tree,#1]{#2}}
+\newcommand\zimatrix[2][]{\zi[style=matrix,#1]{#2}}
+\newcommand\ziformula[2][]{\zi[style=formula,#1]{#2}}
+\newcommand\zimath[2][]{\zi[style=math,#1]{#2}}
+\endinput
