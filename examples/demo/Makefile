@@ -2,10 +2,11 @@
 #   pip install -e ../..   (once, in the zinets2 env)
 ZDATA = ../../tests/data/chars.yaml
 ZLEX  = ../../tests/data/lexicon.yaml
-export TEXINPUTS := ../../tex:
+# zitex.sty is found through TEXINPUTS here; `zitex install-sty` installs it for good
+export TEXINPUTS := ../../src/zitex:
 
 main.pdf: main.tex
-	zitex build $(ZDATA) --scan main.tex -x $(ZLEX) -l en -l fr --collapse --arrow role -o zitex-out
+	zitex render $(ZDATA) --scan main.tex -x $(ZLEX) -l en -l fr --collapse --arrow role
 	xelatex -interaction=nonstopmode main.tex
 
 clean:

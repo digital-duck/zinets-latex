@@ -57,7 +57,7 @@ Open point, to settle when M5 starts: today a zitex entry carries a tree per cha
 
 Two ways to use it:
 
-1. **Batch:** `zitex build doc.zitex` converts `\zi{...}` calls or YAML references into plain `.tex` (TikZ), then runs `xelatex`.
+1. **Batch:** `zitex render data.yaml [--scan doc.tex]` writes snippets (plain TikZ `.tex`) and figures (`.pdf`) for the characters in a YAML file, or for the `\zi{...}` calls in a paper.
 2. **Library:** `zitex.render(char_or_expr, style="tree")` returns a LaTeX string, for use from the zinets app or notebooks.
 
 Keeping the logic in Python means the `.sty` stays a small bundle of styles and wrappers, with no `\expandafter` code.
@@ -141,7 +141,7 @@ The 422 elemental characters (元字) include components that no common font has
 | M1 | `src/zitex/tree.py`, `loader.py`, `validate.py`: YAML tree loader, shape-string expansion, tree → shape round trip, and the position validator | Done: 16 tests pass on all 23 test characters |
 | M2 | `src/zitex/render.py`: tree, formula and matrix output as `.tex` | Done: tree and matrix PDFs for 藻, 時, 愛, 國 plus a formula sheet are in `examples/m2/`; 28 tests pass |
 | M2b | `render_math` and `lexicon.py`: equation view with pinyin above and a gloss below each piece, `lang=` option, `collapse` (3 × 口), role-labelled arrow. Same grammar as conceptbook-app (`\underbrace`, `\overset`), so it works in MathJax and XeLaTeX | Done: 36 tests pass; `examples/m2/equations.pdf` checked |
-| M3 | `tex/zitex.sty` and the `zitex build` / `zitex render` commands, `--emit tex\|pdf\|both`, `--scan main.tex` | Done: `examples/demo` builds from a clean checkout with `make`; end-to-end test (scan, build, xelatex) passes; 43 tests pass |
+| M3 | `src/zitex/zitex.sty` and the `zitex render` command (one command for batch, single and `--scan` use), `--emit tex\|pdf\|both`, `--scan main.tex` | Done: `examples/demo` builds from a clean checkout with `make`; end-to-end test (scan, build, xelatex) passes; 43 tests pass |
 | M4 | `fonts.py`, `fonts.yaml`, `zitex fonts` report, `{name}` components: fallback fonts, SVG images, aliases, boxed label when nothing can draw a glyph | Done: all test-set components covered; fallback, SVG and missing paths tested; 63 tests pass |
 | M4b | Zi-Matrix refactor: 11 position codes, per-operator patterns, `<pattern>` and `∷ ⁙` operators, radical rule (`radicals.py`), validator W1-W8, generic flat layout | Done: 92 tests pass; specified in `zi-matrix.md` and `spec.md` |
 | M5 | *Postponed.* YAML ↔ SQLite bridge, batch PDF of a character family | Start only after the prototype is accepted and the DB is reviewed |
@@ -155,7 +155,7 @@ Test characters should cover every operator: 時 (⿰), 藻 (⿱ with nesting), 
 zinets-latex/
 ├── docs/{gemini,DEV/claude}/
 ├── src/zitex/             # Python package: tree.py, loader.py, validate.py, render.py, cli.py
-├── tex/zitex.sty         # thin macros
+├── src/zitex/zitex.sty   # thin macros (shipped in the package)
 ├── data/                  # *.yaml character decompositions, fonts.yaml
 ├── tests/                 # pytest, plus tests/data/chars.yaml
 └── examples/demo.tex

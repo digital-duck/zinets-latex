@@ -79,6 +79,33 @@ def compile_pdf(snippet: str, dest: Path, font: str = "Noto Serif CJK SC", zitex
         return True
 
 
+def write_snippet(snippet: str, resolver, fonts: FontConfig | None, stem: Path, emit: str = "tex",
+                  font: str | None = None) -> tuple[Path | None, Path | None, bool]:
+    """Write one snippet as ``STEM.tex`` and/or ``STEM.pdf`` (``stem`` is a path without a suffix).
+
+    Returns (tex path or None, pdf path or None, ok). ok is False when the PDF did not compile.
+    SVG glyphs the snippet uses are converted into ``<stem's folder>/glyphs``."""
+    if emit not in ("tex", "pdf", "both"):
+        raise ValueError("emit must be tex, pdf or both")
+    stem = Path(stem)
+    stem.parent.mkdir(parents=True, exist_ok=True)
+    font = font or (fonts.primary if fonts else "Noto Serif CJK SC")
+    if resolver and fonts:
+        for svg in resolver.svgs:
+            src = Path(svg) if Path(svg).is_absolute() else fonts.base / svg
+            svg_to_pdf(src, stem.parent / "glyphs" / f"{src.stem}.pdf")
+    tex = pdf = None
+    ok = True
+    if emit in ("tex", "both"):
+        tex = stem.with_name(stem.name + ".tex")
+        tex.write_text(snippet + "\n", encoding="utf-8")
+    if emit in ("pdf", "both"):
+        pdf = stem.with_name(stem.name + ".pdf")
+        ok = compile_pdf(snippet, pdf, font, str(stem.parent.resolve()))
+        pdf = pdf if ok else None
+    return tex, pdf, ok
+
+
 def build(entries: list[Entry], outdir: str | Path, jobs: set[tuple[str, str, str, str | None]] | None = None, *,
           chars: list[str] | None = None, styles: list[str] | None = None, langs: list[str] | None = None,
           emit: str = "tex", lex: Lexicon | None = None, font: str | None = None,
@@ -99,6 +126,7 @@ def build(entries: list[Entry], outdir: str | Path, jobs: set[tuple[str, str, st
     langs = langs or ["en"]
     if jobs is None:
         jobs = {(c, s, l, reading) for c in (chars or list(by_char)) for s in (styles or list(STYLES)) for l in langs}
+    jobs = {(c, st, l if st in LANG_STYLES else langs[0], rd) for c, st, l, rd in jobs}   # tree/matrix: one file whatever -l
     res = BuildResult()
     converted: set[str] = set()
     for ch, style, lang, rd in sorted(jobs, key=lambda j: tuple(x or "" for x in j)):

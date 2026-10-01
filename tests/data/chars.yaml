@@ -23,7 +23,8 @@
     op: ⿰
     parts: [{c: 亻, pos: L}, {c: 乍, pos: M}]
   role: {亻: semantic, 乍: phonetic}
-  decision: 乍 is a leaf here (an elemental component from the paper) and is placed 右. ⿰ has only 左 and 右, so "mid" is not used.
+  decision: |
+    乍 is a leaf here (an elemental component from the paper) and is placed 右. ⿰ has only 左 and 右, so "mid" is not used.
 
 - char: 悔
   pinyin: huǐ
@@ -76,7 +77,9 @@
                 parts: [{c: 口, pos: U}, {c: 口, pos: LD}, {c: 口, pos: RD}]
               - {c: 木, pos: D}
   role: {艹: semantic, 氵: semantic}
-  decision: 喿 (U+55BF) is kept as a named node, reversing the earlier skip. 品 is named too, and expanded with ∴.
+  decision: |
+    喿 (U+55BF) is kept as a named node, reversing the earlier skip. 
+    品 is named too, and expanded with ∴.
 
 - char: 品
   pinyin: pǐn
@@ -139,7 +142,8 @@
       - op: ⿻
         pos: D
         parts: [{c: 心, pos: M}, {c: 夊, pos: M}]
-  decision: keep the traditional form 愛, whose 心 is semantically meaningful. Bottom is overlay 心 + 夊.
+  decision: |
+    keep the traditional form 愛, whose 心 is semantically meaningful. Bottom is overlay 心 + 夊.
 
 - char: 衍
   pinyin: yǎn
@@ -285,10 +289,13 @@
   note: "The oracle bone form is a two-headed arch (see docs/DEV/claude/stress-test.md)."
   readings:
     - name: author
-      note: "Meaning first. 虫 is a creature of the air and 工 is work or making, so the rainbow is the work of creatures in the sky. Both parts are semantic; sound is secondary."
+      note: |
+        Meaning first. 虫 is a creature of the air and 工 is work or making, so the rainbow is the work of creatures in the sky. Both parts are semantic; sound is secondary.
       role: {虫: semantic, 工: semantic}
     - name: dictionary
       source: "Shuowen, 从虫，工聲 (quoted from memory)"
-      note: "The traditional phono-semantic analysis: 虫 is the meaning part (a snake or creature) and 工 is the sound part."
+      note: |
+        The traditional phono-semantic analysis: 虫 is the meaning part (a snake or creature) and 工 is the sound part.
       role: {虫: semantic, 工: phonetic}
-  review: "Both 虫 and 工 are Kangxi radicals, so the radical rule gives the peers pattern L-R. The author's DB may label it L-M."
+  review: |
+    Both 虫 and 工 are Kangxi radicals, so the radical rule gives the peers pattern L-R. The author's DB may label it L-M.

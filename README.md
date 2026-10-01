@@ -64,8 +64,9 @@ You also need XeLaTeX with `tikz`, `xeCJK`, `fontspec` and `amsmath`, and a CJK 
 
 ```bash
 zitex check tests/data/chars.yaml                     # validate
-zitex render 森 -f tests/data/chars.yaml -s math \
-      -x tests/data/lexicon.yaml --collapse           # print one equation
+zitex render tests/data/chars.yaml -c 森 -s math \
+      -x tests/data/lexicon.yaml --collapse -o -      # print one equation
+zitex render tests/data/chars.yaml -c 森,作 -o figs/   # .tex and .pdf, every style, into figs/
 make -C examples/demo                                  # build a small paper
 ```
 
@@ -78,7 +79,8 @@ In a document:
 ```
 
 ```bash
-zitex build chars.yaml --scan main.tex -x lexicon.yaml -o zitex-out
+zitex install-sty                                      # once: lets plain xelatex find zitex.sty
+zitex render chars.yaml --scan main.tex -x lexicon.yaml
 xelatex main.tex
 ```
 

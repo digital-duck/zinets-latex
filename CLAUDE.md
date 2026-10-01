@@ -14,17 +14,20 @@ Use the `zinets2` conda env (`/home/papagame/anaconda3/envs/zinets2`). The packa
 pytest -q                          # all tests (pytest finds the package via pythonpath = ["src"])
 pytest tests/test_render.py::test_math_collapse_and_wrap   # one test
 zitex check tests/data/chars.yaml  # validate decompositions (warnings never fail the run)
-zitex build tests/data/chars.yaml --scan main.tex -x tests/data/lexicon.yaml -o zitex-out
-zitex render 森 -f tests/data/chars.yaml -s math --collapse   # one snippet to stdout
+zitex render tests/data/chars.yaml --scan main.tex -x tests/data/lexicon.yaml   # only what main.tex asks for, into zitex-out/ (-x defaults to ./lexicon.yaml if it exists)
+zitex render tests/data/chars.yaml -c 森 -s math --collapse -o -   # one snippet to stdout
+zitex render tests/data/chars.yaml                      # no -c: every character, every style, .tex and .pdf, into zitex-out/
+zitex render tests/data/chars.yaml -c 森,作 -o figs/       # -o dir/: that folder; -o x.tex or x.pdf: one output, that format only
 zitex fonts tests/data/chars.yaml --fonts tests/data/fonts.yaml   # glyph coverage report
-make -C examples/demo              # scan, build and typeset the demo with xelatex
+zitex install-sty                  # copy zitex.sty into TEXMFHOME so plain xelatex finds it (--dir DIR: another tree)
+make -C examples/demo              # scan, render and typeset the demo with xelatex (uses TEXINPUTS, no install needed)
 ```
 
 Tests that compile LaTeX need `xelatex`, and the font tests need Droid Sans Fallback and AR PL UMing CN; they skip themselves otherwise. SVG glyphs need `inkscape`. There is no linter configured.
 
 ## Architecture
 
-Python does all parsing and layout. LaTeX is only the last step, and `tex/zitex.sty` is deliberately thin (it `\input`s pre-built files).
+Python does all parsing and layout. LaTeX is only the last step, and `src/zitex/zitex.sty` (shipped inside the package, installed by `zitex install-sty`) is deliberately thin (it `\input`s pre-built files).
 
 ```mermaid
 flowchart LR

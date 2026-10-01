@@ -2,7 +2,7 @@
 \ProvidesPackage{zitex}[2026/10/01 zitex: Chinese character decompositions (XeLaTeX)]
 %
 % Thin by design: all parsing and layout is done by the Python tool.
-%   zitex build chars.yaml --scan main.tex -o zitex-out
+%   zitex render chars.yaml --scan main.tex -o zitex-out
 % writes one snippet per character and style; this package only \input's them.
 %
 %   \zi[style=tree|matrix|formula|math, lang=fr, reading=author]{藻}
@@ -23,10 +23,13 @@
 
 \newcommand\zitexpath{zitex-out}
 \newcommand\zitexlang{en}
-\newcommand\zitexreading{}
+% Plain \def, not \newcommand: \ifx also compares the \long status, and a \long empty macro is not
+% equal to an empty \def one. That made every file name end in a stray @ when no reading was set.
+\def\zitex@empty{}
+\def\zitexreading{}
 \newcommand\zitexsetpath[1]{\renewcommand\zitexpath{#1}}
 \newcommand\zitexsetlang[1]{\renewcommand\zitexlang{#1}}
-\newcommand\zitexsetreading[1]{\renewcommand\zitexreading{#1}}
+\def\zitexsetreading#1{\def\zitexreading{#1}}
 
 \def\zitex@math{math}
 \def\zitex@formula{formula}
@@ -40,7 +43,7 @@
   #1-\zitex@style
   \ifx\zitex@style\zitex@math -\zitex@lang\fi
   \ifx\zitex@style\zitex@formula -\zitex@lang\fi
-  \ifx\zitex@reading\@empty\else @\zitex@reading\fi}
+  \ifx\zitex@reading\zitex@empty\else @\zitex@reading\fi}
 
 \newcommand\zi[2][]{%
   \begingroup
@@ -51,7 +54,7 @@
     \edef\zitex@file{\zitexpath/\zitex@name{#2}.tex}%
     \IfFileExists{\zitex@file}%
       {\input{\zitex@file}}%
-      {\PackageWarning{zitex}{Missing \zitex@file; run `zitex build`}\textbf{[#2]}}%
+      {\PackageWarning{zitex}{Missing \zitex@file; run `zitex render`}\textcolor{red}{\textbf{[#2?]}}}%
   \endgroup}
 
 \newcommand\zitree[2][]{\zi[style=tree,#1]{#2}}

@@ -61,7 +61,7 @@ How the components of a character work (which is meaning, which is sound) is an 
 
 - `role:` directly on an entry is a shorthand for one reading named `default`. If an entry has both `role` and `readings`, `role` comes first.
 - Readings change how roles are shown, and nothing else: piece colours in the tree and the matrix, and the arrow label of the `math` style under `arrow="role"` (`sound: gōng`). The structure and the positions do not depend on the reading.
-- A reading is chosen with `reading=` (`render_snippet(..., reading="dictionary")`, `zitex render --reading`, `zitex build --reading`, `\zi[reading=...]`). A character without that reading uses its default, so one reading can be requested for a whole file.
+- A reading is chosen with `reading=` (`render_snippet(..., reading="dictionary")`, `zitex render --reading`, `\zi[reading=...]`). A character without that reading uses its default, so one reading can be requested for a whole file.
 - Snippet names get `@reading` when a reading was asked for: `虹-math-en@dictionary.tex`.
 
 ## 2. Positions and patterns
@@ -195,7 +195,7 @@ components:
 
 Resolution for each component: override, then primary font, then fallbacks, then a boxed label (`U+20009` or the name), reported as missing. Coverage is read from the font files with fontTools. A font that cannot be inspected is assumed to cover everything, so a build never fails on a guess.
 
-Commands: `zitex fonts data.yaml --fonts fonts.yaml [--strict]` prints the report, and `zitex build ... --fonts fonts.yaml` applies it. Snippets that use a fallback begin with `\providecommand` lines for `\zifont`, `\zisvg` and `\zimissing`, so they stay self-contained. SVG glyphs are converted to `zitex-out/glyphs/*.pdf`.
+Commands: `zitex fonts data.yaml --fonts fonts.yaml [--strict]` prints the report, and `zitex render ... --fonts fonts.yaml` applies it. Snippets that use a fallback begin with `\providecommand` lines for `\zifont`, `\zisvg` and `\zimissing`, so they stay self-contained. SVG glyphs are converted to `zitex-out/glyphs/*.pdf`.
 
 On this machine all 60 components of the original 23-character test set are in Noto Serif CJK SC. No installed font has U+20009, which makes it a good test of the missing path.
 

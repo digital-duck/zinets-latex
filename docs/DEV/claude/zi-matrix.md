@@ -1,6 +1,6 @@
 # Zi-Matrix Positional Notation, and its Mapping to IDS (draft 3)
 
-Source: Figure 5 of the paper (Gong, arXiv:2502.19428), "Distribution of elemental character compositional patterns", plus the author's definitions and corrections. Status: **draft 3, implemented** in zitex on 2026-10-01 after the author's second round of answers. Anything still unconfirmed is marked **(proposal)** or **(open)** and collected in section 8. The implemented form is in `spec.md`; the code is `src/zitex/ops.py`, `radicals.py` and `validate.py`.
+Source: Figure 5 of the paper (Gong, arXiv:2502.19428), "Distribution of elemental character compositional patterns", plus the author's definitions and corrections. Status: **draft 3, implemented and reviewed by the author ("looking good")** in zitex on 2026-10-01 after the author's second round of answers. Anything still unconfirmed is marked **(proposal)** or **(open)** and collected in section 8. The implemented form is in `spec.md`; the code is `src/zitex/ops.py`, `radicals.py` and `validate.py`.
 
 ## 1. Why formalize now
 
@@ -30,7 +30,7 @@ The codes are canonical in data and code (ASCII, short, easy to type). The Chine
 
 A **compositional pattern** is the list of positions of the *immediate* components of a character, joined by hyphens: `L-M`, `U-LD-RD`. A deeper character has one pattern per level, and positions are stored **per level**, relative to the parent. This is what zitex's tree already does, and it is how the SQLite DB stores them.
 
-For example, if 澡 is kept as a node: 藻 is `U-M` (艹, 澡), 澡 is `L-M` (氵, 喿), 喿 is `U-M` (品, 木), and 品 is `U-LD-RD`. (`tests/data/chars.yaml` skips the 澡 level.)
+For example, if 澡 is kept as a node: 藻 is `U-M` (艹, 澡), 澡 is `L-M` (氵, 喿), 喿 is `U-D` (品, 木), and 品 is `U-LD-RD`. (`tests/data/chars.yaml` skips the 澡 level.)
 
 Figure 5 counts the patterns over about 6,000 characters (the frequencies sum to 6,015).
 
@@ -65,20 +65,20 @@ The rule is a tendency and not a law. In `近 = 辶 + 斤` both parts are radica
 | # | Pattern | Count | Share | IDS operator | Note |
 |---|---|---|---|---|---|
 | 0 | `L-M` | 3033 | 50.4% | ⿰ | 佛 = 亻 + 弗 |
-| 1 | `U-D` | 727 | 12.1% | ⿱ | peers |
+| 1 | `U-D` | 727 | 12.1% | ⿱ | peers, e.g. 卡 = 上 + 下|
 | 2 | `U-M` | 688 | 11.4% | ⿱ | 藻 = 艹 + 澡 |
 | 3 | `L-R` | 534 | 8.9% | ⿰ | peers, e.g. 双 = 又 + 又 |
-| 4 | `M-R` | 301 | 5.0% | ⿰ | radical on the right |
-| 5 | `U-M-D` | 139 | 2.3% | ⿳ | |
+| 4 | `M-R` | 301 | 5.0% | ⿰ | radical on the right, e.g. 刮 = 舌 + 刂 |
+| 5 | `U-M-D` | 139 | 2.3% | ⿳ | e.g. 莫 =	艹 + 日	+ 大 |
 | 6 | `LD-M` | 120 | 2.0% | ⿺ | 近 = 辶 + 斤 |
 | 7 | `M-Mi` | 118 | 2.0% | ⿵ ⿶ ⿷ ? | **to be reviewed by the author**, see 5.3 |
 | 8 | `LU-M` | 106 | 1.8% | ⿸ | 病 = 疒 + 丙 |
-| 9 | `M-D` | 70 | 1.2% | ⿱ | radical at the bottom |
+| 9 | `M-D` | 70 | 1.2% | ⿱ | radical at the bottom, e.g. 想 = 相 + 心 |
 | 10 | `LU-RU-D` | 45 | 0.7% | none (needs nesting) | 哭 = 口 口 / 犬. zitex `∵`. Written `D-LU-RU` in Figure 5; the author renamed it |
 | 11 | `LU-LD-R` | 28 | 0.5% | none (needs nesting) | two on the left, one on the right |
-| 12 | `L-M-R` | 26 | 0.4% | ⿲ | |
+| 12 | `L-M-R` | 26 | 0.4% | ⿲ | e.g. 衍 = 彳 + 氵+ 亍|
 | 13 | `U-LD-RD` | 21 | 0.3% | none (needs nesting) | 品 = 口 / 口 口, 叒 = 又 / 又 又. zitex `∴` |
-| 14 | `Mo-M` | 21 | 0.3% | ⿴ | written `M-Mo` in Figure 5; the author replaced it with `Mo-M` |
+| 14 | `Mo-M` | 21 | 0.3% | ⿴ | written `M-Mo` in Figure 5; the author replaced it with `Mo-M`, e.g. 回 = 口 + 口 |
 | 15 | `L-RU-RD` | 18 | 0.3% | none (needs nesting) | one on the left, two on the right |
 | 16 | `U-L-R` | 8 | 0.1% | same as `U-LD-RD` | same topology as `∴`, see 5.2 |
 | 17 | ~~`Mi-Mo`~~ | 6 | 0.1% | | not used. The author uses `Mo-M` instead |
