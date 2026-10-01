@@ -2,7 +2,7 @@
 
 Package and CLI name: **zitex** (`import zitex`, `zitex check ...`), source in `src/zitex/`.
 
-Goal: write complex Chinese character decompositions in a compact text syntax and render them through **XeLaTeX** as Zi-Matrix boxes, decomposition trees and component formulas. Persistence is **YAML** for the prototype. The preprocessor is **Python**. Output is both **PDF and standalone `.tex`**.
+Goal: write complex Chinese character decompositions in a compact text syntax and render them through **XeLaTeX** as Zi-Matrix boxes, decomposition trees and component formulas. Persistence is **YAML** for the prototype and for exchange, because ZiNets is graph-first (section 1.1); the author's relational SQLite DB is the working store for the 5000+ character decomposition. The preprocessor is **Python**. Output is both **PDF and standalone `.tex`**.
 
 Origin: `docs/gemini/readme.md` (review of the ZiNets paper plus a first-draft `zinets.sty`). That draft is reference material only, because it has several bugs (see "Not carried over from the Gemini draft").
 
@@ -12,10 +12,38 @@ Origin: `docs/gemini/readme.md` (review of the ZiNets paper plus a first-draft `
 |---|---|
 | Engine | XeLaTeX (`fontspec` + `xeCJK`), available at `/usr/bin/xelatex` |
 | Preprocessing | Python 3 (parser, renderer, CLI). LaTeX holds only thin, dumb macros |
-| Persistence | YAML files only (`data/*.yaml`). The 5000-character SQLite DB is not final and is still under review, so the SQLite bridge is postponed until the prototype is accepted |
+| Persistence | YAML files (`data/*.yaml`) for the prototype and for exchange, in line with the graph-first design (section 1.1). The relational SQLite DB of 5000+ characters is the author's working store for the decomposition work. It is not final and is under review, so the SQLite bridge is postponed until the prototype is accepted |
 | Output | Both PDF (via XeLaTeX) and standalone `.tex` snippets for embedding in the paper |
 | Default CJK font | Noto Serif CJK SC / Noto Sans CJK SC (installed). Not SimSun |
-| Input core | Unicode IDS operators (⿰ ⿱ ⿲ ⿳ ⿴ ⿵ ⿶ ⿷ ⿸ ⿹ ⿺ ⿻) plus ZiNets position labels |
+| Input core | the `shape` string: Unicode IDS operators (⿰ ⿱ ⿲ ⿳ ⿴ ⿵ ⿶ ⿷ ⿸ ⿹ ⿺ ⿻) plus ZiNets position labels |
+
+### 1.1 Why YAML
+
+The ZiNets project is **graph-first**: knowledge, code and computation are modelled as decomposition graphs, and those graphs are persisted as YAML. The formal statement is "Graph.yaml as Universal IR" (2026-09-27), in `/home/papagame/projects/digital-duck/zinets/RESEARCH-status-and-plan.csv` and `README-graph-vision.md`. The practice so far:
+
+- **ConceptBook** (`conceptbook-app`) stores each concept book as a `graph.yaml` (`primitives` → `concepts` → `applications`), and the `cba` CLI turns it into pages.
+- **Graph-Code** (`gfc`) reads the same format to scaffold software.
+- **SPL scripts** are planned next (still a TODO in the vision doc): an `.spl` script is already a computation DAG, so persisting it as YAML makes it browsable and validatable by the same tools.
+- **Origin.** `graph.yaml` itself started from ZiNets character decomposition (character → radicals → strokes). zitex brings that decomposition back to characters, typeset.
+
+Reasons this matters for zitex:
+
+1. **One format across tools.** A decomposition written for zitex can be read, validated and visualised by the rest of the ecosystem, and the reverse. The CSV row on the ecosystem puts it as one validator, one visualizer and one navigator for all domains.
+2. **Human-readable and diffable.** The data is reviewed by hand. The test set carries `decision:` and `review:` notes next to each entry, and comments are allowed. JSON allows neither.
+3. **Fits reductionism.** The elemental characters (元字) or radicals are the *primitives*. Everything else (composite characters, families, applications) is *derived* from them, which is exactly the `primitives` → `concepts` → `applications` direction of `graph.yaml`.
+4. **Two stores, two jobs.** The relational SQLite DB is how the 5000+ character decomposition work is done and streamlined, so it stays the working store. YAML is good for prototyping zitex, for hand review, and for exchange with the graph tools. The bridge (M5) maps between them.
+
+**Three dimensions, three graphs.** A character has shape, sound and meaning. The same graph-first approach applies to each:
+
+| Dimension | Graph | Status |
+|---|---|---|
+| shape (form) | primitives (元字, radicals) → derived characters, drawn as a tree, matrix or equation | what zitex does today |
+| sound | the same approach, later | not started |
+| meaning | a semantic network of concepts: the semantic evolution of characters over the centuries | the original motivation of ZiNets (knowledge construction driven by concepts) |
+
+So the **tree is a rendering** of the form dimension, a view and not the persistence model. The persisted model is the graph, and zitex's job is to turn it into typeset views.
+
+Open point, to settle when M5 starts: today a zitex entry carries a tree per character (`char`, `shape`, `tree`, `role`), which is already a per-character view of the shape graph. `graph.yaml` is the shared DAG of `primitives`, `concepts` and `applications`. The two should be made compatible, or a converter written (graph in, per-character trees out), so a zitex file can be read by `cba` and `gfc`. The two schemas have not been compared in detail yet.
 
 ## 2. Architecture
 
@@ -43,7 +71,7 @@ One entry per character. **Positions are stored per component**, as in the SQLit
 - char: 藻
   pinyin: zǎo
   meaning: algae, aquatic plant
-  ids: "⿱艹⿰氵喿"           # optional shortcut: expands to a tree with default positions
+  shape: "⿱艹⿰氵喿"         # optional shortcut: expands to a tree with default positions
   tree:                      # canonical form: pos is stored per component
     op: ⿱
     parts:
@@ -61,11 +89,11 @@ One entry per character. **Positions are stored per component**, as in the SQLit
     艹: semantic
     喿: phonetic
 - char: 時
-  ids: "⿰日寺"
+  shape: "⿰日寺"
 ```
 
 - `tree` with an explicit `pos` on every component is the canonical form and the source of truth. This matches how the SQLite DB stores it, so later import and export is a direct mapping.
-- `ids` is an optional shortcut for writing new entries quickly. The parser expands it to a tree and fills in the default positions for each operator. For example, ⿰ gives (左, 右), ⿸ gives (左上, 中内), and ⿴ gives (中外, 中内). Any `pos` given explicitly in `tree` overrides the default.
+- `shape` is an optional shortcut for writing new entries quickly. The parser expands it to a tree and fills in the default positions for each operator. For example, ⿰ gives (左, 右), ⿸ gives (左上, 中内), and ⿴ gives (中外, 中内). Any `pos` given explicitly in `tree` overrides the default.
 - `pos` uses the paper's 11-position vocabulary: 上 下 左 右 中 左上 右上 左下 右下 中内 中外. 中内 and 中外 are enclosure roles, so the renderer draws them as nested boxes rather than grid cells.
 - A validator (`zitex check`) flags a `pos` that does not fit its operator, a missing `pos`, and unknown labels. These checks help review and revise the DB data.
 - SQLite import and export are postponed (see M5).
@@ -76,8 +104,8 @@ One entry per character. **Positions are stored per component**, as in the SQLit
 
 | Form | Example | Notes |
 |---|---|---|
-| IDS prefix | `⿱艹⿰氵喿` | Standard Unicode IDS, so it is interoperable |
-| Existing ZiNets net form | `藻(艹+澡)` | Flat; importer converts it to IDS with the operator guessed or marked `?` |
+| Shape string | `⿱艹⿰氵喿` | Prefix form built on the Unicode IDS operators, so it is interoperable |
+| Existing ZiNets net form | `藻(艹+澡)` | Flat; importer converts it to a shape string with the operator guessed or marked `?` |
 | Explicit nesting | `藻 = 艹 / (氵 \| (木 / 品))` | Optional later sugar: `/` is ⿱, `\|` is ⿰ |
 
 **LaTeX-side macros** (thin):
@@ -110,11 +138,12 @@ The 422 elemental characters (元字) include components that no common font has
 | # | Deliverable | Done when |
 |---|---|---|
 | M0 | Spec: `docs/DEV/claude/spec.md` with grammar, position table, 20 test characters in `tests/data/chars.yaml` | Reviewed by user |
-| M1 | `src/zitex/tree.py`, `loader.py`, `validate.py`: YAML tree loader, IDS shortcut expansion, tree → IDS round trip, and the position validator | Done: 16 tests pass on all 23 test characters |
+| M1 | `src/zitex/tree.py`, `loader.py`, `validate.py`: YAML tree loader, shape-string expansion, tree → shape round trip, and the position validator | Done: 16 tests pass on all 23 test characters |
 | M2 | `src/zitex/render.py`: tree, formula and matrix output as `.tex` | Done: tree and matrix PDFs for 藻, 時, 愛, 國 plus a formula sheet are in `examples/m2/`; 28 tests pass |
 | M2b | `render_math` and `lexicon.py`: equation view with pinyin above and a gloss below each piece, `lang=` option, `collapse` (3 × 口), role-labelled arrow. Same grammar as conceptbook-app (`\underbrace`, `\overset`), so it works in MathJax and XeLaTeX | Done: 36 tests pass; `examples/m2/equations.pdf` checked |
 | M3 | `tex/zitex.sty` and the `zitex build` / `zitex render` commands, `--emit tex\|pdf\|both`, `--scan main.tex` | Done: `examples/demo` builds from a clean checkout with `make`; end-to-end test (scan, build, xelatex) passes; 43 tests pass |
 | M4 | `fonts.py`, `fonts.yaml`, `zitex fonts` report, `{name}` components: fallback fonts, SVG images, aliases, boxed label when nothing can draw a glyph | Done: all test-set components covered; fallback, SVG and missing paths tested; 63 tests pass |
+| M4b | Zi-Matrix refactor: 11 position codes, per-operator patterns, `<pattern>` and `∷ ⁙` operators, radical rule (`radicals.py`), validator W1-W8, generic flat layout | Done: 92 tests pass; specified in `zi-matrix.md` and `spec.md` |
 | M5 | *Postponed.* YAML ↔ SQLite bridge, batch PDF of a character family | Start only after the prototype is accepted and the DB is reviewed |
 | M6 | *Postponed.* Hook into the zinets app (`/home/papagame/projects/Proj-ZiNets/zinets_vis`) for export | Same condition as M5 |
 

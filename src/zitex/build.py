@@ -16,22 +16,40 @@ from .render import STYLES, document, render_with
 LANG_STYLES = ("math", "formula")  # styles whose output depends on the language
 
 
-def snippet_name(char: str, style: str, lang: str = "en") -> str:
-    """File stem used for a snippet, e.g. ``藻-tree`` or ``藻-math-fr``. zitex.sty uses the same rule."""
-    return f"{char}-{style}-{lang}" if style in LANG_STYLES else f"{char}-{style}"
+def snippet_name(char: str, style: str, lang: str = "en", reading: str | None = None) -> str:
+    """File stem used for a snippet: ``藻-tree``, ``藻-math-fr``, ``虹-math-en@author``.
+
+    The language is part of the name only for the styles that print glosses, and ``@reading`` only when a
+    named reading was asked for. zitex.sty uses the same rule."""
+    stem = f"{char}-{style}-{lang}" if style in LANG_STYLES else f"{char}-{style}"
+    return f"{stem}@{reading}" if reading else stem
 
 
-# \zi[style=matrix,lang=fr]{藻}  \zimath{藻}  \zitree[lang=fr]{藻} ...
-_CALL = re.compile(r"\\zi(tree|matrix|formula|math)?(?:\[([^\]]*)\])?\{(.)\}")
+# \zi[style=matrix,lang=fr]{藻}  \zimath{藻}  \zitree[reading=author]{藻} ...  and the defaults set with
+# \zitexsetlang{fr} / \zitexsetreading{author}
+_CALL = re.compile(
+    r"\\zitexsetlang\{([^}]*)\}"
+    r"|\\zitexsetreading\{([^}]*)\}"
+    r"|\\zi(tree|matrix|formula|math)?(?:\[([^\]]*)\])?\{(.)\}"
+)
 
 
-def scan_tex(path: str | Path) -> set[tuple[str, str, str | None]]:
-    """(char, style, lang) triples a .tex file asks for. lang is None when not given."""
+def scan_tex(path: str | Path) -> set[tuple[str, str, str | None, str | None]]:
+    """(char, style, lang, reading) a .tex file asks for. lang and reading are None when not given.
+
+    Follows the file in order, so a ``\\zitexsetlang{fr}`` or ``\\zitexsetreading{author}`` applies to the
+    calls after it, the way zitex.sty applies it. (Grouping is not tracked.)"""
     found = set()
+    lang = reading = None
     for m in _CALL.finditer(Path(path).read_text(encoding="utf-8")):
-        style, opts, ch = m.group(1), m.group(2) or "", m.group(3)
-        kv = dict(p.split("=", 1) for p in (x.strip() for x in opts.split(",")) if "=" in p)
-        found.add((ch, style or kv.get("style", "tree"), kv.get("lang")))
+        if m.group(1) is not None:
+            lang = m.group(1).strip() or None
+        elif m.group(2) is not None:
+            reading = m.group(2).strip() or None
+        else:
+            style, opts, ch = m.group(3), m.group(4) or "", m.group(5)
+            kv = dict(p.split("=", 1) for p in (x.strip() for x in opts.split(",")) if "=" in p)
+            found.add((ch, style or kv.get("style", "tree"), kv.get("lang", lang), kv.get("reading", reading)))
     return found
 
 
@@ -61,13 +79,14 @@ def compile_pdf(snippet: str, dest: Path, font: str = "Noto Serif CJK SC", zitex
         return True
 
 
-def build(entries: list[Entry], outdir: str | Path, jobs: set[tuple[str, str, str]] | None = None, *,
+def build(entries: list[Entry], outdir: str | Path, jobs: set[tuple[str, str, str, str | None]] | None = None, *,
           chars: list[str] | None = None, styles: list[str] | None = None, langs: list[str] | None = None,
           emit: str = "tex", lex: Lexicon | None = None, font: str | None = None,
-          math_opts: dict | None = None, fonts: FontConfig | None = None) -> BuildResult:
+          math_opts: dict | None = None, fonts: FontConfig | None = None, reading: str | None = None) -> BuildResult:
     """Render snippets into outdir.
 
-    jobs:  explicit (char, style, lang) triples (from scan_tex). Otherwise chars x styles x langs.
+    jobs:  explicit (char, style, lang, reading) tuples (from scan_tex). Otherwise chars x styles x langs, all
+           under `reading` (a named reading of the roles; entries without it use their default).
     emit:  "tex" (snippets), "pdf" (compiled figures) or "both".
     fonts: glyph fallback configuration (see zitex.fonts). The CJK font is fonts.primary unless `font` is given.
     """
@@ -79,10 +98,10 @@ def build(entries: list[Entry], outdir: str | Path, jobs: set[tuple[str, str, st
     outdir.mkdir(parents=True, exist_ok=True)
     langs = langs or ["en"]
     if jobs is None:
-        jobs = {(c, s, l) for c in (chars or list(by_char)) for s in (styles or list(STYLES)) for l in langs}
+        jobs = {(c, s, l, reading) for c in (chars or list(by_char)) for s in (styles or list(STYLES)) for l in langs}
     res = BuildResult()
     converted: set[str] = set()
-    for ch, style, lang in sorted(jobs):
+    for ch, style, lang, rd in sorted(jobs, key=lambda j: tuple(x or "" for x in j)):
         e = by_char.get(ch)
         if e is None:
             if ch not in res.missing:
@@ -91,8 +110,8 @@ def build(entries: list[Entry], outdir: str | Path, jobs: set[tuple[str, str, st
         kw = dict(math_opts or {}) if style == "math" else {}
         if style in LANG_STYLES:
             kw["lang"], kw["lex"] = lang, lex
-        stem = snippet_name(ch, style, lang)
-        snippet, resolver = render_with(e, style, fonts, **kw)
+        stem = snippet_name(ch, style, lang, rd)
+        snippet, resolver = render_with(e, style, fonts, reading=rd, **kw)
         if resolver:
             for ch in resolver.missing:
                 if ch not in res.glyph_missing:

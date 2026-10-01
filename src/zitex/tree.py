@@ -1,9 +1,10 @@
-"""Decomposition tree: the Node model, the compact `ids` parser and serializer."""
+"""Decomposition tree: the Node model, the compact `shape` parser and serializer."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .ops import OPS, arity
+from .ops import (GENERAL_CLOSE, GENERAL_OPEN, OPS, POSITIONS, arity, default_pattern, general_pattern,
+                  normalize_pos, pattern_of)
 
 
 class ParseError(ValueError):
@@ -22,13 +23,19 @@ class Node:
     def is_leaf(self) -> bool:
         return self.op is None
 
+    @property
+    def pattern(self) -> str | None:
+        """Compositional pattern of this level, e.g. ``L-M``: the labels of the immediate components."""
+        return pattern_of(p.pos or "?" for p in self.parts) if self.parts else None
 
-# ---- ids -> tree ------------------------------------------------------------
 
-def parse_ids(s: str) -> Node:
+# ---- shape string -> tree ------------------------------------------------------------
+
+def parse_shape(s: str) -> Node:
     """Parse the compact prefix form, e.g. ``⿱艹⿰氵喿(⿱品(∴口口口)木)``.
 
-    Children get the default position for their operator and index. The root has no pos.
+    Children get the default positions for their operator (for ⿰ and ⿱ chosen by the radical rule,
+    see ops.default_pattern). The root has no pos.
     """
     node, i = _expr(s, 0)
     if i != len(s):
@@ -41,13 +48,24 @@ def _expr(s: str, i: int) -> tuple[Node, int]:
         raise ParseError(f"unexpected end of input in {s!r}")
     ch = s[i]
     i += 1
-    if ch in OPS:
+    if ch in OPS or ch == GENERAL_OPEN:
+        op = ch
+        if ch == GENERAL_OPEN:               # general form <L-RU-RD>
+            end = s.find(GENERAL_CLOSE, i)
+            if end <= i:
+                raise ParseError(f"unterminated or empty <pattern> in {s!r}")
+            op = GENERAL_OPEN + s[i:end] + GENERAL_CLOSE
+            bad = [x for x in general_pattern(op) if x not in POSITIONS]
+            if bad:
+                raise ParseError(f"unknown position label(s) {bad} in {op!r}")
+            i = end + 1
         parts = []
-        for pos in OPS[ch]:
+        for _ in range(arity(op)):
             child, i = _expr(s, i)
-            child.pos = pos
             parts.append(child)
-        return Node(op=ch, parts=parts), i
+        for child, pos in zip(parts, default_pattern(op, parts)):
+            child.pos = pos
+        return Node(op=op, parts=parts), i
     if ch in "()":
         raise ParseError(f"unexpected {ch!r} at {i - 1} in {s!r}")
     if ch == "{":  # a component with no code point, written by name: {name}
@@ -66,13 +84,13 @@ def _expr(s: str, i: int) -> tuple[Node, int]:
     return Node(c=ch), i
 
 
-# ---- tree -> ids ------------------------------------------------------------
+# ---- tree -> shape string ------------------------------------------------------------
 
-def to_ids(n: Node) -> str:
+def to_shape(n: Node) -> str:
     name = _name(n.c)
     if n.is_leaf:
         return name
-    body = n.op + "".join(to_ids(p) for p in n.parts)
+    body = n.op + "".join(to_shape(p) for p in n.parts)
     return f"{name}({body})" if n.c else body
 
 
@@ -88,7 +106,7 @@ def node_from_dict(d: dict) -> Node:
     if not isinstance(d, dict):
         raise ParseError(f"tree node must be a mapping, got {d!r}")
     parts = [node_from_dict(p) for p in d.get("parts") or []]
-    return Node(c=d.get("c"), op=d.get("op"), pos=d.get("pos"), parts=parts)
+    return Node(c=d.get("c"), op=d.get("op"), pos=normalize_pos(d.get("pos")), parts=parts)
 
 
 def node_to_dict(n: Node) -> dict:
@@ -108,4 +126,4 @@ def leaves(n: Node) -> list[Node]:
     return [n] if n.is_leaf else [l for p in n.parts for l in leaves(p)]
 
 
-__all__ = ["Node", "ParseError", "parse_ids", "to_ids", "node_from_dict", "node_to_dict", "leaves", "arity"]
+__all__ = ["Node", "ParseError", "parse_shape", "to_shape", "node_from_dict", "node_to_dict", "leaves", "arity"]

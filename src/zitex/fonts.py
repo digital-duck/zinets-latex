@@ -10,7 +10,7 @@ fonts.yaml::
       甲: {alias: 日}                              # draw this other character instead
 
 Resolution order for a component: override, primary font, fallback fonts, then a boxed label
-(reported as missing). Components longer than one character are names, written ``{name}`` in ids.
+(reported as missing). Components longer than one character are names, written ``{name}`` in a shape string.
 """
 from __future__ import annotations
 
@@ -66,7 +66,7 @@ def covers(family: str, ch: str) -> bool | None:
 
 
 def _bare(key: str) -> str:
-    """``{name}`` -> ``name`` (components are written with braces in ids but stored without)."""
+    """``{name}`` -> ``name`` (components are written with braces in a shape string but stored without)."""
     return key[1:-1] if len(key) > 2 and key[0] == "{" and key[-1] == "}" else key
 
 

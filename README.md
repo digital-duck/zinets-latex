@@ -8,10 +8,10 @@ Write what a character is made of, once, in YAML:
 - char: 時
   pinyin: shí
   meaning: time
-  ids: "⿰日寺"
+  shape: "⿰日寺"
 ```
 
-and get it back as a reaction-style equation with pinyin above and a gloss below each piece:
+A character has three dimensions, and each has a field: **shape** (形, the decomposition), **sound** (音, `pinyin`) and **meaning** (義, `meaning`). The `shape` string uses Unicode's Ideographic Description Sequence notation (plus ZiNets operators for flat patterns). zitex typesets all three together, as a reaction-style equation with pinyin above and a gloss below each piece:
 
 ```
  rì     sì          shí
@@ -42,10 +42,12 @@ An early sketch of a LaTeX package for this lives in `docs/DEV/gemini/readme.md`
 | `tree` | a decomposition tree, with the position on each edge |
 | `matrix` | nested boxes laid out by operator: the Zi-Matrix |
 
-- **Compact input.** Unicode IDS strings, such as `⿱艹⿰氵喿(⿱品(∴口口口)木)` for 藻, or explicit YAML trees with a position on every component.
-- **Two ZiNets operators.** `∴` (one on top, two below: 品, 森) and `∵` (two on top, one below: 哭) keep triangular patterns as single units, which standard IDS cannot.
+- **Compact input.** A `shape` string, such as `⿱艹⿰氵喿(⿱品(∴口口口)木)` for 藻, or explicit YAML trees with a position on every component.
+- **The Zi-Matrix positions.** Eleven position codes (`L R M U D Mi Mo LU LD RU RD`), where `M` is the center of gravity and a Kangxi radical is peripheral, so 佛 is 亻(`L`) + 弗(`M`).
+- **ZiNets operators for flat patterns.** `∴` (品, 叒), `∵` (哭), `∷` (叕), `⁙` (器: four 口 around 犬) and a general `<pattern>` form keep a level with three or more parts as one level, which standard IDS cannot.
 - **Chemistry-style extras.** Repeats collapse (`3 × 木 = 森`), and the arrow can carry the reason for the combination (`忄 + 每 —(sound: měi)→ 悔`).
 - **Several languages.** Glosses come from a lexicon file and fall back to English.
+- **Several readings.** A character can carry competing interpretations of its parts (for example the dictionary's and the author's), and you pick one when rendering.
 - **Fonts that fall short.** Fallback fonts, SVG images for components with no code point, and a coverage report.
 - **Two outputs.** `.tex` snippets to `\input` into a paper, and compiled PDF figures.
 - **Web-ready.** The `math` output uses only commands that MathJax and KaTeX also understand.
@@ -96,7 +98,7 @@ print(render_snippet(entries[0], "math", lex=lex, lang="fr"))
 
 A working prototype. Parsing, validation, all four renderers, the LaTeX package, the build command, the language and font handling are done and tested (`pytest -q`).
 
-Not done yet: the bridge to the ZiNets SQLite database (the decomposition data there is still under review, so for now zitex works from YAML files), and the hook into the ZiNets app. The data in `tests/data/` is a reviewed 23-character sample, and its glosses and pinyin are drafts.
+Not done yet: the bridge to the ZiNets SQLite database (the decomposition data there is still under review, so for now zitex works from YAML files), and the hook into the ZiNets app. The data in `tests/data/` is a 29-character sample, partly reviewed, and its glosses and pinyin are drafts.
 
 The API will change a little as [conceptbook-app](https://github.com/digital-duck/conceptbook-app) starts to use it as a dependency.
 

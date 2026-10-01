@@ -11,8 +11,11 @@ Styles:
 """
 from __future__ import annotations
 
+import contextvars
+
 from .fonts import CURRENT, FontConfig, Resolver
-from .loader import Entry
+from .loader import Entry, role_kinds
+from .ops import FLAT_OPS, is_general
 from .tree import Node
 
 PT_PER_CM = 28.4528
@@ -22,7 +25,11 @@ ROLE_FILL = {
     "semantic": (214, 234, 248),
     "phonetic": (252, 228, 214),
     "force": (226, 240, 217),
+    "both": (232, 222, 245),      # a component that is both semantic and phonetic
 }
+
+# which reading of an entry's roles is being rendered (None: the entry's default)
+READING: contextvars.ContextVar[str | None] = contextvars.ContextVar("zitex_reading", default=None)
 DEFAULT_FILL = (248, 249, 250)
 BORDER = (44, 62, 80)
 ACCENT = (231, 76, 60)
@@ -42,6 +49,7 @@ def esc(text: str) -> str:
 _COLORS = {
     "zi-border": BORDER, "zi-accent": ACCENT, "zi-muted": MUTED, "zi-default": DEFAULT_FILL,
     "zi-semantic": ROLE_FILL["semantic"], "zi-phonetic": ROLE_FILL["phonetic"], "zi-force": ROLE_FILL["force"],
+    "zi-both": ROLE_FILL["both"],
 }
 
 
@@ -68,8 +76,16 @@ def _rgb(c: tuple[int, int, int]) -> str:
     raise KeyError(c)
 
 
-def _fill(c: str | None, role: dict[str, str]) -> tuple[int, int, int]:
-    return ROLE_FILL.get(role.get(c or "", ""), DEFAULT_FILL)
+def _fill(c: str | None, role: dict) -> tuple[int, int, int]:
+    kinds = role_kinds(role.get(c or ""))
+    if "semantic" in kinds and "phonetic" in kinds:
+        return ROLE_FILL["both"]
+    return ROLE_FILL.get(kinds[0] if kinds else "", DEFAULT_FILL)
+
+
+def _roles(e: Entry) -> dict:
+    """Roles of the entry under the reading being rendered."""
+    return e.roles_for(READING.get())
 
 
 def _flat(n: Node) -> str:
@@ -172,10 +188,11 @@ def render_math(e: Entry, lex=None, lang: str = "en", arrow: str = "=", collapse
         terms.append((f"{k}\\times " if k > 1 else "") + t)
     lhs = " + ".join(terms)
 
-    if arrow == "role" and e.role:
+    roles = _roles(e)
+    if arrow == "role" and roles:
         words = ARROW_WORDS.get(lang, ARROW_WORDS["en"])
         label = ", ".join(f"{words.get(r, r)}: {(lex.get_pinyin(c) if lex else None) or c}"
-                          for c, r in e.role.items() if r == "phonetic")
+                          for c, r in roles.items() if "phonetic" in role_kinds(r))
         sym = r"\xrightarrow{" + _t(label) + "}" if label else "="
     elif arrow == "reaction":
         sym = r"\longrightarrow"
@@ -233,13 +250,13 @@ def render_tree(e: Entry, dx: float = 2.4, dy: float = 0.85) -> str:
             style = rf"zinode, line width=0.9pt, draw={_rgb(ACCENT)}, fill={_rgb(DEFAULT_FILL)}, font=\LARGE\bfseries"
             label = _g(e.char)
         else:
-            style = f"zinode, fill={_rgb(_fill(n.c, e.role))}"
+            style = f"zinode, fill={_rgb(_fill(n.c, _roles(e)))}"
             if n.is_leaf:
                 label = _g(n.c or "")
             elif n.c:
-                label = _g(n.c) + r"\,{\small " + (n.op or "") + "}"
+                label = _g(n.c) + r"\,{\small " + _op_text(n.op or "") + "}"
             else:
-                label = r"{\large " + (n.op or "") + "}"
+                label = r"{\large " + _op_text(n.op or "") + "}"
         out.append(rf"  \node[{style}] ({name}) at ({x:.2f},{y:.2f}) {{{label}}};")
     for name, n, x, y, parent in nodes:
         if parent is None:
@@ -252,6 +269,46 @@ def render_tree(e: Entry, dx: float = 2.4, dy: float = 0.85) -> str:
 
 
 # ---- matrix -----------------------------------------------------------------
+
+def flat_rects(labels: list[str]) -> list[tuple[float, float, float, float]]:
+    """Unit-square rectangles (x, y, w, h; origin bottom-left) for the labels of a flat pattern.
+
+    Patterns with L or R are laid out in columns, all others in rows (top, middle, bottom).
+    Inside a row or column the parts follow reading order. A lone U or D part is centered at half
+    width when the opposite row has two parts, which gives the triangle look of ∴ and ∵.
+    """
+    rects: list[tuple[float, float, float, float] | None] = [None] * len(labels)
+    idx = range(len(labels))
+    if any(l in ("L", "R") for l in labels):
+        groups = [[i for i in idx if labels[i] in g] for g in (("L", "LU", "LD"), ("M",), ("R", "RU", "RD"))]
+        groups = [g for g in groups if g]
+        for ci, g in enumerate(groups):
+            order = sorted(g, key=lambda i: 0 if labels[i] in ("LU", "RU") else 2 if labels[i] in ("LD", "RD") else 1)
+            for k, i in enumerate(order):
+                rects[i] = (ci / len(groups), 1 - (k + 1) / len(order), 1 / len(groups), 1 / len(order))
+    else:
+        groups = [[i for i in idx if labels[i] in g] for g in (("U", "LU", "RU"), ("M",), ("D", "LD", "RD"))]
+        groups = [g for g in groups if g]
+        widest = max((len(g) for g in groups), default=1)
+        for ri, g in enumerate(groups):
+            order = sorted(g, key=lambda i: 0 if labels[i] in ("LU", "LD") else 1 if labels[i] in ("U", "D", "M") else 2)
+            for k, i in enumerate(order):
+                w = 1 / len(order)
+                x0 = k * w
+                if len(order) == 1 and labels[i] in ("U", "D") and widest > 1:
+                    w, x0 = 0.5, 0.25
+                rects[i] = (x0, 1 - (ri + 1) / len(groups), w, 1 / len(groups))
+    return [r if r else (0.0, 0.0, 1.0, 1.0) for r in rects]
+
+
+def _op_text(op: str) -> str:
+    """Operator as shown in a tree: the symbol, or the pattern when the symbol has no glyph."""
+    if op == "⁙":
+        return r"{\scriptsize LU-RU-M-LD-RD}"
+    if is_general(op):
+        return r"{\scriptsize " + op[1:-1] + "}"
+    return op
+
 
 def _size_pt(w: float, h: float, k: float = 0.62) -> str:
     pt = max(4.0, k * min(w, h) * PT_PER_CM)
@@ -312,7 +369,7 @@ def render_matrix(e: Entry, size: float = 4.4) -> str:
         elif op == "⿸": ir, lab = (x + t, y, w - t, h - t), (x + t / 2, y + h - t / 2)
         elif op == "⿹": ir, lab = (x, y, w - t, h - t), (x + w - t / 2, y + h - t / 2)
         else:           ir, lab = (x + t, y + t, w - t, h - t), (x + t / 2, y + t / 2)  # ⿺
-        rect(x, y, w, h, _fill(outer.c, e.role), "thin")
+        rect(x, y, w, h, _fill(outer.c, _roles(e)), "thin")
         glyph(_flat(outer), lab[0], lab[1], t, t, 0.8)
         box(inner, *ir)
 
@@ -321,17 +378,10 @@ def render_matrix(e: Entry, size: float = 4.4) -> str:
         box(a, x, y, w, h)
         box(b, x, y, w, h, opacity=0.55)
 
-    def triangle(n, x, y, w, h):
-        a, b, c = n.parts
-        hh, hw = h / 2, w / 2
-        if n.op == "∴":
-            box(a, x + w / 4, y + hh, hw, hh)
-            box(b, x, y, hw, hh)
-            box(c, x + hw, y, hw, hh)
-        else:  # ∵
-            box(a, x, y + hh, hw, hh)
-            box(b, x + hw, y + hh, hw, hh)
-            box(c, x + w / 4, y, hw, hh)
+    def flat(n, x, y, w, h):
+        """Any flat pattern (∴ ∵ ∷ ⁙ and <pattern>): place each child by its position label."""
+        for p, (rx, ry, rw, rh) in zip(n.parts, flat_rects([q.pos or "M" for q in n.parts])):
+            box(p, x + rx * w, y + ry * h, rw * w, rh * h)
 
     def layout(n, x, y, w, h):
         if n.op in ("⿱", "⿳"):
@@ -342,14 +392,14 @@ def render_matrix(e: Entry, size: float = 4.4) -> str:
             surround(n, x, y, w, h)
         elif n.op == "⿻":
             overlay(n, x, y, w, h)
-        elif n.op in ("∴", "∵"):
-            triangle(n, x, y, w, h)
+        elif n.op in FLAT_OPS or is_general(n.op or ""):
+            flat(n, x, y, w, h)
         else:
             rows(n, x, y, w, h)
 
     root = e.tree
     if root.is_leaf:
-        rect(0, 0, size, size, _fill(root.c, e.role))
+        rect(0, 0, size, size, _fill(root.c, _roles(e)))
         glyph(_g(root.c or ""), size / 2, size / 2, size, size)
     else:
         rect(0, 0, size, size, DEFAULT_FILL, "thick")
@@ -363,24 +413,29 @@ def render_matrix(e: Entry, size: float = 4.4) -> str:
 STYLES = {"tree": render_tree, "formula": render_formula, "matrix": render_matrix, "math": render_math}
 
 
-def render_with(e: Entry, style: str = "tree", fonts: FontConfig | None = None, **kw) -> tuple[str, Resolver | None]:
+def render_with(e: Entry, style: str = "tree", fonts: FontConfig | None = None, reading: str | None = None,
+                **kw) -> tuple[str, Resolver | None]:
     """Render, resolving glyphs through `fonts`. Returns the snippet and the resolver
-    (which lists missing components and SVG files that were used)."""
+    (which lists missing components and SVG files that were used).
+
+    `reading` picks which named reading of the roles colours the pieces and labels the arrow
+    (an entry without it uses its default reading)."""
     if style not in STYLES:
         raise ValueError(f"unknown style {style!r}; choose from {sorted(STYLES)}")
     resolver = Resolver(fonts) if fonts else None
-    token = CURRENT.set(resolver)
+    token, rtoken = CURRENT.set(resolver), READING.set(reading)
     try:
         out = STYLES[style](e, **kw)
     finally:
         CURRENT.reset(token)
+        READING.reset(rtoken)
     if resolver and resolver.used:
         out = resolver.prelude + "\n" + out
     return out, resolver
 
 
-def render(e: Entry, style: str = "tree", fonts: FontConfig | None = None, **kw) -> str:
-    return render_with(e, style, fonts, **kw)[0]
+def render(e: Entry, style: str = "tree", fonts: FontConfig | None = None, reading: str | None = None, **kw) -> str:
+    return render_with(e, style, fonts, reading, **kw)[0]
 
 
 def document(body: str, font: str = "Noto Serif CJK SC", standalone: bool = True, zitexpath: str | None = None) -> str:
@@ -391,7 +446,7 @@ def document(body: str, font: str = "Noto Serif CJK SC", standalone: bool = True
         r"\usepackage{fontspec}",
         r"\usepackage{xeCJK}",
         rf"\setCJKmainfont{{{font}}}",
-        r'\xeCJKDeclareCharClass{CJK}{"2234,"2235}  % the triangle operators',
+        r'\xeCJKDeclareCharClass{CJK}{"2234,"2235,"2237}  % the ZiNets operators ∴ ∵ ∷',
         r"\usepackage{amsmath}",
         r"\usepackage{graphicx}",
         r"\usepackage{tikz}",

@@ -21,7 +21,7 @@ def test_formula_anonymous_composite_in_brackets():
 
 
 def test_formula_show_pos():
-    assert "左" in render_formula(ENTRIES["時"], show_pos=True, info=False)
+    assert "L" in render_formula(ENTRIES["時"], show_pos=True, info=False)
 
 
 def test_esc():
@@ -44,8 +44,8 @@ def test_snippets_are_balanced_and_standalone(style):
 
 def test_tree_has_every_position_label():
     s = render(ENTRIES["藻"], "tree")
-    for lab in ("上", "下", "左", "右", "左下", "右下"):
-        assert lab in s
+    for lab in ("U", "M", "L", "D", "LD", "RD"):
+        assert f"{{{lab}}};" in s            # edge labels are node texts
     assert "喿" in s and "品" in s  # named nodes appear
 
 
@@ -128,3 +128,122 @@ def test_math_compiles_with_xelatex(tmp_path):
                         "-output-directory", str(tmp_path), str(tex)], capture_output=True, text=True)
     assert r.returncode == 0, r.stdout[-800:]
     assert "Missing character" not in r.stdout
+
+
+# ---- flat patterns -------------------------------------------------------------------
+
+from zitex.render import flat_rects  # noqa: E402
+
+
+def _inside(r):
+    x, y, w, h = r
+    return -1e-9 <= x and -1e-9 <= y and x + w <= 1 + 1e-9 and y + h <= 1 + 1e-9
+
+
+def _overlap(a, b):
+    return min(a[0] + a[2], b[0] + b[2]) - max(a[0], b[0]) > 1e-9 and min(a[1] + a[3], b[1] + b[3]) - max(a[1], b[1]) > 1e-9
+
+
+@pytest.mark.parametrize("pattern", ["U-LD-RD", "LU-RU-D", "LU-RU-LD-RD", "LU-RU-M-LD-RD", "LU-LD-R", "L-RU-RD", "L-M-R"])
+def test_flat_rects_fit_and_do_not_overlap(pattern):
+    rs = flat_rects(pattern.split("-"))
+    assert len(rs) == len(pattern.split("-")) and all(_inside(r) for r in rs)
+    assert not any(_overlap(a, b) for i, a in enumerate(rs) for b in rs[i + 1:])
+
+
+def test_flat_rects_geometry():
+    top, lo_l, lo_r = flat_rects(["U", "LD", "RD"])
+    assert top[1] > lo_l[1] and lo_l[0] < lo_r[0] and top[2] == 0.5     # apex up, centered
+    a, b, c = flat_rects(["LU", "RU", "D"])
+    assert a[1] == b[1] > c[1] and a[0] < b[0] and c[2] == 0.5          # apex down
+    lu, ld, r = flat_rects(["LU", "LD", "R"])
+    assert lu[1] > ld[1] and lu[0] == ld[0] < r[0]
+    five = flat_rects(["LU", "RU", "M", "LD", "RD"])
+    assert five[2][1] < five[0][1] and five[2][1] > five[3][1] and five[2][2] == 1.0   # M is the full-width middle row
+
+
+def test_five_part_character_renders():
+    e = ENTRIES["器"]
+    assert e.tree.pattern == "LU-RU-M-LD-RD"
+    assert render(e, "matrix").count(r"\node[] at") == 5
+    assert "⁙" not in render(e, "tree")
+    # a nested ⁙ has no glyph, so the tree shows its pattern instead
+    from zitex.loader import entry_from_dict
+    nested = entry_from_dict({"char": "X", "shape": "⿱艹⁙口口犬口口"})
+    assert "LU-RU-M-LD-RD" in render(nested, "tree") and "⁙" not in render(nested, "tree")
+
+
+@pytest.mark.skipif(shutil.which("xelatex") is None, reason="xelatex not installed")
+def test_flat_patterns_compile(tmp_path):
+    for ch in ("器", "叒", "叕", "哭"):
+        for style in ("matrix", "tree"):
+            tex = tmp_path / f"{ch}-{style}.tex"
+            tex.write_text(document(render(ENTRIES[ch], style)), encoding="utf-8")
+            r = subprocess.run(["xelatex", "-interaction=nonstopmode", "-halt-on-error",
+                                "-output-directory", str(tmp_path), str(tex)], capture_output=True, text=True)
+            assert r.returncode == 0, r.stdout[-600:]
+            assert "Missing character" not in r.stdout, (ch, style)
+
+
+# ---- readings -------------------------------------------------------------------------
+
+from zitex.loader import entry_from_dict, role_kinds  # noqa: E402
+
+
+def test_entry_readings_and_default():
+    e = ENTRIES["虹"]
+    assert [r.name for r in e.readings] == ["author", "dictionary"]
+    assert e.role == {"虫": "semantic", "工": "semantic"}                    # the first reading is the default
+    assert e.roles_for("dictionary")["工"] == "phonetic"
+    assert e.roles_for("nope") == e.role                                    # unknown reading: the default
+    assert e.reading("dictionary").source.startswith("Shuowen")
+
+
+def test_role_shorthand_is_a_default_reading():
+    e = entry_from_dict({"char": "悔", "shape": "⿰忄每", "role": {"忄": "semantic", "每": "phonetic"}})
+    assert [r.name for r in e.readings] == ["default"] and e.role["每"] == "phonetic"
+    assert entry_from_dict({"char": "好", "shape": "⿰女子"}).role == {}
+
+
+def test_role_kinds():
+    assert role_kinds("semantic") == ["semantic"] and role_kinds(["semantic", "phonetic"]) == ["semantic", "phonetic"]
+    assert role_kinds(None) == []
+
+
+def test_reading_changes_math_arrow_and_colours():
+    lex = LEX
+    author = render_math(ENTRIES["虹"], lex, arrow="role")
+    assert r"\xrightarrow" not in author and "= " in author               # 工 is semantic: plain equals
+    with_reading = render(ENTRIES["虹"], "math", lex=lex, arrow="role", reading="dictionary")
+    assert r"\xrightarrow{\text{sound: gōng}}" in with_reading
+    # tree colours: 工 is semantic under "author" and phonetic under "dictionary"
+    assert render(ENTRIES["虹"], "tree").count("fill=zi-semantic") == 2
+    d = render(ENTRIES["虹"], "tree", reading="dictionary")
+    assert d.count("fill=zi-semantic") == 1 and d.count("fill=zi-phonetic") == 1
+
+
+def test_both_roles_get_their_own_colour():
+    e = entry_from_dict({"char": "虹", "shape": "⿰虫工",
+                         "readings": [{"name": "both", "role": {"虫": "semantic", "工": ["semantic", "phonetic"]}}]})
+    s = render(e, "matrix")
+    assert "zi-both" in s.replace("\\definecolor{zi-both}", "") and s.count("fill=zi-both") == 1
+
+
+def test_reading_does_not_leak_between_renders():
+    render(ENTRIES["虹"], "tree", reading="dictionary")
+    assert render(ENTRIES["虹"], "tree").count("fill=zi-phonetic") == 0
+
+
+def test_reading_validation():
+    from zitex import validate_entry
+    e = entry_from_dict({"char": "虹", "shape": "⿰虫工", "readings": [
+        {"name": "a", "role": {"虫": "semantic", "木": "phonetic", "工": "magic"}},
+        {"name": "a", "role": {}}]})
+    assert sorted(w.code for w in validate_entry(e)) == ["W10", "W11", "W9"]
+    assert validate_entry(ENTRIES["虹"]) == []
+
+
+def test_reading_needs_a_name():
+    from zitex import ParseError
+    with pytest.raises(ParseError):
+        entry_from_dict({"char": "虹", "shape": "⿰虫工", "readings": [{"role": {}}]})

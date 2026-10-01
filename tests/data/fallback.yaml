@@ -1,7 +1,7 @@
 # SYNTHETIC test data for the font fallback code. These are not real decompositions.
 - char: 甲        # 𠂉 (U+20089): not in the primary font, found in the fallback font
-  ids: "⿰日𠂉"
+  shape: "⿰日𠂉"
 - char: 乙        # 𠀉 (U+20009): no installed font has it, so it is reported missing
-  ids: "⿰日𠀉"
+  shape: "⿰日𠀉"
 - char: 丙        # {demo}: no code point, drawn from glyphs/demo.svg
-  ids: "⿰日{demo}"
+  shape: "⿰日{demo}"

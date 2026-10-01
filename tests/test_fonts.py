@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from zitex import load_yaml, parse_ids, to_ids
+from zitex import load_yaml, parse_shape, to_shape
 from zitex.build import build
 from zitex.cli import main
 from zitex.fonts import FontConfig, coverage_report, covers, resolve
@@ -18,25 +18,25 @@ have_fonts = covers("Droid Sans Fallback", "日") is not None and covers("AR PL 
 needs_fonts = pytest.mark.skipif(not have_fonts, reason="test fonts (Droid Sans Fallback, AR PL UMing CN) not installed")
 
 
-# ---- {name} components in ids ------------------------------------------------
+# ---- {name} components in a shape string ------------------------------------------------
 
 def test_name_component_roundtrip():
-    n = parse_ids("⿰日{demo}")
-    assert n.parts[1].c == "demo" and n.parts[1].pos == "右"
-    assert to_ids(n) == "⿰日{demo}"
+    n = parse_shape("⿰日{demo}")
+    assert n.parts[1].c == "demo" and n.parts[1].pos == "M"   # 日 is a radical, so demo is M
+    assert to_shape(n) == "⿰日{demo}"
 
 
 def test_named_composite_with_name_component():
-    n = parse_ids("⿰日{wide}(⿱一二)")
+    n = parse_shape("⿰日{wide}(⿱一二)")
     assert n.parts[1].c == "wide" and n.parts[1].op == "⿱"
-    assert to_ids(n) == "⿰日{wide}(⿱一二)"
+    assert to_shape(n) == "⿰日{wide}(⿱一二)"
 
 
 @pytest.mark.parametrize("bad", ["{", "{}", "⿰日{abc"])
 def test_name_component_errors(bad):
     from zitex import ParseError
     with pytest.raises(ParseError):
-        parse_ids(bad)
+        parse_shape(bad)
 
 
 # ---- resolution ---------------------------------------------------------------

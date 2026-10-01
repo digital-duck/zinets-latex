@@ -1,229 +1,294 @@
-# ZiNets-LaTeX M0 test set: 21 hand-drafted decompositions (DRAFT, needs review).
-# Format: see docs/DEV/claude/spec.md
+# ZiNets-LaTeX test set: 29 hand-drafted decompositions (DRAFT, partly reviewed by the author).
+# Format: see docs/DEV/claude/spec.md and docs/DEV/claude/zi-matrix.md
 #   leaf   : {c: <component>, pos: <position>}
 #   branch : {op: <operator>, pos: <position>, parts: [...]}   (root has no pos)
-# `ids` is the compact form; it must equal the string produced from `tree`.
-# `review:` marks entries whose decomposition I am not sure of.
+# Positions are the Zi-Matrix codes L R M U D Mi Mo LU LD RU RD; M is the center of gravity, and a
+# Kangxi radical is peripheral. `shape` is the compact form; it must equal the string produced from `tree`.
+# `decision:` records a choice made by the author, `review:` an entry whose decomposition is uncertain.
 
 - char: 時
   pinyin: shí
   meaning: time
-  ids: "⿰日寺"
+  shape: "⿰日寺"
   tree:
     op: ⿰
-    parts: [{c: 日, pos: 左}, {c: 寺, pos: 右}]
+    parts: [{c: 日, pos: L}, {c: 寺, pos: M}]
   role: {日: semantic, 寺: phonetic}
 
 - char: 作
   pinyin: zuò
   meaning: to make, to do
-  ids: "⿰亻乍"
+  shape: "⿰亻乍"
   tree:
     op: ⿰
-    parts: [{c: 亻, pos: 左}, {c: 乍, pos: 右}]
+    parts: [{c: 亻, pos: L}, {c: 乍, pos: M}]
   role: {亻: semantic, 乍: phonetic}
   decision: 乍 is a leaf here (an elemental component from the paper) and is placed 右. ⿰ has only 左 and 右, so "mid" is not used.
 
 - char: 悔
   pinyin: huǐ
   meaning: regret
-  ids: "⿰忄每"
+  shape: "⿰忄每"
   tree:
     op: ⿰
-    parts: [{c: 忄, pos: 左}, {c: 每, pos: 右}]
+    parts: [{c: 忄, pos: L}, {c: 每, pos: M}]
   role: {忄: semantic, 每: phonetic}
 
 - char: 寺
   pinyin: sì
   meaning: temple
-  ids: "⿱土寸"
+  shape: "⿱土寸"
   tree:
     op: ⿱
-    parts: [{c: 土, pos: 上}, {c: 寸, pos: 下}]
+    parts: [{c: 土, pos: U}, {c: 寸, pos: D}]
 
 - char: 想
   pinyin: xiǎng
   meaning: to think
-  ids: "⿱⿰木目心"
+  shape: "⿱⿰木目心"
   tree:
     op: ⿱
     parts:
       - op: ⿰
-        pos: 上
-        parts: [{c: 木, pos: 左}, {c: 目, pos: 右}]
-      - {c: 心, pos: 下}
+        pos: M
+        parts: [{c: 木, pos: L}, {c: 目, pos: R}]
+      - {c: 心, pos: D}
 
 - char: 藻
   pinyin: zǎo
   meaning: algae
-  ids: "⿱艹⿰氵喿(⿱品(∴口口口)木)"
+  shape: "⿱艹⿰氵喿(⿱品(∴口口口)木)"
   tree:
     op: ⿱
     parts:
-      - {c: 艹, pos: 上}
+      - {c: 艹, pos: U}
       - op: ⿰
-        pos: 下
+        pos: M
         parts:
-          - {c: 氵, pos: 左}
+          - {c: 氵, pos: L}
           - c: 喿
             op: ⿱
-            pos: 右
+            pos: M
             parts:
               - c: 品
                 op: ∴
-                pos: 上
-                parts: [{c: 口, pos: 上}, {c: 口, pos: 左下}, {c: 口, pos: 右下}]
-              - {c: 木, pos: 下}
+                pos: M
+                parts: [{c: 口, pos: U}, {c: 口, pos: LD}, {c: 口, pos: RD}]
+              - {c: 木, pos: D}
   role: {艹: semantic, 氵: semantic}
   decision: 喿 (U+55BF) is kept as a named node, reversing the earlier skip. 品 is named too, and expanded with ∴.
 
 - char: 品
   pinyin: pǐn
   meaning: goods, article
-  ids: "∴口口口"
+  shape: "∴口口口"
   tree:
     op: ∴
-    parts: [{c: 口, pos: 上}, {c: 口, pos: 左下}, {c: 口, pos: 右下}]
+    parts: [{c: 口, pos: U}, {c: 口, pos: LD}, {c: 口, pos: RD}]
 
 - char: 森
   pinyin: sēn
   meaning: forest
-  ids: "∴木木木"
+  shape: "∴木木木"
   tree:
     op: ∴
-    parts: [{c: 木, pos: 上}, {c: 木, pos: 左下}, {c: 木, pos: 右下}]
+    parts: [{c: 木, pos: U}, {c: 木, pos: LD}, {c: 木, pos: RD}]
 
 - char: 晶
   pinyin: jīng
   meaning: crystal
-  ids: "∴日日日"
+  shape: "∴日日日"
   tree:
     op: ∴
-    parts: [{c: 日, pos: 上}, {c: 日, pos: 左下}, {c: 日, pos: 右下}]
+    parts: [{c: 日, pos: U}, {c: 日, pos: LD}, {c: 日, pos: RD}]
 
 - char: 淼
   pinyin: miǎo
   meaning: vast water
-  ids: "∴水水水"
+  shape: "∴水水水"
   tree:
     op: ∴
-    parts: [{c: 水, pos: 上}, {c: 水, pos: 左下}, {c: 水, pos: 右下}]
+    parts: [{c: 水, pos: U}, {c: 水, pos: LD}, {c: 水, pos: RD}]
 
 - char: 众
   pinyin: zhòng
   meaning: crowd
-  ids: "∴人人人"
+  shape: "∴人人人"
   tree:
     op: ∴
-    parts: [{c: 人, pos: 上}, {c: 人, pos: 左下}, {c: 人, pos: 右下}]
+    parts: [{c: 人, pos: U}, {c: 人, pos: LD}, {c: 人, pos: RD}]
 
 - char: 哭
   pinyin: kū
   meaning: to cry
-  ids: "∵口口犬"
+  shape: "∵口口犬"
   tree:
     op: ∵
-    parts: [{c: 口, pos: 左上}, {c: 口, pos: 右上}, {c: 犬, pos: 下}]
+    parts: [{c: 口, pos: LU}, {c: 口, pos: RU}, {c: 犬, pos: D}]
   note: inverted triangle (∵), two mouths over 犬.
 
 - char: 愛
   pinyin: ài
   meaning: love
-  ids: "⿳爫冖⿻心夊"
+  shape: "⿳爫冖⿻心夊"
   tree:
     op: ⿳
     parts:
-      - {c: 爫, pos: 上}
-      - {c: 冖, pos: 中}
+      - {c: 爫, pos: U}
+      - {c: 冖, pos: M}
       - op: ⿻
-        pos: 下
-        parts: [{c: 心, pos: 中}, {c: 夊, pos: 中}]
+        pos: D
+        parts: [{c: 心, pos: M}, {c: 夊, pos: M}]
   decision: keep the traditional form 愛, whose 心 is semantically meaningful. Bottom is overlay 心 + 夊.
 
 - char: 衍
   pinyin: yǎn
   meaning: to spread
-  ids: "⿲彳氵亍"
+  shape: "⿲彳氵亍"
   tree:
     op: ⿲
-    parts: [{c: 彳, pos: 左}, {c: 氵, pos: 中}, {c: 亍, pos: 右}]
+    parts: [{c: 彳, pos: L}, {c: 氵, pos: M}, {c: 亍, pos: R}]
   note: 行 is split into 彳 and 亍 around the inserted 氵.
 
 - char: 國
   pinyin: guó
   meaning: country
-  ids: "⿴囗或"
+  shape: "⿴囗或"
   tree:
     op: ⿴
-    parts: [{c: 囗, pos: 中外}, {c: 或, pos: 中内}]
+    parts: [{c: 囗, pos: Mo}, {c: 或, pos: M}]
 
 - char: 同
   pinyin: tóng
   meaning: same
-  ids: "⿵冂⿱一口"
+  shape: "⿵冂⿱一口"
   tree:
     op: ⿵
     parts:
-      - {c: 冂, pos: 中外}
+      - {c: 冂, pos: Mo}
       - op: ⿱
-        pos: 中内
-        parts: [{c: 一, pos: 上}, {c: 口, pos: 下}]
+        pos: D
+        parts: [{c: 一, pos: U}, {c: 口, pos: D}]
 
 - char: 区
   pinyin: qū
   meaning: district
-  ids: "⿷匚乂"
+  shape: "⿷匚乂"
   tree:
     op: ⿷
-    parts: [{c: 匚, pos: 中外}, {c: 乂, pos: 中内}]
+    parts: [{c: 匚, pos: Mo}, {c: 乂, pos: R}]
 
 - char: 病
   pinyin: bìng
   meaning: illness
-  ids: "⿸疒丙"
+  shape: "⿸疒丙"
   tree:
     op: ⿸
-    parts: [{c: 疒, pos: 左上}, {c: 丙, pos: 中内}]
+    parts: [{c: 疒, pos: LU}, {c: 丙, pos: M}]
 
 - char: 句
   pinyin: jù
   meaning: sentence
-  ids: "⿹勹口"
+  shape: "⿹勹口"
   tree:
     op: ⿹
-    parts: [{c: 勹, pos: 右上}, {c: 口, pos: 中内}]
-  review: ⿹ (upper-right surround) is the Unicode choice, but 勹 usually sits at upper-left. Check against your DB.
+    parts: [{c: 勹, pos: RU}, {c: 口, pos: M}]
+  decision: "⿹ with RU-M, confirmed by the author. This is the only entry that uses RU-M, which has no case in Figure 5 of the paper."
 
 - char: 近
   pinyin: jìn
   meaning: near
-  ids: "⿺辶斤"
+  shape: "⿺辶斤"
   tree:
     op: ⿺
-    parts: [{c: 辶, pos: 左下}, {c: 斤, pos: 中内}]
+    parts: [{c: 辶, pos: LD}, {c: 斤, pos: M}]
 
 - char: 禺
   pinyin: yù
   meaning: "region (paper: force carrier)"
-  ids: "⿱甲禸"
+  shape: "⿱甲禸"
   tree:
     op: ⿱
-    parts: [{c: 甲, pos: 上}, {c: 禸, pos: 下}]
+    parts: [{c: 甲, pos: M}, {c: 禸, pos: D}]
   note: 甲 (top) + 禸 (bottom), read as interlocking / coupling. Reviewed by the author; the top is 甲, not 日.
 
 - char: 巠
   pinyin: jīng
   meaning: "underground stream (paper: force carrier)"
-  ids: "⿱巛工"
+  shape: "⿱巛工"
   tree:
     op: ⿱
-    parts: [{c: 巛, pos: 上}, {c: 工, pos: 下}]
+    parts: [{c: 巛, pos: U}, {c: 工, pos: D}]
 
 - char: 氢
   pinyin: qīng
   meaning: hydrogen
-  ids: "⿵气巠"
+  shape: "⿵气巠"
   tree:
     op: ⿵
-    parts: [{c: 气, pos: 中外}, {c: 巠, pos: 中内}]
+    parts: [{c: 气, pos: Mo}, {c: 巠, pos: D}]
   decision: 巠 stays one unit. Semantically it carries 轻 (light), so 氢 is the lightest element. Its own entry is above.
+
+- char: 佛
+  pinyin: fó
+  meaning: "Buddha"
+  shape: "⿰亻弗"
+  tree:
+    op: ⿰
+    parts: [{c: 亻, pos: L}, {c: 弗, pos: M}]
+  role: {亻: semantic, 弗: phonetic}
+  decision: the author's example, 亻(L) + 弗(M), preferred to 亻(L) + 弗(R).
+
+- char: 器
+  pinyin: qì
+  meaning: "vessel, utensil"
+  shape: "⁙口口犬口口"
+  tree:
+    op: ⁙
+    parts: [{c: 口, pos: LU}, {c: 口, pos: RU}, {c: 犬, pos: M}, {c: 口, pos: LD}, {c: 口, pos: RD}]
+  decision: four 口 (pits) around 犬 as the trap for a wild dog, one level with five components (LU-RU-M-LD-RD), as in the author's DB. IDS can only nest it.
+
+- char: 双
+  pinyin: shuāng
+  meaning: "pair"
+  shape: "⿰又又"
+  tree:
+    op: ⿰
+    parts: [{c: 又, pos: L}, {c: 又, pos: R}]
+  note: 又 x 2, peers, L-R.
+
+- char: 叒
+  pinyin: ruò
+  meaning: "(rare) a mythical tree"
+  shape: "∴又又又"
+  tree:
+    op: ∴
+    parts: [{c: 又, pos: U}, {c: 又, pos: LD}, {c: 又, pos: RD}]
+  note: 又 x 3 as U-LD-RD.
+
+- char: 叕
+  pinyin: zhuó
+  meaning: "(rare) to connect"
+  shape: "∷又又又又"
+  tree:
+    op: ∷
+    parts: [{c: 又, pos: LU}, {c: 又, pos: RU}, {c: 又, pos: LD}, {c: 又, pos: RD}]
+  note: 又 x 4 as a 2x2 grid, LU-RU-LD-RD.
+
+- char: 虹
+  pinyin: hóng
+  meaning: rainbow
+  shape: "⿰虫工"
+  tree:
+    op: ⿰
+    parts: [{c: 虫, pos: L}, {c: 工, pos: R}]
+  note: "The oracle bone form is a two-headed arch (see docs/DEV/claude/stress-test.md)."
+  readings:
+    - name: author
+      note: "Meaning first. 虫 is a creature of the air and 工 is work or making, so the rainbow is the work of creatures in the sky. Both parts are semantic; sound is secondary."
+      role: {虫: semantic, 工: semantic}
+    - name: dictionary
+      source: "Shuowen, 从虫，工聲 (quoted from memory)"
+      note: "The traditional phono-semantic analysis: 虫 is the meaning part (a snake or creature) and 工 is the sound part."
+      role: {虫: semantic, 工: phonetic}
+  review: "Both 虫 and 工 are Kangxi radicals, so the radical rule gives the peers pattern L-R. The author's DB may label it L-M."

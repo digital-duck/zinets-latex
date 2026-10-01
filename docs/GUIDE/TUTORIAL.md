@@ -21,56 +21,71 @@ A decomposition lives in a YAML file. Create `my.yaml`:
 - char: 好
   pinyin: hǎo
   meaning: good
-  ids: "⿰女子"
+  shape: "⿰女子"
 
 - char: 林
   pinyin: lín
   meaning: woods
-  ids: "⿰木木"
+  shape: "⿰木木"
 
 - char: 森
   pinyin: sēn
   meaning: forest
-  ids: "∴木木木"
+  shape: "∴木木木"
 ```
 
-`ids` is a compact prefix expression. `⿰` puts two parts left and right, so `⿰女子` is 女 on the left of 子. Each operator takes a fixed number of arguments, so no brackets are needed.
+A character has three dimensions, and each has its own field: **shape** (形, how it is built from strokes and components), **sound** (音, `pinyin`) and **meaning** (義, `meaning`). The `shape` field holds the decomposition as a compact prefix expression, written in Unicode's *Ideographic Description Sequence* (IDS) notation, plus some ZiNets operators for flat patterns. `⿰` puts two parts left and right, so `⿰女子` is 女 on the left of 子. Each operator takes a fixed number of arguments, so no brackets are needed.
 
 | Operator | Layout | Example |
 |---|---|---|
 | ⿰ ⿲ | left to right (2 or 3 parts) | 好 = `⿰女子` |
 | ⿱ ⿳ | top to bottom (2 or 3 parts) | 寺 = `⿱土寸` |
-| ⿴ ⿵ ⿶ ⿷ | enclosed (all sides, top, bottom, left) | 國 = `⿴囗或` |
+| ⿴ ⿵ ⿶ ⿷ | enclosed (all sides, from above, from below, from the left) | 國 = `⿴囗或` |
 | ⿸ ⿹ ⿺ | enclosed from a corner | 病 = `⿸疒丙` |
 | ⿻ | overlaid | |
 | **∴** | one on top, two below (ZiNets) | 品 = `∴口口口` |
 | **∵** | two on top, one below (ZiNets) | 哭 = `∵口口犬` |
+| **∷** | a 2×2 grid (ZiNets) | 叕 = `∷又又又又` |
+| **⁙** | four corners and a center (ZiNets) | 器 = `⁙口口犬口口` |
+| **<pattern>** | any other flat pattern (ZiNets) | `<L-RU-RD>又又又` |
 
-The last two are not Unicode IDS. They keep a triangular pattern as one unit, where plain IDS would write `⿱口⿰口口` and lose that.
+The ZiNets operators are not Unicode IDS. They keep a level with three or more parts as one level, where plain IDS has to nest (`⿱口⿰口口`) and invents intermediate parts that have no meaning. For 器, four 口 around 犬, that matters: it is one level with five parts.
 
 Check the file:
 
 ```bash
 zitex check my.yaml
 # my.yaml: 3 entries, 0 warnings
-zitex ids my.yaml
+zitex shape my.yaml
 # 好	⿰女子
 ```
 
 ## 3. Positions
 
-Every component has one of the paper's eleven positions: 上 下 左 右 中 左上 右上 左下 右下 中内 中外. When you write `ids`, zitex fills in the default position for each operator (左 and 右 for `⿰`, and so on).
+Every component sits at one of eleven positions, written with short codes:
 
-If you want to set positions yourself, which is how the SQLite database stores them, write the tree out:
+| Code | Meaning | Code | Meaning |
+|---|---|---|---|
+| L | left (左) | LU | left-up (左上) |
+| R | right (右) | LD | left-down (左下) |
+| U | up (上) | RU | right-up (右上) |
+| D | down (下) | RD | right-down (右下) |
+| M | mid, the center of gravity (中) | Mo | the frame of an enclosure (中外) |
+
+The Chinese names are accepted too, and converted when the file is loaded. The positions of one level, joined by hyphens, form its **pattern**: `L-M`, `U-LD-RD`.
+
+`M` is not only the geometric middle. It is the part that holds the character's center of gravity, which in a two-part character is usually the non-radical part. **A Kangxi radical is peripheral.** So 佛 is 亻 (`L`) + 弗 (`M`), not 亻 (L) + 弗 (R), and 時 is 日 (`L`) + 寺 (`M`). Two radicals, or none, are peers: 双 is 又 (`L`) + 又 (`R`).
+
+When you write `shape`, zitex fills in the positions for you: from the radical rule for `⿰` and `⿱`, and from the operator's fixed pattern for the rest (`⿴` is `Mo-M`, `⿵` is `Mo-D`, `⿸` is `LU-M`). If you want to set them yourself, which is how the SQLite database stores them, write the tree out:
 
 ```yaml
-- char: 時
+- char: 佛
   tree:
     op: ⿰
-    parts: [{c: 日, pos: 左}, {c: 寺, pos: 右}]
+    parts: [{c: 亻, pos: L}, {c: 弗, pos: M}]
 ```
 
-If a position does not fit its operator, `zitex check` prints a warning such as `W2 時: '日' pos '上' differs from ⿰ default '左'`. Warnings never stop a build. Deeper nesting and named composites (a part with its own name, like 喿 inside 藻) are in `tests/data/chars.yaml`.
+`zitex check` warns when a pattern is not allowed for its operator (`W2`), when position regions overlap (`W7`, for example `U-L-R`, which should be `U-LD-RD`), or when a radical is labelled `M` (`W8`). Warnings never stop a build. The full rules are in `docs/DEV/claude/zi-matrix.md`. Deeper nesting and named composites (a part with its own name, like 喿 inside 藻) are in `tests/data/chars.yaml`.
 
 ## 4. See the result
 
@@ -116,6 +131,27 @@ zitex render 好 -f my.yaml -s math -x lex.yaml --show-pos            # subscrip
 ```
 
 `--arrow role` labels the arrow with the phonetic component when the entry has a `role:` mapping (for example `忄 + 每 —(sound: měi)→ 悔`). If a language has no gloss for a character, zitex falls back to English.
+
+### Several readings of one character
+
+Which part of a character carries the meaning and which the sound is an interpretation, and interpretations differ. An entry can keep several, and you choose one when you render:
+
+```yaml
+- char: 虹
+  shape: "⿰虫工"
+  readings:
+    - name: author
+      role: {虫: semantic, 工: semantic}
+    - name: dictionary
+      role: {虫: semantic, 工: phonetic}
+```
+
+```bash
+zitex render 虹 -f my.yaml -s math -x lex.yaml --arrow role                       # the first reading: 虫 + 工 = 虹
+zitex render 虹 -f my.yaml -s math -x lex.yaml --arrow role --reading dictionary  # 虫 + 工 —(sound: gōng)→ 虹
+```
+
+The first reading is the default. A reading changes the colours of the pieces and the label on the arrow, and nothing else. In a paper, write `\zimath[reading=dictionary]{虹}`, or `\zitexsetreading{dictionary}` to change the default for the rest of the document.
 
 ## 5. Use it in a paper
 
@@ -176,7 +212,7 @@ components:
   甲: {alias: 日}                          # draw a different character instead
 ```
 
-Write such a component by name in `ids`: `⿰日{qi-top}`. Then pass `--fonts fonts.yaml` to `build` or `render`. A glyph that nothing can draw is shown as a boxed `U+20009` (or the name) and listed in the build output. `zitex fonts --strict` exits with status 1 if any component is missing. SVG glyphs are converted with Inkscape into `zitex-out/glyphs/`.
+Write such a component by name in `shape`: `⿰日{qi-top}`. Then pass `--fonts fonts.yaml` to `build` or `render`. A glyph that nothing can draw is shown as a boxed `U+20009` (or the name) and listed in the build output. `zitex fonts --strict` exits with status 1 if any component is missing. SVG glyphs are converted with Inkscape into `zitex-out/glyphs/`.
 
 ## 7. From Python
 
@@ -207,5 +243,5 @@ print(render_snippet(hao, "formula", lex=lex))
 ## Where next
 
 - `docs/DEV/claude/spec.md`: the exact grammar, operator table and position rules
-- `tests/data/chars.yaml`: 23 reviewed characters, including deep nesting and named composites
+- `tests/data/chars.yaml`: 29 sample characters, including deep nesting and named composites
 - the paper that defines the 422 elemental characters and the eleven positions: see the README

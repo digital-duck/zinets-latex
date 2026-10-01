@@ -1,4 +1,4 @@
-"""Command line: ``zitex build|render|check|ids`` (or ``python -m zitex ...``)."""
+"""Command line: ``zitex build|render|check|shape`` (or ``python -m zitex ...``)."""
 from __future__ import annotations
 
 import sys
@@ -11,7 +11,7 @@ from .fonts import FontConfig, coverage_report
 from .lexicon import load_lexicon
 from .loader import load_yaml
 from .render import STYLES, render
-from .tree import ParseError, to_ids
+from .tree import ParseError, to_shape
 from .validate import validate_entry
 
 FILE = click.Path(exists=True, dir_okay=False)
@@ -59,10 +59,11 @@ def check(files: tuple[str, ...]) -> None:
 
 @main.command()
 @click.argument("file", type=FILE)
-def ids(file: str) -> None:
-    """Print the compact ids form of every entry."""
+def shape(file: str) -> None:
+    """Print the compact shape string of every entry."""
     for e in _load(file):
-        click.echo(f"{e.char}\t{to_ids(e.tree)}")
+        click.echo(f"{e.char}\t{to_shape(e.tree)}")
+
 
 
 @main.command()
@@ -76,8 +77,9 @@ def ids(file: str) -> None:
 @click.option("-x", "--lexicon", "lexicons", multiple=True, type=FILE, help="lexicon YAML (pinyin, glosses), repeatable")
 @click.option("--font", default=None, help="CJK font for PDF output (default: primary of --fonts, else Noto Serif CJK SC)")
 @click.option("--fonts", "fonts_file", type=FILE, help="fonts.yaml: primary font, fallbacks, per-component overrides")
+@click.option("--reading", default=None, help="named reading of the roles (not with --scan: the document chooses)")
 @math_options
-def build(data, out, emit, styles, chars, scan_file, langs, lexicons, font, fonts_file, collapse, arrow, show_pos, result) -> None:
+def build(data, out, emit, styles, chars, scan_file, langs, lexicons, font, fonts_file, reading, collapse, arrow, show_pos, result) -> None:
     """Write snippets (.tex) and/or figures (.pdf) for characters in DATA."""
     entries = _load(data)
     lex = load_lexicon(entries, *lexicons)
@@ -87,11 +89,11 @@ def build(data, out, emit, styles, chars, scan_file, langs, lexicons, font, font
     default_lang = (langs or ("en",))[0]
     jobs = None
     if scan_file:
-        jobs = {(c, s, l or default_lang) for c, s, l in scan_tex(scan_file)}
+        jobs = {(c, s, l or default_lang, rd) for c, s, l, rd in scan_tex(scan_file)}
         if not jobs:
             click.echo(f"{scan_file}: no \\zi calls found")
     res = build_snippets(entries, out, jobs, chars=chars, styles=styles, langs=list(langs) or ["en"], emit=emit,
-                         lex=lex, font=font, fonts=FontConfig.load(fonts_file) if fonts_file else None, math_opts={"collapse": collapse, "arrow": arrow, "show_pos": show_pos, "result": result})
+                         lex=lex, font=font, fonts=FontConfig.load(fonts_file) if fonts_file else None, reading=reading, math_opts={"collapse": collapse, "arrow": arrow, "show_pos": show_pos, "result": result})
     click.echo(f"{out}: {len(res.tex)} .tex, {len(res.pdf)} .pdf")
     if res.missing:
         click.echo(f"not in {data}: {' '.join(res.missing)}", err=True)
@@ -132,8 +134,9 @@ def fonts(data, fonts_file, strict) -> None:
 @click.option("-l", "--lang", default="en", show_default=True)
 @click.option("-x", "--lexicon", "lexicons", multiple=True, type=FILE)
 @click.option("--fonts", "fonts_file", type=FILE, help="fonts.yaml")
+@click.option("--reading", default=None, help="named reading of the roles (default: the entry's first)")
 @math_options
-def render_cmd(char, data, style, lang, lexicons, fonts_file, collapse, arrow, show_pos, result) -> None:
+def render_cmd(char, data, style, lang, lexicons, fonts_file, reading, collapse, arrow, show_pos, result) -> None:
     """Print the LaTeX snippet for one character to stdout (no files)."""
     entries = _load(data)
     e = next((x for x in entries if x.char == char), None)
@@ -145,7 +148,7 @@ def render_cmd(char, data, style, lang, lexicons, fonts_file, collapse, arrow, s
         kw.update(lang=lang, lex=load_lexicon(entries, *lexicons))
     if style == "math":
         kw.update(collapse=collapse, arrow=arrow, show_pos=show_pos, result=result)
-    click.echo(render(e, style, fonts=FontConfig.load(fonts_file) if fonts_file else None, **kw))
+    click.echo(render(e, style, fonts=FontConfig.load(fonts_file) if fonts_file else None, reading=reading, **kw))
 
 
 main.add_command(render_cmd, name="render")
