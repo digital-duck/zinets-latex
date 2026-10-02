@@ -23,7 +23,12 @@ It is for learning and for fun: teachers making worksheets, students exploring w
 
 It began as a chat with Google Gemini, and Claude Code from Anthropic helped build, test and write it up. The character decompositions, the design and the checking of results are mine.
 
-Try it: https://github.com/digital-duck/zinets-latex
+Try it:
+pip install zitex
+https://pypi.org/project/zitex/
+Code: https://github.com/digital-duck/zinets-latex
+
+(It needs XeLaTeX and a decomposition database, and the README shows how to start from a checkout.)
 
 What character would you like to see taken apart?
 
