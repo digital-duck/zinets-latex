@@ -298,7 +298,24 @@ def flat_rects(labels: list[str]) -> list[tuple[float, float, float, float]]:
                 if len(order) == 1 and labels[i] in ("U", "D") and widest > 1:
                     w, x0 = 0.5, 0.25
                 rects[i] = (x0, 1 - (ri + 1) / len(groups), w, 1 / len(groups))
-    return [r if r else (0.0, 0.0, 1.0, 1.0) for r in rects]
+    if any(r is None for r in rects):
+        return _grid_rects(labels)       # a label the column or row groups above do not cover (U with L or R, ...)
+    return rects
+
+
+# the nine places of a 3 x 3 grid, as (column, row) with row 0 at the top
+_CELL = {"LU": (0, 0), "U": (1, 0), "RU": (2, 0), "L": (0, 1), "M": (1, 1), "R": (2, 1), "LD": (0, 2), "D": (1, 2), "RD": (2, 2)}
+
+
+def _grid_rects(labels: list[str]) -> list[tuple[float, float, float, float]]:
+    """Rectangles for a flat pattern that mixes rows and columns, such as U-RU-M-R-RD.
+
+    Each label goes to its place in a 3 x 3 grid, then the columns and rows nobody uses are dropped, so every part
+    gets its own cell and none is hidden. A cell nobody uses stays empty."""
+    cells = [_CELL.get(l, (1, 1)) for l in labels]
+    cols = sorted({c for c, _ in cells})
+    rows = sorted({r for _, r in cells})
+    return [(cols.index(c) / len(cols), 1 - (rows.index(r) + 1) / len(rows), 1 / len(cols), 1 / len(rows)) for c, r in cells]
 
 
 def _op_text(op: str) -> str:

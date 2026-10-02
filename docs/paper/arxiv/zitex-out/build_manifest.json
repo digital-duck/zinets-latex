@@ -1,0 +1,140 @@
+{
+ "zitex_version": "0.1.0",
+ "snippets": [
+  {
+   "char": "佛",
+   "codepoint": "U+4F5B",
+   "style": "formula",
+   "lang": "en",
+   "reading": null,
+   "file": "u4f5b-formula-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "佛",
+   "codepoint": "U+4F5B",
+   "style": "math",
+   "lang": "en",
+   "reading": null,
+   "file": "u4f5b-math-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "佛",
+   "codepoint": "U+4F5B",
+   "style": "matrix",
+   "lang": null,
+   "reading": null,
+   "file": "u4f5b-matrix.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "佛",
+   "codepoint": "U+4F5B",
+   "style": "tree",
+   "lang": null,
+   "reading": null,
+   "file": "u4f5b-tree.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "器",
+   "codepoint": "U+5668",
+   "style": "formula",
+   "lang": "en",
+   "reading": null,
+   "file": "u5668-formula-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "器",
+   "codepoint": "U+5668",
+   "style": "math",
+   "lang": "en",
+   "reading": null,
+   "file": "u5668-math-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "器",
+   "codepoint": "U+5668",
+   "style": "matrix",
+   "lang": null,
+   "reading": null,
+   "file": "u5668-matrix.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "器",
+   "codepoint": "U+5668",
+   "style": "tree",
+   "lang": null,
+   "reading": null,
+   "file": "u5668-tree.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "藻",
+   "codepoint": "U+85FB",
+   "style": "formula",
+   "lang": "en",
+   "reading": null,
+   "file": "u85fb-formula-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "藻",
+   "codepoint": "U+85FB",
+   "style": "math",
+   "lang": "en",
+   "reading": null,
+   "file": "u85fb-math-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "藻",
+   "codepoint": "U+85FB",
+   "style": "matrix",
+   "lang": null,
+   "reading": null,
+   "file": "u85fb-matrix.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "藻",
+   "codepoint": "U+85FB",
+   "style": "tree",
+   "lang": null,
+   "reading": null,
+   "file": "u85fb-tree.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  }
+ ],
+ "characters_not_in_data": [],
+ "components_without_glyph": [],
+ "pdf_failed": []
+}

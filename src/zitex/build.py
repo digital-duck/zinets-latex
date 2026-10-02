@@ -1,6 +1,7 @@
 """Build snippets (and PDFs) for a set of characters; scan a .tex file for what it needs."""
 from __future__ import annotations
 
+import json
 import re
 import shutil
 import subprocess
@@ -17,11 +18,14 @@ LANG_STYLES = ("math", "formula")  # styles whose output depends on the language
 
 
 def snippet_name(char: str, style: str, lang: str = "en", reading: str | None = None) -> str:
-    """File stem used for a snippet: ``藻-tree``, ``藻-math-fr``, ``虹-math-en@author``.
+    """File stem used for a snippet: ``u85fb-tree`` (藻 is U+85FB), ``u85fb-math-fr``, ``u8679-math-en@author``.
 
-    The language is part of the name only for the styles that print glosses, and ``@reading`` only when a
-    named reading was asked for. zitex.sty uses the same rule."""
-    stem = f"{char}-{style}-{lang}" if style in LANG_STYLES else f"{char}-{style}"
+    The character is named by its code point in lower-case hex, so every file name is plain ASCII and works on any
+    file system, in any archive, and with any TeX engine. ``build_manifest.json`` maps the names back to the
+    characters. The language is part of the name only for the styles that print glosses, and ``@reading`` only when
+    a named reading was asked for. zitex.sty uses the same rule (``\\zitex@name``)."""
+    cp = f"u{ord(char):x}"
+    stem = f"{cp}-{style}-{lang}" if style in LANG_STYLES else f"{cp}-{style}"
     return f"{stem}@{reading}" if reading else stem
 
 
@@ -66,6 +70,7 @@ class BuildResult:
     missing: list[str] = field(default_factory=list)   # characters not found in the data
     failed: list[str] = field(default_factory=list)    # PDF builds that did not compile
     glyph_missing: list[str] = field(default_factory=list)  # components no font or image could draw
+    manifest: list[dict] = field(default_factory=list)      # one record per snippet, see write_manifest()
 
 
 def compile_pdf(snippet: str, dest: Path, font: str = "Noto Serif CJK SC", zitexpath: str | None = None) -> bool:
@@ -146,10 +151,14 @@ def build(entries: list[Entry], outdir: str | Path, jobs: set[tuple[str, str, st
             kw["lang"], kw["lex"] = lang, lex
         stem = snippet_name(ch, style, lang, rd)
         snippet, resolver = render_with(e, style, fonts, reading=rd, **kw)
+        record = {"char": ch, "codepoint": f"U+{ord(ch):04X}", "style": style, "lang": lang if style in LANG_STYLES else None,
+                  "reading": rd, "file": f"{stem}.pdf" if emit == "pdf" else f"{stem}.tex", "fallback_fonts": [], "images": [], "no_glyph": []}
         if resolver:
-            for ch in resolver.missing:
-                if ch not in res.glyph_missing:
-                    res.glyph_missing.append(ch)
+            record.update(fallback_fonts=sorted(resolver.fonts), images=sorted(Path(s).name for s in resolver.svgs),
+                          no_glyph=sorted(resolver.missing))
+            for m in resolver.missing:
+                if m not in res.glyph_missing:
+                    res.glyph_missing.append(m)
             for svg in resolver.svgs - converted:
                 src = Path(svg) if Path(svg).is_absolute() else fonts.base / svg
                 svg_to_pdf(src, outdir / "glyphs" / f"{src.stem}.pdf")
@@ -158,7 +167,24 @@ def build(entries: list[Entry], outdir: str | Path, jobs: set[tuple[str, str, st
             p = outdir / f"{stem}.tex"
             p.write_text(snippet + "\n", encoding="utf-8")
             res.tex.append(p)
+        res.manifest.append(record)
         if emit in ("pdf", "both"):
             p = outdir / f"{stem}.pdf"
             (res.pdf if compile_pdf(snippet, p, font, str(outdir.resolve())) else res.failed).append(p if p.exists() else Path(stem))
+    write_manifest(res, outdir)
     return res
+
+
+def write_manifest(res: BuildResult, outdir: str | Path) -> Path:
+    """``build_manifest.json``: what this build wrote, for audits and for finding a snippet by its character.
+
+    One record per snippet (the character, its code point, style, language, reading, file name, the fallback fonts
+    and images it uses, and any component nothing could draw), then the characters that were not in the data and
+    the components without a glyph, over the whole build. It describes the latest build in the folder: a later
+    build overwrites it."""
+    from . import __version__
+    doc = {"zitex_version": __version__, "snippets": res.manifest, "characters_not_in_data": res.missing,
+           "components_without_glyph": res.glyph_missing, "pdf_failed": [p.name for p in res.failed]}
+    path = Path(outdir) / "build_manifest.json"
+    path.write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    return path

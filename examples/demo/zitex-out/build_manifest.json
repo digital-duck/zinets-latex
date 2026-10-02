@@ -1,0 +1,118 @@
+{
+ "zitex_version": "0.1.0",
+ "snippets": [
+  {
+   "char": "哭",
+   "codepoint": "U+54ED",
+   "style": "matrix",
+   "lang": null,
+   "reading": null,
+   "file": "u54ed-matrix.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "國",
+   "codepoint": "U+570B",
+   "style": "matrix",
+   "lang": null,
+   "reading": null,
+   "file": "u570b-matrix.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "悔",
+   "codepoint": "U+6094",
+   "style": "math",
+   "lang": "fr",
+   "reading": null,
+   "file": "u6094-math-fr.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "愛",
+   "codepoint": "U+611B",
+   "style": "tree",
+   "lang": null,
+   "reading": null,
+   "file": "u611b-tree.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "時",
+   "codepoint": "U+6642",
+   "style": "math",
+   "lang": "en",
+   "reading": null,
+   "file": "u6642-math-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "森",
+   "codepoint": "U+68EE",
+   "style": "math",
+   "lang": "en",
+   "reading": null,
+   "file": "u68ee-math-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "氢",
+   "codepoint": "U+6C22",
+   "style": "formula",
+   "lang": "en",
+   "reading": null,
+   "file": "u6c22-formula-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "藻",
+   "codepoint": "U+85FB",
+   "style": "math",
+   "lang": "en",
+   "reading": null,
+   "file": "u85fb-math-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "藻",
+   "codepoint": "U+85FB",
+   "style": "matrix",
+   "lang": null,
+   "reading": null,
+   "file": "u85fb-matrix.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "藻",
+   "codepoint": "U+85FB",
+   "style": "tree",
+   "lang": null,
+   "reading": null,
+   "file": "u85fb-tree.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  }
+ ],
+ "characters_not_in_data": [],
+ "components_without_glyph": [],
+ "pdf_failed": []
+}

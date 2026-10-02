@@ -118,7 +118,7 @@ zitex render -i chars.yaml -c 好 -s math -x lexicon.yaml -o -
 
 That is plain LaTeX math. In a document it shows pinyin above each piece, its gloss below, and the result as an equation, like a chemical reaction. The same string works in MathJax or KaTeX on a web page.
 
-`render` reads the file you name with `-i` (`--input`), or `./chars.yaml` when you leave `-i` out. By default it renders **every character** in the file, in every style, as `<char>-<style>.tex` and `.pdf`, into a `zitex-out/` folder (the folder `zitex.sty` reads). Choose characters with `--char` (`-c`) and say where the output goes with `-o`:
+`render` reads the file you name with `-i` (`--input`), or `./chars.yaml` when you leave `-i` out. By default it renders **every character** in the file, in every style, as `u<hex>-<style>.tex` and `.pdf` (`<hex>` is the character's code point, so 藻 is `u85fb-tree.tex`; `build_manifest.json` in the same folder maps names back to characters), into a `zitex-out/` folder (the folder `zitex.sty` reads). Choose characters with `--char` (`-c`) and say where the output goes with `-o`:
 
 | Command | Result |
 |---|---|
@@ -210,7 +210,7 @@ zitex render -i chars.yaml --scan main.tex -x lexicon.yaml -l en -l fr --collaps
 xelatex main.tex
 ```
 
-`--scan` reads `main.tex` and writes just those snippets (`.tex` only, since LaTeX typesets them) into `zitex-out/` (here `好-math-en.tex`, `森-math-fr.tex` and `森-matrix.tex`). XeLaTeX must be able to find `zitex.sty`. There are three ways, and the first is the simplest:
+`--scan` reads `main.tex` and writes just those snippets (`.tex` only, since LaTeX typesets them) into `zitex-out/` (here `u597d-math-en.tex`, `u68ee-math-fr.tex` and `u68ee-matrix.tex`). XeLaTeX must be able to find `zitex.sty`. There are three ways, and the first is the simplest:
 
 - **Put it next to your document.** `zitex setup -o .` copies `zitex.sty` into the folder (and writes a `fonts.yaml` for your computer, see section 8). The folder is then self-contained, and you can zip it or upload it to Overleaf.
 - **Install it once for every document.** `zitex install-sty` copies it into your personal TeX folder (`TEXMFHOME`, usually `~/texmf`), and plain `xelatex main.tex` works from then on. Run it again after upgrading zitex. `zitex install-sty --dir DIR` installs into another TeX tree.

@@ -72,14 +72,17 @@ The second line matters. The ZiNets operators `∴` `∵` `∷` are math symbols
 ### 3.3.1 The file name is the contract
 
 ```latex
+\ExplSyntaxOn
+\newcommand\zitex@cp[1]{u\int_to_hex:n{`#1}}      % 藻 (U+85FB) becomes u85fb
+\ExplSyntaxOff
 \newcommand\zitex@name[1]{%
-  #1-\zitex@style
+  \zitex@cp{#1}-\zitex@style
   \ifx\zitex@style\zitex@math -\zitex@lang\fi
   \ifx\zitex@style\zitex@formula -\zitex@lang\fi
   \ifx\zitex@reading\zitex@empty\else @\zitex@reading\fi}
 ```
 
-`\zimath[lang=fr, reading=dictionary]{虹}` becomes `zitex-out/虹-math-fr@dictionary.tex`. Python writes the files under the same rule (`snippet_name()` in `src/zitex/build.py`), and **the two must stay in sync**. That is the only interface between the halves. The language is part of the name only for the styles that print glosses (`math`, `formula`), and `@reading` only when a reading was asked for.
+`\zimath[lang=fr, reading=dictionary]{虹}` becomes `zitex-out/u8679-math-fr@dictionary.tex` (虹 is U+8679). The character is named by its code point in lower-case hex, so every file name is plain ASCII and safe on any file system or archive. Each build also writes `zitex-out/build_manifest.json`, which lists every snippet with its character, code point, style, language, reading and file name, and the fallback fonts, images and undrawable components it uses. Python writes the files under the same rule (`snippet_name()` in `src/zitex/build.py`), and **the two must stay in sync**. That is the only interface between the halves. The language is part of the name only for the styles that print glosses (`math`, `formula`), and `@reading` only when a reading was asked for.
 
 ### 3.4 Includes the snippet, or says it is missing
 

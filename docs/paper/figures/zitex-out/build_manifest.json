@@ -1,0 +1,228 @@
+{
+ "zitex_version": "0.1.0",
+ "snippets": [
+  {
+   "char": "哭",
+   "codepoint": "U+54ED",
+   "style": "formula",
+   "lang": "en",
+   "reading": null,
+   "file": "u54ed-formula-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "哭",
+   "codepoint": "U+54ED",
+   "style": "math",
+   "lang": "en",
+   "reading": null,
+   "file": "u54ed-math-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "哭",
+   "codepoint": "U+54ED",
+   "style": "matrix",
+   "lang": null,
+   "reading": null,
+   "file": "u54ed-matrix.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "哭",
+   "codepoint": "U+54ED",
+   "style": "tree",
+   "lang": null,
+   "reading": null,
+   "file": "u54ed-tree.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "器",
+   "codepoint": "U+5668",
+   "style": "formula",
+   "lang": "en",
+   "reading": null,
+   "file": "u5668-formula-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "器",
+   "codepoint": "U+5668",
+   "style": "math",
+   "lang": "en",
+   "reading": null,
+   "file": "u5668-math-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "器",
+   "codepoint": "U+5668",
+   "style": "matrix",
+   "lang": null,
+   "reading": null,
+   "file": "u5668-matrix.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "器",
+   "codepoint": "U+5668",
+   "style": "tree",
+   "lang": null,
+   "reading": null,
+   "file": "u5668-tree.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "嚣",
+   "codepoint": "U+56A3",
+   "style": "formula",
+   "lang": "en",
+   "reading": null,
+   "file": "u56a3-formula-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "嚣",
+   "codepoint": "U+56A3",
+   "style": "math",
+   "lang": "en",
+   "reading": null,
+   "file": "u56a3-math-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "嚣",
+   "codepoint": "U+56A3",
+   "style": "matrix",
+   "lang": null,
+   "reading": null,
+   "file": "u56a3-matrix.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "嚣",
+   "codepoint": "U+56A3",
+   "style": "tree",
+   "lang": null,
+   "reading": null,
+   "file": "u56a3-tree.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "武",
+   "codepoint": "U+6B66",
+   "style": "formula",
+   "lang": "en",
+   "reading": null,
+   "file": "u6b66-formula-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "武",
+   "codepoint": "U+6B66",
+   "style": "math",
+   "lang": "en",
+   "reading": null,
+   "file": "u6b66-math-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "武",
+   "codepoint": "U+6B66",
+   "style": "matrix",
+   "lang": null,
+   "reading": null,
+   "file": "u6b66-matrix.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "武",
+   "codepoint": "U+6B66",
+   "style": "tree",
+   "lang": null,
+   "reading": null,
+   "file": "u6b66-tree.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "犬",
+   "codepoint": "U+72AC",
+   "style": "formula",
+   "lang": "en",
+   "reading": null,
+   "file": "u72ac-formula-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "犬",
+   "codepoint": "U+72AC",
+   "style": "math",
+   "lang": "en",
+   "reading": null,
+   "file": "u72ac-math-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "犬",
+   "codepoint": "U+72AC",
+   "style": "matrix",
+   "lang": null,
+   "reading": null,
+   "file": "u72ac-matrix.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  },
+  {
+   "char": "犬",
+   "codepoint": "U+72AC",
+   "style": "tree",
+   "lang": null,
+   "reading": null,
+   "file": "u72ac-tree.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": []
+  }
+ ],
+ "characters_not_in_data": [],
+ "components_without_glyph": [],
+ "pdf_failed": []
+}

@@ -100,9 +100,9 @@ zitex render -i chars.yaml --scan main.tex -x lexicon.yaml
 xelatex main.tex
 ```
 
-A browser app does the same, and lets you review and correct decompositions: `pip install -e ".[ui]"`, then `streamlit run src/ui/streamlit/app.py` (see [`src/ui/streamlit/README.md`](src/ui/streamlit/README.md)).
+A browser app does the same, and lets you review and correct decompositions: `pip install -e ".[ui]"`, then `streamlit run src/ui/streamlit/app.py` (see [`src/ui/streamlit/README.md`](https://github.com/digital-duck/zinets-latex/blob/main/src/ui/streamlit/README.md)).
 
-The step-by-step guide is in [`docs/GUIDE/TUTORIAL.md`](docs/GUIDE/TUTORIAL.md).
+The step-by-step guide is in [`docs/GUIDE/TUTORIAL.md`](https://github.com/digital-duck/zinets-latex/blob/main/docs/GUIDE/TUTORIAL.md).
 
 ## From Python
 
@@ -124,10 +124,10 @@ The API will change a little as [conceptbook-app](https://github.com/digital-duc
 
 ## Documentation
 
-- [`docs/GUIDE/TUTORIAL.md`](docs/GUIDE/TUTORIAL.md): tutorial
-- [`docs/GUIDE/HOW-IT-WORKS.md`](docs/GUIDE/HOW-IT-WORKS.md): how LaTeX is extended to make zitex work
-- [`docs/DEV/claude/spec.md`](docs/DEV/claude/spec.md): grammar, operators and position rules
-- [`docs/DEV/claude/readme.md`](docs/DEV/claude/readme.md): development plan and milestones
+- [`docs/GUIDE/TUTORIAL.md`](https://github.com/digital-duck/zinets-latex/blob/main/docs/GUIDE/TUTORIAL.md): tutorial
+- [`docs/GUIDE/HOW-IT-WORKS.md`](https://github.com/digital-duck/zinets-latex/blob/main/docs/GUIDE/HOW-IT-WORKS.md): how LaTeX is extended to make zitex work
+- [`docs/DEV/claude/spec.md`](https://github.com/digital-duck/zinets-latex/blob/main/docs/DEV/claude/spec.md): grammar, operators and position rules
+- [`docs/DEV/claude/readme.md`](https://github.com/digital-duck/zinets-latex/blob/main/docs/DEV/claude/readme.md): development plan and milestones
 - [`CLAUDE.md`](CLAUDE.md): architecture notes for working on the code
 
 ## Citing
@@ -149,4 +149,4 @@ If you use zitex in your work, please cite the paper above:
 
 The code is MIT. See [`LICENSE`](LICENSE).
 
-The data in [`db/`](db/) is derived from the ZiNets database and uses definitions from **[CC-CEDICT](https://cc-cedict.org)**, which is licensed **CC BY-SA 4.0**. That data is shared under the same licence, with the changes described in [`db/NOTICE.md`](db/NOTICE.md). The attribution is also stored inside the database file and written at the top of every YAML file that `zitex extract` produces.
+The data in [`db/`](https://github.com/digital-duck/zinets-latex/blob/main/db/) is derived from the ZiNets database and uses definitions from **[CC-CEDICT](https://cc-cedict.org)**, which is licensed **CC BY-SA 4.0**. That data is shared under the same licence, with the changes described in [`db/NOTICE.md`](https://github.com/digital-duck/zinets-latex/blob/main/db/NOTICE.md). The attribution is also stored inside the database file and written at the top of every YAML file that `zitex extract` produces.

@@ -262,12 +262,12 @@ Tick them off here. The worklists are in `db/` (`zitex-quarantine*.csv`) and in 
 
 - The Streamlit app **in a browser**. The pages run headless and the server starts (health check and home page return OK), but nobody has looked at the layout.
 - The `math` output in **MathJax or KaTeX**. It uses only commands both support, but it was only compiled with XeLaTeX.
-- **Windows**: UTF-8 snippet file names such as `藻-tree.tex`. Linux and macOS work.
+- **Windows**: snippet file names are now ASCII code points (`u85fb-tree.tex`), which removes the UTF-8 file name risk, but nothing has been run on Windows. Linux works.
 - **LuaLaTeX**: only XeLaTeX is supported.
 - The `qi-top` example in tutorial section 6 is a placeholder.
 - One full test run showed 5 failures that could not be explained or reproduced (several later runs were green).
 
-## 16. Resolve decomposition DQ issue - TODO
+## 16. TODO: Resolve decomposition DQ issue
 
 The design is settled, and what is left is data quality. This section is the working loop for fixing it. The four worklists below were exported on 2026-10-02 from `db/zitex.sqlite3`, and they match the numbers at the top of the review page.
 

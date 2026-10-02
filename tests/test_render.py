@@ -247,3 +247,16 @@ def test_reading_needs_a_name():
     from zitex import ParseError
     with pytest.raises(ParseError):
         entry_from_dict({"char": "虹", "shape": "⿰虫工", "readings": [{"role": {}}]})
+
+
+def test_flat_rects_give_every_part_its_own_cell_when_rows_and_columns_mix():
+    """Regression: in U-RU-M-R-RD (寝) the U part had no row or column group and was left at full size, behind the others."""
+    from zitex.render import flat_rects
+    for labels in (["U", "RU", "M", "R", "RD"], ["U", "L", "R"], ["D", "LU", "R"]):
+        rects = flat_rects(labels)
+        assert len(set(rects)) == len(labels), labels                            # no two parts share a rectangle
+        assert not any(w == 1.0 and h == 1.0 for _, _, w, h in rects), labels   # and none is left at full size
+        for i, (x, y, w, h) in enumerate(rects):                                 # and they do not overlap
+            for x2, y2, w2, h2 in rects[i + 1:]:
+                assert x + w <= x2 + 1e-9 or x2 + w2 <= x + 1e-9 or y + h <= y2 + 1e-9 or y2 + h2 <= y + 1e-9, labels
+    assert flat_rects(["L", "R"]) == [(0.0, 0.0, 0.5, 1.0), (0.5, 0.0, 0.5, 1.0)]    # the usual patterns are unchanged

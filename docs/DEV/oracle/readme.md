@@ -37,8 +37,11 @@ This directory's CSV lists candidate sources, each tagged with whether it covers
 | 《甲骨文字詁林》 (print) | both, with decipherment discussion | yes, glyph tables |
 | 《甲骨文字編》 (print) | both | yes, glyph tables |
 | 《新甲骨文編》 (print) | mainly deciphered | yes, glyph tables |
+| 人人认得甲骨文 (太和山居, WeChat) | deciphered | yes, per character |
 
 Digital, image-bearing sources with undeciphered material (HUST-OBC, 殷契文淵, IHP) matter most for the decipherment goal, since the deciphered-only sources can only ever confirm layer 1 for characters already in `zx_char`.
+
+**人人认得甲骨文** (local copy: `wechat-content.md`) is worth calling out separately: it is hand-crafted educational content — a personal WeChat series, not a bulk corpus or dataset — but unlike every other row above, each entry already pairs an oracle glyph image with a prose structural gloss (e.g. 家 = 宀 + 豕) and a catalog citation (合 / 马典 numbers). That is closer to what this project's layer 1 + layer 2 correlation actually needs than any bulk image dataset; it just doesn't scale past the ~900 characters the author chose to cover. Good for spot-checking `zx_char`/`zx_part` against an independent source, not for the undeciphered-sign side of the goal. Zinets being a research project, this kind of hand-curated secondary source is fine to lean on for validation, same caveats as any other web source: confirm reuse license before using content beyond personal review.
 
 ## Sketch of the data model
 
@@ -66,6 +69,8 @@ Searched for prior work combining computer vision / LVLMs with structural or sem
 
 Also surfaced but not yet reviewed in depth: *Interpretable Oracle Bone Script Decipherment through Radical and Pictographic Analysis with LVLMs* ([arXiv:2508.10113](https://arxiv.org/abs/2508.10113)), *OracleFusion* ([arXiv:2506.21101](https://arxiv.org/abs/2506.21101)), *Specializing Large Models for Oracle Bone Script Interpretation via Component-Grounded Multimodal Knowledge Augmentation* ([arXiv:2604.06711](https://arxiv.org/abs/2604.06711)), *OracleAnalyser* ([arXiv:2606.25906](https://arxiv.org/abs/2606.25906)).
 
+Local PDFs of the 6 core papers (HUST-OBC, OBSD, P3, RZCR, OracleSage, AlphaOracle) are kept in `literatures/` for offline reading.
+
 **Finding**: no prior work found pairs an *independently pre-existing, full-lexicon* semantic/decomposition network with oracle glyph embeddings as a decipherment prior. Every semantic/graph component in the literature (OracleSage's GSRF, RZCR's CKG) is built *from* oracle-era annotation effort itself, not imported from a separately-built network spanning the whole modern lexicon. This project's angle — reusing the existing ZiNets decomposition DB as a prior for oracle decipherment — looks genuinely distinct, though OracleSage's graph schema should be read closely before claiming novelty anywhere public.
 
 **Suggestions arising from this search:**
@@ -87,6 +92,19 @@ Also surfaced but not yet reviewed in depth: *Interpretable Oracle Bone Script D
    - **Suggested starting point:** run the held-out validation from the related-work suggestions (above) with DINOv2 or Chinese-CLIP first — cheapest way to test whether pairing the semantic-network embedding with an image embedding actually helps — before fine-tuning anything larger.
    - Whichever is picked, image resolution/format requirements and licensing exposure (local vs. uploading to a third party) still need deciding.
 2. **Licensing per source.** The CSV already flags "check license" for several rows (Wikimedia especially); unlike the CC-CEDICT text attribution already resolved for glosses (`db-integration.md` §5.7), image reuse needs a per-source confirmation before anything is redistributed in this repo.
+   - **Checked for the 6 core papers (2026-10-03):**
+
+     | Source | License | Note |
+     |---|---|---|
+     | HUST-OBC | CC BY-NC 4.0 | Non-commercial research reuse OK, attribution required. Fine for this project. 3 image folders; exclude/quarantine the "GuoXueDaShi" one, flagged unreliable by the authors themselves. |
+     | AlphaOracle | Apache-2.0 (code only) | Permissive for code/framework, but the paper states it does **not** redistribute original rubbing images/scans for copyrighted sources — only derived resources (indices, metadata), citing fair use under PRC copyright law. The 73,883-rubbing corpus itself is not reusable as images from this release. |
+     | OBSD | none declared | `github.com/guanhaisu/OBSD` has no LICENSE file and no license text in its README — default all-rights-reserved; would need the authors' permission to reuse code or data. |
+     | P3 (Puzzle Pieces Picker) | none declared | Same as OBSD: `github.com/Pengjie-W/Puzzle-Pieces-Picker` has no declared license. The ACCP dataset's reuse terms are unstated. |
+     | RZCR | not publicly released | No public repo found for the OracleRC dataset; likely available only on request, if at all. |
+     | OracleSage | not publicly released | No public repo found for the OracleSem dataset. |
+
+     Net: of the 6, only **HUST-OBC** is clearly reusable as an image source today. AlphaOracle's code is reusable but not its images. The other 4 would need contacting the authors before any reuse.
+   - Still open for every other image source in the CSV (Wikimedia, 小學堂, hanziyuan, Wiktionary, 殷契文淵, Academia Sinica IHP).
 3. **Where undeciphered signs live**: a new `zx_oracle`/`zx_embedding` pair as sketched above, or a dataset kept entirely outside `zitex.sqlite3` since its purpose (decipherment research) differs from zitex's purpose (typesetting known decompositions)?
 4. **Scope relative to zitex's milestone track.** This is not on the M0–M6 list in `docs/DEV/claude/readme.md` (M5/M6 are themselves postponed); decide whether it becomes its own milestone once this plan is reviewed, or stays a separate tool reading `db/zitex.sqlite3` read-only.
 5. **Source list completeness** — is `oracle-bone-scripts.csv` final, or are more sources (e.g. additional university corpora) still to be added before pipeline work starts?

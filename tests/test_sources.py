@@ -247,7 +247,7 @@ def test_check_shape_patterns_and_render_accept_a_database(raw_db, tmp_path):
 def test_render_a_database_into_a_directory(raw_db, tmp_path):
     r = _run(["render", "-i", str(raw_db), "-c", "器,哭", "-s", "tree", "--emit", "tex", "-o", "o/"], tmp_path)
     assert r.exit_code == 0, r.output
-    assert sorted(p.name for p in (tmp_path / "o").iterdir()) == ["哭-tree.tex", "器-tree.tex"]
+    assert sorted(p.name for p in (tmp_path / "o").iterdir() if p.suffix == ".tex") == ["u54ed-tree.tex", "u5668-tree.tex"]
 
 
 def test_a_local_lexicon_yaml_overrides_the_database(raw_db, tmp_path):
