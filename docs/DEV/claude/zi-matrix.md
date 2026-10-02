@@ -181,7 +181,7 @@ Children in the shape string and in the YAML follow the same order, so the patte
 
 ### 6.4 A region rule for validation **(proposal)**
 
-Each label claims cells of a 3×3 grid: `L` the left column, `R` the right column, `U` the top row, `D` the bottom row, `LU` `RU` `LD` `RD` the corner cells, and `M` **whatever the others leave**, which is the central mass. A pattern is valid when its peripheral labels do not overlap, and `M` appears at most once. This accepts `L-M` (`M` is the middle and right columns), `L-M-R`, `U-M-D`, `LU-RU-M-LD-RD` and `LU-RU-D`, and it rejects `U-L-R` because `U` overlaps `L` and `R` at the corners, which agrees with treating it as an alias of `U-LD-RD`. Enclosures (`Mo-X`) are checked separately: `Mo` is the frame and `X` is where the inner part sits in it.
+Each label claims cells of a 3×3 grid (with one refinement made when the database was read: `U D L R` mean the middle cell of their edge when a corner label, or an `M`, sits beside them, see `spec.md`): `L` the left column, `R` the right column, `U` the top row, `D` the bottom row, `LU` `RU` `LD` `RD` the corner cells, and `M` **whatever the others leave**, which is the central mass. A pattern is valid when its peripheral labels do not overlap, and `M` appears at most once. This accepts `L-M` (`M` is the middle and right columns), `L-M-R`, `U-M-D`, `LU-RU-M-LD-RD` and `LU-RU-D`, and it rejects `U-L-R` because `U` overlaps `L` and `R` at the corners, which agrees with treating it as an alias of `U-LD-RD`. Enclosures (`Mo-X`) are checked separately: `Mo` is the frame and `X` is where the inner part sits in it.
 
 ## 7. What this means for zitex (done)
 

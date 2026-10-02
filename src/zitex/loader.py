@@ -6,6 +6,8 @@ from pathlib import Path
 
 import yaml
 
+_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)      # the C parser is several times faster on a big file
+
 from .tree import Node, ParseError, node_from_dict, parse_shape
 
 
@@ -82,7 +84,7 @@ def entry_from_dict(d: dict) -> Entry:
 
 
 def load_yaml(path: str | Path) -> list[Entry]:
-    data = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or []
+    data = yaml.load(Path(path).read_text(encoding="utf-8"), Loader=_LOADER) or []
     if not isinstance(data, list):
         raise ParseError(f"{path}: top level must be a list of entries")
     return [entry_from_dict(d) for d in data]

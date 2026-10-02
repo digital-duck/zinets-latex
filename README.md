@@ -46,6 +46,7 @@ An early sketch of a LaTeX package for this lives in `docs/DEV/gemini/readme.md`
 - **The Zi-Matrix positions.** Eleven position codes (`L R M U D Mi Mo LU LD RU RD`), where `M` is the center of gravity and a Kangxi radical is peripheral, so 佛 is 亻(`L`) + 弗(`M`).
 - **ZiNets operators for flat patterns.** `∴` (品, 叒), `∵` (哭), `∷` (叕), `⁙` (器: four 口 around 犬) and a general `<pattern>` form keep a level with three or more parts as one level, which standard IDS cannot.
 - **Chemistry-style extras.** Repeats collapse (`3 × 木 = 森`), and the arrow can carry the reason for the combination (`忄 + 每 —(sound: měi)→ 悔`).
+- **Two data sources.** A hand-written `chars.yaml`, or the ZiNets SQLite database (6,000 characters), through the same commands. The database is read only and never changed.
 - **Several languages.** Glosses come from a lexicon file and fall back to English.
 - **Several readings.** A character can carry competing interpretations of its parts (for example the dictionary's and the author's), and you pick one when rendering.
 - **Fonts that fall short.** Fallback fonts, SVG images for components with no code point, and a coverage report.
@@ -68,6 +69,13 @@ zitex render tests/data/chars.yaml -c 森 -s math \
       -x tests/data/lexicon.yaml --collapse -o -      # print one equation
 zitex render tests/data/chars.yaml -c 森,作 -o figs/   # .tex and .pdf, every style, into figs/
 make -C examples/demo                                  # build a small paper
+```
+
+From the ZiNets SQLite database instead of a YAML file:
+
+```bash
+zitex db-build path/to/zi.sqlite3 -o db/zitex.sqlite3  # once: a clean zx_ copy, the original untouched
+zitex render db/zitex.sqlite3 -c 器,藻 -o figs/       # the same render command
 ```
 
 In a document:
@@ -127,6 +135,8 @@ If you use zitex in your work, please cite the paper above:
 }
 ```
 
-## License
+## License and data attribution
 
-MIT. See [`LICENSE`](LICENSE).
+The code is MIT. See [`LICENSE`](LICENSE).
+
+The data in [`db/`](db/) is derived from the ZiNets database and uses definitions from **[CC-CEDICT](https://cc-cedict.org)**, which is licensed **CC BY-SA 4.0**. That data is shared under the same licence, with the changes described in [`db/NOTICE.md`](db/NOTICE.md). The attribution is also stored inside the database file and written at the top of every YAML file that `zitex extract` produces.

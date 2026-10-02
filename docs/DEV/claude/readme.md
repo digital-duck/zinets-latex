@@ -144,7 +144,7 @@ The 422 elemental characters (元字) include components that no common font has
 | M3 | `src/zitex/zitex.sty` and the `zitex render` command (one command for batch, single and `--scan` use), `--emit tex\|pdf\|both`, `--scan main.tex` | Done: `examples/demo` builds from a clean checkout with `make`; end-to-end test (scan, build, xelatex) passes; 43 tests pass |
 | M4 | `fonts.py`, `fonts.yaml`, `zitex fonts` report, `{name}` components: fallback fonts, SVG images, aliases, boxed label when nothing can draw a glyph | Done: all test-set components covered; fallback, SVG and missing paths tested; 63 tests pass |
 | M4b | Zi-Matrix refactor: 11 position codes, per-operator patterns, `<pattern>` and `∷ ⁙` operators, radical rule (`radicals.py`), validator W1-W8, generic flat layout | Done: 92 tests pass; specified in `zi-matrix.md` and `spec.md` |
-| M5 | *Postponed.* YAML ↔ SQLite bridge, batch PDF of a character family | Start only after the prototype is accepted and the DB is reviewed |
+| M5 | Two data adapters: YAML and SQLite (`zitex db-build`, `extract`, `patterns`; zitex's own `zx_*` tables in a separate file, the working DB read only) | Done for a first iteration: 6,000 characters convert, 223 rows left out and reported; see `db-integration.md` |
 | M6 | *Postponed.* Hook into the zinets app (`/home/papagame/projects/Proj-ZiNets/zinets_vis`) for export | Same condition as M5 |
 
 Test characters should cover every operator: 時 (⿰), 藻 (⿱ with nesting), 衍 (⿻/⿲ style), 國 (⿴), 同 (⿵), 区 (⿷), 病 (⿸), 句 (⿹), 近 (⿺), 品 (⿳-like), 愛 (4 parts), and a few paper examples (禺, 乍, 巠, 寺, 氢).

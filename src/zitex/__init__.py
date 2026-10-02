@@ -1,4 +1,10 @@
 """ZiNets-LaTeX: Chinese character decomposition trees, rendered through XeLaTeX."""
+try:
+    from importlib.metadata import version as _version
+    __version__ = _version("zitex")
+except Exception:          # not installed (running from a checkout)
+    __version__ = "0.1.0"
+
 from .ops import OPS, POSITIONS
 from .tree import Node, ParseError, parse_shape, to_shape, node_from_dict, node_to_dict
 from .loader import Entry, load_yaml

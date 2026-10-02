@@ -91,3 +91,45 @@ def default_pattern(op: str, parts) -> tuple[str, ...]:
             return ("M", second)
         return (first, second)
     return allowed(op)[0]
+
+
+# ---- reading order and pattern -> operator (used when positions come from a database) ----------------
+
+_ROW = {"U": 0, "LU": 0, "RU": 0, "M": 1, "L": 1, "R": 1, "D": 2, "LD": 2, "RD": 2}
+_COL = {"L": 0, "LU": 0, "LD": 0, "U": 1, "M": 1, "D": 1, "R": 2, "RU": 2, "RD": 2}
+
+
+def reading_order(labels) -> tuple[str, ...]:
+    """Put the labels of one level in the canonical order (see zi-matrix.md, "Order of labels").
+
+    A frame (Mo) comes first. A corner enclosure (LU-M, LD-M, RU-M) puts the corner first. A layout with
+    L or R and no U or D runs left to right, top before bottom in a column (LU-LD-R). Everything else runs
+    top to bottom, left before right in a row (LU-RU-D, U-LD-RD, LU-RU-M-LD-RD).
+    """
+    labels = list(labels)
+    s = set(labels)
+    if "Mo" in s:
+        rest = sorted((x for x in labels if x != "Mo"), key=lambda x: (_ROW.get(x, 3), _COL.get(x, 3)))
+        return ("Mo", *rest)
+    if len(labels) == 2 and "M" in s and (s & {"LU", "LD", "RU"}):
+        return tuple(sorted(labels, key=lambda x: 1 if x == "M" else 0))
+    if "Mi" in s:
+        rest = sorted((x for x in labels if x != "Mi"), key=lambda x: (_ROW.get(x, 3), _COL.get(x, 3)))
+        return (*rest, "Mi")
+    if s & {"L", "R"} and not s & {"U", "D"}:
+        return tuple(sorted(labels, key=lambda x: (_COL.get(x, 3), _ROW.get(x, 3))))
+    return tuple(sorted(labels, key=lambda x: (_ROW.get(x, 3), _COL.get(x, 3))))
+
+
+# pattern -> operator, for the patterns an operator allows
+_OP_OF: dict[tuple[str, ...], str] = {}
+for _op, _pats in OPS.items():
+    for _p in _pats:
+        _OP_OF.setdefault(_p, _op)
+
+
+def op_for_pattern(labels) -> str:
+    """The operator for a level whose labels are already in reading order. A pattern no operator allows
+    (the long flat ones, and anything with Mi) gets the general form <pattern>."""
+    labels = tuple(labels)
+    return _OP_OF.get(labels) or GENERAL_OPEN + pattern_of(labels) + GENERAL_CLOSE

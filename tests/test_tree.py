@@ -164,3 +164,54 @@ def test_old_ids_key_is_not_accepted():
     from zitex.loader import entry_from_dict
     with pytest.raises(ParseError, match="shape"):
         entry_from_dict({"char": "好", "ids": "⿰女子"})
+
+
+# ---- reading order and pattern -> operator (database input) -----------------------------------------------
+
+@pytest.mark.parametrize("given,canonical", [
+    ("D-LU-RU", "LU-RU-D"), ("LU-D-RU", "LU-RU-D"), ("LD-U-RD", "U-LD-RD"), ("LU-LD-R", "LU-LD-R"),
+    ("L-RU-RD", "L-RU-RD"), ("M-Mo", "Mo-M"), ("L-U-R", "U-L-R"), ("LU-L-LD-R", "LU-L-LD-R"),
+    ("LU-LD-M-RU-RD", "LU-RU-M-LD-RD"), ("M-L", "L-M"), ("R-M", "M-R"), ("D-U", "U-D"), ("D-M", "M-D"),
+    ("M-U", "U-M"), ("M-LU", "LU-M"), ("D-M-U", "U-M-D"), ("R-M-L", "L-M-R"), ("Mi-M", "M-Mi"),
+    ("LU-RU-LD-RD", "LU-RU-LD-RD"), ("RD-LD-RU-LU", "LU-RU-LD-RD"),
+])
+def test_reading_order(given, canonical):
+    from zitex.ops import reading_order
+    assert "-".join(reading_order(given.split("-"))) == canonical
+
+
+def test_the_order_does_not_depend_on_the_order_given():
+    import itertools
+    from zitex.ops import reading_order
+    for pat in ("LU-RU-M-LD-RD", "U-LD-RD", "LU-LD-R", "L-M-R"):
+        labels = pat.split("-")
+        assert {reading_order(p) for p in itertools.permutations(labels)} == {tuple(labels)}
+
+
+@pytest.mark.parametrize("pattern,op", [
+    ("L-M", "⿰"), ("M-R", "⿰"), ("U-D", "⿱"), ("L-M-R", "⿲"), ("U-M-D", "⿳"), ("LU-M", "⿸"), ("LD-M", "⿺"),
+    ("Mo-M", "⿴"), ("Mo-D", "⿵"), ("Mo-U", "⿶"), ("Mo-R", "⿷"), ("U-LD-RD", "∴"), ("LU-RU-D", "∵"),
+    ("LU-RU-LD-RD", "∷"), ("LU-RU-M-LD-RD", "⁙"),
+    ("LU-LD-R", "<LU-LD-R>"), ("M-Mi", "<M-Mi>"), ("L-RU-RD", "<L-RU-RD>"),     # no operator allows these
+])
+def test_op_for_pattern(pattern, op):
+    from zitex.ops import op_for_pattern
+    assert op_for_pattern(pattern.split("-")) == op
+    # a shape string gives back the same pattern, except that ⿰ and ⿱ choose theirs by the radical rule
+    if op not in ("⿰", "⿱"):
+        n = parse_shape(op + "".join("甲丙丁戊庚"[i] for i in range(len(pattern.split("-")))))
+        assert n.pattern == pattern
+
+
+def test_w7_understands_edge_middle_labels():
+    # three parts across the top, or down the right: U / R mean the middle cell of that edge
+    for shape in ("<LU-U-RU-D>日月木火", "<L-RU-R-RD>日月木火", "<LU-L-LD-R>日月木火", "∴又又又",
+                  "<U-L-M-D>日月木火", "<U-L-R-D>日月木火"):
+        assert _codes_of_shape(shape) == [], shape
+    for shape in ("<U-L-R>又又又", "<L-U-R>日月木"):                       # U overlaps L and R in the corners
+        assert _codes_of_shape(shape) == ["W7"], shape
+
+
+def _codes_of_shape(shape):
+    from zitex.loader import entry_from_dict
+    return [w.code for w in validate_entry(entry_from_dict({"char": "X", "shape": shape}))]

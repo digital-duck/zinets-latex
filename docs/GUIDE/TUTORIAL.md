@@ -247,7 +247,27 @@ print(render_snippet(hao, "formula", lex=lex))
 
 `render_snippet(entry, style, fonts=None, **options)` returns a LaTeX string. Use `zitex.render_with` if you also want the list of missing glyphs. `zitex.build.build(...)` writes files, as the command does.
 
-## 8. Troubleshooting
+## 8. Using the SQLite database
+
+Everything above reads a `chars.yaml`. The same commands also read the ZiNets SQLite database, through a second data adapter, so you can render the thousands of characters in it without writing YAML by hand.
+
+```bash
+zitex db-build path/to/zi.sqlite3 -o db/zitex.sqlite3 --report db/zitex-quarantine.csv   # once, and again after the database changes
+zitex patterns db/zitex.sqlite3                                  # how often each pattern occurs
+zitex render db/zitex.sqlite3 -c 器,藻 -o figs/                  # render straight from the database
+zitex extract db/zitex.sqlite3 -c 器,藻                          # or extract them as YAML, to read and review
+```
+
+- **Your database is never changed.** `db-build` opens it read only, and writes a small separate file, `zitex.sqlite3`, next to it (four tables, all starting with `zx_`). It checks at the end that your file is byte for byte what it was. You can delete the new file and rebuild it any time.
+- **Rows that cannot be converted safely are not guessed at.** They are left out, and listed with the reason in the report: for example a position cell that holds two parts, or a part that is `?`. Characters whose parts have no decomposition of their own stay as leaves.
+- **Every command accepts the database in place of the YAML:** `check`, `shape`, `patterns`, `fonts`, `render` and `extract`. You can also point them at the raw working database (`zi.sqlite3`): it is converted in memory and nothing is written.
+- **Pinyin and glosses** come from the database too (tone numbers are converted to tone marks), so equations have labels without a lexicon file. A `lexicon.yaml` in the current folder, or `-x`, replaces what the database says for the characters it names.
+- **`--depth N`** limits how many levels a tree is expanded (default: all, so 藻 goes down to 口 and 木).
+- **`zitex extract`** writes `db-chars.yaml` and `db-lexicon.yaml` for the characters you name with `-c` (all of them without it), then prints the render command to use: `zitex render db-chars.yaml -x db-lexicon.yaml`. They load like hand-written files, and are a good way to read what the database says. The default names start with `db-` so they never replace your own `chars.yaml`. Add `--force` to overwrite.
+
+How the adapters work, what was found in the database, and what is still open is in `docs/DEV/claude/db-integration.md`.
+
+## 9. Troubleshooting
 
 | Symptom | Cause and fix |
 |---|---|

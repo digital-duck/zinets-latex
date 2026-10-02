@@ -284,7 +284,7 @@ def test_sty_reading_end_to_end(tmp_path):
 # ---- help text -------------------------------------------------------------------------------
 
 @pytest.mark.parametrize("width", ["60", "80", "120"])
-@pytest.mark.parametrize("command", [[], ["check"], ["shape"], ["fonts"], ["render"], ["install-sty"]])
+@pytest.mark.parametrize("command", [[], ["check"], ["shape"], ["fonts"], ["render"], ["install-sty"], ["patterns"], ["db-build"], ["extract"]])
 def test_help_is_spelled_out(command, width):
     """No help page may cut its text short with '...' (click does that to a derived short help)."""
     r = CliRunner().invoke(main, [*command, "-h"], env={"COLUMNS": width})
@@ -294,7 +294,7 @@ def test_help_is_spelled_out(command, width):
 
 def test_every_command_has_a_complete_one_line_summary():
     summaries = {name: cmd.short_help for name, cmd in main.commands.items()}
-    assert set(summaries) == {"check", "shape", "fonts", "render", "install-sty"}
+    assert set(summaries) == {"check", "shape", "fonts", "render", "install-sty", "patterns", "db-build", "extract"}
     assert all(s and s.endswith(".") for s in summaries.values()), summaries
 
 

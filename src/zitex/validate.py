@@ -22,11 +22,25 @@ from .radicals import is_radical
 from .tree import Node, ParseError, leaves, parse_shape, to_shape
 
 # cells of a 3x3 grid (row, col) that a peripheral label claims; M is "whatever is left"
-_CELLS = {
-    "L": {(0, 0), (1, 0), (2, 0)}, "R": {(0, 2), (1, 2), (2, 2)},
-    "U": {(0, 0), (0, 1), (0, 2)}, "D": {(2, 0), (2, 1), (2, 2)},
-    "LU": {(0, 0)}, "RU": {(0, 2)}, "LD": {(2, 0)}, "RD": {(2, 2)},
-}
+_CORNER = {"LU": (0, 0), "RU": (0, 2), "LD": (2, 0), "RD": (2, 2)}
+
+
+def _cells(label: str, present: set[str]) -> set[tuple[int, int]]:
+    """Cells a label claims. U, D, L and R take a whole row or column, unless something else shares that edge:
+    a corner label (LU-U-RU is three parts across the top), or, for L and R, an M or both U and D (U-L-M-D has
+    the left part beside M). Then they mean the middle cell of the edge. U-L-R alone stays an overlap."""
+    middle_row = "M" in present or {"U", "D"} <= present
+    if label in _CORNER:
+        return {_CORNER[label]}
+    if label == "U":
+        return {(0, 1)} if present & {"LU", "RU"} else {(0, 0), (0, 1), (0, 2)}
+    if label == "D":
+        return {(2, 1)} if present & {"LD", "RD"} else {(2, 0), (2, 1), (2, 2)}
+    if label == "L":
+        return {(1, 0)} if present & {"LU", "LD"} or middle_row else {(0, 0), (1, 0), (2, 0)}
+    if label == "R":
+        return {(1, 2)} if present & {"RU", "RD"} or middle_row else {(0, 2), (1, 2), (2, 2)}
+    return set()
 
 
 @dataclass(frozen=True)
@@ -126,8 +140,9 @@ def _regions(n: Node, labels: tuple[str, ...], char: str, out: list[Warn]) -> No
         out.append(Warn("W7", char, f"{n.pattern} has more than one M"))
     claimed: dict[tuple[int, int], str] = {}
     clash = []
+    present = set(labels)
     for lab in labels:
-        for cell in _CELLS.get(lab, ()):
+        for cell in _cells(lab, present):
             if cell in claimed and claimed[cell] != lab:
                 clash.append(f"{claimed[cell]}/{lab}")
             claimed.setdefault(cell, lab)

@@ -144,7 +144,7 @@ Every check is a **warning**; a warning never stops a build.
 | W10 | a reading uses an unknown role (known: `semantic`, `phonetic`, `force`) |
 | W11 | two readings of one character have the same name |
 
-W7 uses a 3×3 grid: `L` and `R` claim a column, `U` and `D` a row, `LU RU LD RD` a corner cell, and `M` is whatever the others leave. `U-L-R` overlaps at the corners, so it is reported with a hint to use `U-LD-RD`. Enclosure patterns (`Mo-X`) and `⿻` are exempt.
+W7 uses a 3×3 grid: `L` and `R` claim a column, `U` and `D` a row, `LU RU LD RD` a corner cell, and `M` is whatever the others leave. `U`, `D`, `L` and `R` mean only the middle cell of their edge when a corner label shares it (`LU-U-RU`), or, for `L` and `R`, when `M` or both `U` and `D` are present (`U-L-M-D`). `U-L-R` overlaps at the corners, so it is reported with a hint to use `U-LD-RD`. Enclosure patterns (`Mo-X`) and `⿻` are exempt.
 
 ## 4. Compact `shape` grammar
 
