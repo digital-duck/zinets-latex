@@ -416,12 +416,44 @@ def setup(out, force) -> None:
     click.echo(f"next: zitex extract -c 器,藻,佛 -o {out}")
 
 
+@main.command("review-export", short_help="Write the review lists (warnings, left out, elemental but decomposed, revised) as CSV files.")
+@input_option(help=f"the zitex database (default: {DB_RELATIVE} in this folder or a parent folder, or ${ENV_DB})")
+@click.option("-o", "--out", default=".", show_default=True, type=click.Path(file_okay=False),
+              help="the folder to write the CSV files into")
+def review_export(input_, out) -> None:
+    """Export the four lists shown at the top of the Streamlit review page, one CSV file each.
+
+    \b
+      review-with-warnings.csv         characters with a validation warning (W7, W8, ...), with their parts
+      review-left-out.csv              rows that could not be converted, with the reason and the cells
+      review-elemental-decomposed.csv  elemental characters that still have a decomposition
+      review-revised.csv               the revisions made so far
+
+    The database is only read. The files are UTF-8 with a byte order mark, so a spreadsheet shows the Chinese
+    correctly. Fix the data in the review app (or the working database), rebuild with `zitex db-build`, and export again.
+    """
+    from .review import export_csv
+    source = input_
+    if source is None:
+        found_db = find_default_database()
+        if found_db is None:
+            raise click.UsageError(f"no database: pass --input PATH. Looked for {DB_RELATIVE} in this folder and its parents, "
+                                   f"in the zitex checkout, and in ${ENV_DB}.")
+        source = str(found_db)
+        click.echo(f"using the database {found_db}", err=True)
+    if not isinstance(_open(source, 12), SqliteSource):
+        click.echo(f"{source}: not a database, nothing to export", err=True)
+        sys.exit(2)
+    for name, n in export_csv(source, out).items():
+        click.echo(f"wrote {Path(out) / name}: {n} rows")
+
+
 @main.command(short_help="Extract characters from a database into a folder: chars.yaml, lexicon.yaml, main.tex and its snippets.")
 @input_option(help=f"the SQLite database (default: {DB_RELATIVE} in this folder or a parent folder, or ${ENV_DB})")
 @click.option("-o", "--out", default=".", show_default=True, type=click.Path(file_okay=False),
               help="the folder to fill (run `zitex setup` on it first to get fonts.yaml)")
 @click.option("-c", "--char", "char_args", multiple=True, metavar="CHARS",
-              help="only these characters, separated by commas or spaces (default: all)")
+              help="only these characters: a phrase such as 守株待兔, or characters separated by commas or spaces (default: all)")
 @click.option("--annotation", type=click.Choice(["minimal", "demo"]), default="minimal", show_default=True,
               help="the main.tex to write: minimal (every style for every character) or demo (an annotated paper "
                    "that explains the syntax and the features of zitex, for these characters)")
@@ -439,7 +471,7 @@ def extract(input_, out, char_args, annotation, depth) -> None:
       zitex extract -c 器,藻,佛 -o work/
       cd work && xelatex main.tex
 
-    Name the characters with -c (commas or spaces; they are written in that order). At most 60 are extracted, a
+    Name the characters with -c (a phrase, or commas or spaces; each character once, in that order). At most 60 are extracted, a
     document of that size being as much as main.tex should hold: with more, the first 60 are kept and a warning
     says so. With --annotation demo, main.tex is an annotated paper that explains the syntax and the features of
     zitex using your first characters. Running it again on the same folder overwrites chars.yaml, lexicon.yaml,
@@ -449,7 +481,7 @@ def extract(input_, out, char_args, annotation, depth) -> None:
     from .fonts import DEFAULT_PRIMARY
     from .lexicon import load_lexicon
     from .loader import load_yaml
-    from .workspace import MAX_CHARS, make_main_tex, sty_state
+    from .workspace import MAX_CHARS, make_main_tex, split_chars, sty_state
     source = input_
     if source is None:
         found_db = find_default_database()
@@ -463,7 +495,7 @@ def extract(input_, out, char_args, annotation, depth) -> None:
         click.echo(f"{source}: already a decomposition YAML, nothing to extract", err=True)
         sys.exit(2)
     dicts = src.entry_dicts()
-    wanted = list(dict.fromkeys(c for tok in char_args for c in re.split(r"[,，、\s]+", tok) if c))
+    wanted = split_chars(" ".join(char_args))
     if wanted:
         by_char = {d["char"]: d for d in dicts}
         if [c for c in wanted if c not in by_char]:

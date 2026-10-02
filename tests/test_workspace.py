@@ -432,3 +432,9 @@ def test_extract_annotation_demo_makes_a_paper_that_compiles(raw_db, tmp_path):
     again = _run(["extract", "-i", str(raw_db), "-c", "器", "-o", "work"], tmp_path)                       # default: minimal again
     assert again.exit_code == 0 and "research paper" not in (work / "main.tex").read_text(encoding="utf-8")
     assert _run(["extract", "-i", str(raw_db), "-o", "w9", "--annotation", "long"], tmp_path).exit_code == 2
+
+
+def test_extract_takes_a_phrase_as_characters(raw_db, tmp_path):
+    r = _run(["extract", "-i", str(raw_db), "-c", "器時", "-o", "work"], tmp_path)
+    assert r.exit_code == 0, r.output
+    assert [e.char for e in load_yaml(tmp_path / "work" / "chars.yaml")] == ["器", "時"]

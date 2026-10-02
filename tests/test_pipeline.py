@@ -22,6 +22,13 @@ def test_parse_chars():
     assert parse_chars("器,器,藻") == ["器", "藻"] and parse_chars("") == [] and parse_chars(" , ") == []
 
 
+def test_parse_chars_splits_a_phrase_without_delimiters():
+    assert parse_chars("守株待兔") == ["守", "株", "待", "兔"]
+    assert parse_chars("守株待兔，守株待兔。") == ["守", "株", "待", "兔"]          # repeats once, punctuation skipped
+    assert parse_chars("器藻 佛,時") == ["器", "藻", "佛", "時"]                   # mixed with delimiters
+    assert parse_chars("𠀉口") == ["𠀉", "口"]                                       # characters outside the basic plane
+
+
 def test_skipped_reads_extract_output():
     assert _skipped("not in /x/zitex.sqlite3: 龘 也\nwrote a") == ["龘", "也"]
     assert _skipped("wrote chars.yaml: 2 characters") == []

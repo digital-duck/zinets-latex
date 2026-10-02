@@ -23,6 +23,7 @@ zitex db-build -i path/to/zi.sqlite3 -o db/zitex.sqlite3 --report db/zitex-quara
 zitex patterns -i db/zitex.sqlite3     # pattern counts; check, shape, render, extract also take a database
 zitex setup -o work/                # self-contained folder: zitex.sty, fonts.yaml (detected), fallback.yaml, glyphs/
 zitex extract -c 器,藻 -o work/    # chars.yaml, lexicon.yaml, main.tex, zitex-out/ (-i PATH, default db/zitex.sqlite3 found upward from cwd; at most 60 chars); then `cd work && xelatex main.tex`
+zitex review-export -i db/zitex.sqlite3 -o db   # the review lists (warnings, left out, elemental but decomposed, revised) as CSV files
 zitex install-sty                  # copy zitex.sty into TEXMFHOME so plain xelatex finds it (--dir DIR: another tree)
 make -C examples/demo              # scan, render and typeset the demo with xelatex (uses TEXINPUTS, no install needed)
 ```

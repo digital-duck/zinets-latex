@@ -4,6 +4,7 @@ Nothing here writes to a database except through zxdb.revise() and zxdb.revert()
 """
 from __future__ import annotations
 
+import csv
 import shutil
 import tempfile
 from dataclasses import dataclass, field
@@ -117,3 +118,46 @@ def level_of(path: str | Path, zi: str) -> list[tuple[str, str]]:
         return [(p, c) for p, c in con.execute("SELECT pos, part FROM zx_part WHERE zi = ? ORDER BY ord", (zi,))]
     finally:
         con.close()
+
+
+# the four lists of the review page's metrics row, as CSV files: name -> (file, columns)
+EXPORTS = {
+    "with warnings": "review-with-warnings.csv",
+    "left out": "review-left-out.csv",
+    "elemental, decomposed": "review-elemental-decomposed.csv",
+    "revised": "review-revised.csv",
+}
+
+
+def export_tables(data: ReviewData) -> dict[str, tuple[list[str], list[list[str]]]]:
+    """The lists behind the metrics of the review page, each as (header, rows): file name -> table."""
+    def entry_cols(zi):
+        e = data.entries.get(zi)
+        return [e.pinyin or "", e.meaning or "", e.shape] if e else ["", "", ""]
+    warned = [[zi, *entry_cols(zi), " ".join(sorted({w.code for w in ws})), "; ".join(f"{w.code} {w.msg}" for w in ws),
+               " ".join(f"{n.pos}={n.c}" for n in data.entries[zi].tree.parts if n.c)]
+              for zi, ws in sorted(data.warnings.items())]
+    return {
+        EXPORTS["with warnings"]: (["char", "pinyin", "meaning", "shape", "codes", "warnings", "first_level_parts"], warned),
+        EXPORTS["left out"]: (["char", "reason", "cells"], [[zi, reason, cells] for zi, reason, cells in data.quarantine]),
+        EXPORTS["elemental, decomposed"]: (["char", "pinyin", "meaning", "shape", "decomposition"],
+                                           [[zi, *entry_cols(zi), parts] for zi, parts in data.elemental_decomposed]),
+        EXPORTS["revised"]: (["char", "parts", "note", "when"],
+                             [[r["zi"], " ".join(f"{p}={c}" for p, c in r["parts"]) or "(a primitive)", r.get("note") or "",
+                               r.get("ts") or ""] for r in data.revisions]),
+    }
+
+
+def export_csv(path: str | Path, out_dir: str | Path) -> dict[str, int]:
+    """Write the four lists of the review page as CSV files in out_dir (UTF-8 with a BOM, so Excel shows the Chinese).
+    Returns file name -> number of rows. The database is only read."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    counts = {}
+    for name, (header, rows) in export_tables(load_review(path)).items():
+        with open(out / name, "w", newline="", encoding="utf-8-sig") as f:
+            w = csv.writer(f)
+            w.writerow(header)
+            w.writerows(rows)
+        counts[name] = len(rows)
+    return counts

@@ -1,0 +1,223 @@
+﻿char,reason,cells
+㝅,a position holds more than one part,LU=士 L=冖一 LD=子 R=殳
+㺉,a position holds more than one part,LU=士 L=冖一 LD=犬 R=殳
+䍍,a position holds more than one part,LU=士 L=冖一 LD=缶 R=殳
+严,a position holds more than one part,LD=丿 M=亚 
+乔,a position holds more than one part,U=夭 D=丿 丨
+乞,a position holds more than one part,U=丿一 D=乙
+买,a position holds more than one part,U=乛  M=头
+亦,only one part (incomplete),U=亠
+亭,a position holds more than one part,U=亠 口 M=冖 D=丁
+亮,a position holds more than one part,U=亠 口 M=冖 D=几
+伤,a position holds more than one part,L=亻 RU=丿 一 RD=力
+低,a position holds more than one part,L=亻 M= 氐
+侯,a position holds more than one part,L=亻 U=乛 一 D=矢
+候,a position holds more than one part,L=亻 M=丨 RU=乛 一 RD=矢
+兜,a position holds more than one part,LU=匚 U=白 D=儿 RU=㇆ 一
+兵,a position holds more than one part,M=丘  D=八
+兽,a position holds more than one part,U=丷 田 M=一 D=口
+冏,a position holds more than one part,M=冂 Mi=八口
+军,a position holds more than one part,U=冖  M=车
+冡,a position holds more than one part,U=冖一 M=豕
+击,a position holds more than one part,U=二  M=山
+凿,a position holds more than one part,U=业 M=丷干 D=凵
+划,a position holds more than one part,M= 戈 R=刂
+別,row is not active,M=另 R=刂
+利,a position holds more than one part,M=禾  R=刂
+别,a position holds more than one part,M=另  R=刂
+前,a position holds more than one part,L=月 U=丷 一 R=刂
+剔,a position holds more than one part,M=易  R=刂
+劫,a position holds more than one part,L=去 R= 力
+劳,a position holds more than one part,U=艹  M=冖 D= 力
+南,only one part (incomplete),Mi=二
+危,a position holds more than one part,U= 厃 M=㔾
+即,a position holds more than one part,M=艮  R=卩
+却,a position holds more than one part,M=去  R=卩
+县,a position holds more than one part,M=且  D=厶
+叮,a position holds more than one part,L=口 M= 丁
+同,a position holds more than one part,M=冂 Mi=一 口
+君,a position holds more than one part,U=尹 D= 口
+吴,a position holds more than one part,U=口  D=天
+吵,a position holds more than one part,L=口 M= 少
+呆,a position holds more than one part,U=口  D=木
+员,a position holds more than one part,U=口  D=贝
+啇,a position holds more than one part,U=亠丷 M=冂 Mi=古
+善,a position holds more than one part,U=羊 M=丷 一 D=口
+喜,a position holds more than one part,U=吉 M=丷 一 D=口
+嗀,a position holds more than one part,LU=士 L=冖 一 LD=口 R=殳
+嘉,a position holds more than one part,U=吉 M=丷 一 D=加
+因,a position holds more than one part,M=囗  Mi=大
+困,a position holds more than one part,M=囗  Mi=木
+围,a position holds more than one part,M=囗  Mi=韦
+坚,a position holds more than one part,LU=丨 丨 D=土 RU=又 
+坝,a position holds more than one part,L=土 R= 贝
+坟,a position holds more than one part,L=土 R= 文
+塞,a position holds more than one part,U=宀 M=井大 D=土
+声,a part is the placeholder ?,U=士 D=?
+壳,a position holds more than one part,U=士  D=冗
+复,a position holds more than one part,U=丿一 M=日 D=夂
+夢,a position holds more than one part,U=艹 M=罒 D=冖夕
+失,a position holds more than one part,LU=丿 M= 夫
+头,a position holds more than one part,LU=丶 丶 M=大
+妈,a position holds more than one part,L=女 M= 马
+字,a position holds more than one part,U=宀  M=子
+安,a position holds more than one part,U=宀  M=女
+寨,a position holds more than one part,U=宀 M=井 大 D=木
+寻,a position holds more than one part,U=彐 D= 寸
+导,a position holds more than one part,U=巳 D= 寸
+尘,a position holds more than one part,U=小  D=土
+尚,only one part (incomplete),Mi=口
+尞,a position holds more than one part,U=大丷 M=日 D=小
+尽,a position holds more than one part,M=尺  D=冫
+层,a position holds more than one part,U=尸  M=云
+展,a part is the placeholder ?,U=尸 M=?
+岁,a position holds more than one part,U=山 D= 夕
+岔,a position holds more than one part,U=分  D=山
+岗,a position holds more than one part,U=山 D= 冈
+巡,a position holds more than one part,LD=辶  M=巛
+巩,a position holds more than one part,L=工 R= 凡
+帅,a position holds more than one part,L=丨 丿 M=巾
+师,a position holds more than one part,L=丨 丿 M=帀
+帝,a position holds more than one part,U=亠 丷 M=冖 D=巾
+并,a position holds more than one part,U=丷  M=开
+幽,a position holds more than one part,M=山 Mi=幺 幺
+庄,a position holds more than one part,U=广  M=土
+庆,a position holds more than one part,U=广 M= 大
+库,a position holds more than one part,U=广  M=车
+异,a position holds more than one part,U=已  D=廾
+弄,a position holds more than one part,U=王  D=廾
+弱,a position holds more than one part,L=弓 冫 R=弓 冫
+彀,a position holds more than one part,LU=士 L=冖 一 LD=弓 R=殳
+归,a position holds more than one part,L=丨 丿 M=彐
+德,a position holds more than one part,L=彳 RU=十罒 R=一 RD=心
+志,a position holds more than one part,U=士 D= 心
+恼,a position holds more than one part,L=忄 M=亠乂凵
+惛,a position holds more than one part,L=忄 M= 昏
+戏,a position holds more than one part,L=又 R= 戈
+成,only one part (incomplete),R=戊
+或,a position holds more than one part,M=口一 R=戈
+找,a position holds more than one part,L=扌 M= 戈
+抄,a position holds more than one part,L=扌 M= 少
+抓,a position holds more than one part,L=扌 M= 爪
+折,a position holds more than one part,L=扌 M= 斤
+抛,a position holds more than one part,L=扌 M=九 R=力 
+护,a position holds more than one part,L=扌 M= 户
+拖,a position holds more than one part,L=扌 RU=丿 一 RD=也
+攸,a position holds more than one part,L=亻 丨 R=攵
+断,a position holds more than one part,L=丨 一 M=米 R=斤
+旁,a position holds more than one part,U=亠 M=丷冖 D=方
+旅,a position holds more than one part,L=方 RU=丿 一 RD=氏
+族,a position holds more than one part,L=方 RU=丿 一 RD=矢
+旗,a position holds more than one part,L=方 RU=丿 一 RD=其
+曹,a position holds more than one part,U=卄 曰 D=日
+朵,a position holds more than one part,U=几  D=木
+杆,a position holds more than one part,L=木 M= 干
+杏,a position holds more than one part,U=木  D=口
+束,a position holds more than one part,M=木 Mi= 口
+榖,a position holds more than one part,LU=士 L=冖 一 LD=木 R=殳
+步,a position holds more than one part,U=止  D=少
+段,a part is the placeholder ?,L=? R=殳
+每,a position holds more than one part,U=丿一 M=母
+比,a position holds more than one part,L=匕 R=匕 
+毕,a position holds more than one part,U=比  M=十
+毫,a position holds more than one part,U=亠 口 M=冖 D=毛
+气,a position holds more than one part,U=丿 一 M=一 D=乙
+汁,a position holds more than one part,L=氵 M= 十
+求,a position holds more than one part,U=一  M=水 RU=丶
+池,a position holds more than one part,L=氵 M= 也
+涤,a position holds more than one part,L=氵 条 M=条
+渊,a position holds more than one part,L=氵 M=丿 米 丨
+滕,a position holds more than one part,L=月 U=丷 M=夫 D=水 
+漦,a position holds more than one part,LU=未 M= 厂 D=水 RU=攵
+灭,a position holds more than one part,U=一  M= 火
+灰,a position holds more than one part,LU=又 M= 火
+灿,a position holds more than one part,L=火 M= 山
+烈,a position holds more than one part,M=列  D=灬
+烝,a position holds more than one part,M=丞 D= 灬
+熙,a position holds more than one part,M=巸 D= 灬
+犛,a position holds more than one part,LU=未 M= 厂 D=牛 RU=攵
+畺,a position holds more than one part,U=一田 M=一田 D=一
+疆,a position holds more than one part,L=弓土 M=畺
+疗,a position holds more than one part,LU= 疒 M=了
+疟,a position holds more than one part,LU=疒 M=匸 一
+癹,a part is the placeholder ?,LU=? D=殳 RU=?
+监,a position holds more than one part,LU=丨 丨 D=皿 RU=丿 一 丶
+眞,a position holds more than one part,U=匕  M= 目 D=八
+眷,a position holds more than one part,U=丷  M=夫 D=目
+矛,a position holds more than one part,M=予 Mo= 丿
+离,a position holds more than one part,U=亠乂凵 M=冂 Mi=厶
+秦,a position holds more than one part,U=三人 M=禾
+穀,a position holds more than one part,LU=士 L=冖一 LD=禾 R=殳
+竖,a position holds more than one part,LU=丨丨 D=立 RU=又
+粤,a position holds more than one part,U=丶 M=冂 米 D=亏
+粱,a position holds more than one part,LU=氵 D=米 RU=刀 八
+紧,a position holds more than one part,LU=丨 丨 D=糸 RU=又
+縠,a position holds more than one part,LU=士 L=冖一 LD=糸 R=殳
+红,a position holds more than one part,L=纟 M= 工
+细,a position holds more than one part,L=纟  M=田
+网,a position holds more than one part,M=冂 Mi=乂 乂
+罙,a position holds more than one part,U=冖八 M=木
+肖,a position holds more than one part,U=小 D= 月
+肾,a position holds more than one part,LU=丨 丨 D=月 RU=又
+背,a position holds more than one part,U=北 D= 月
+胤,a position holds more than one part,L=丿 U=幺 D= 月 R=乚
+胥,a position holds more than one part,U=疋 D= 月
+脑,a position holds more than one part,L=月 M=亠乂凵
+自,a position holds more than one part,U=丿 M= 目
+良,a position holds more than one part,U=丶  M=艮
+芦,a position holds more than one part,U=艹  M=户
+芬,a position holds more than one part,U=艹  M=分
+花,a position holds more than one part,U=艹  M=化
+芹,a position holds more than one part,U=艹  M=斤
+苍,a position holds more than one part,U=艹  M=仓
+苏,a position holds more than one part,U=艹 M= 办
+薛,a part is the placeholder ?,L=? U=艹 R=辛
+薻,a position holds more than one part,L=氵 U= 艹 R=巢
+虐,a position holds more than one part,U=虍 M=匸 一
+虫,a position holds more than one part,M=口  Mo=厶
+蚩,a position holds more than one part,U=山  M=一 D=虫
+蠜,a position holds more than one part,LU=木  U=爻 M=大 D=虫 RU=木 
+衡,a position holds more than one part,M=行 Mi=角大
+衰,a position holds more than one part,M=衣 Mi=口一
+褱,a position holds more than one part,M=衣  Mi=眔
+襄,only one part (incomplete),M=衣
+览,a position holds more than one part,LU=丨 丨 D=见 RU=丿 一 丶
+觳,a position holds more than one part,LU=士 L=冖一 LD=角 R=殳
+访,a position holds more than one part,L=讠 M= 方
+谷,a position holds more than one part,U=八  M=人  D=口
+豪,a position holds more than one part,U=亠口 M=冖 D=豕
+豰,a position holds more than one part,LU=士 L=冖一 LD=豕 R=殳
+贡,a position holds more than one part,U=工  D=贝
+贤,a position holds more than one part,LU=丨 丨 D=贝 RU=又
+赛,a position holds more than one part,U=宀 M=井 大 D=贝
+轂,a position holds more than one part,LU=士 L=冖一 LD=车 R=殳
+辨,a position holds more than one part,L=辛 M=丨丿 R=辛
+边,a position holds more than one part,LD= 辶 M=力
+达,a position holds more than one part,LD=辶  M=大
+迁,a position holds more than one part,LD= 辶 M=千
+运,a position holds more than one part,LD= 辶 M= 云
+进,a position holds more than one part,LD=辶 M= 井
+远,a position holds more than one part,LD= 辶  M=元
+违,a position holds more than one part,LD=辶  M=韦
+连,a position holds more than one part,LD=辶  M=车
+迟,a position holds more than one part,LD=辶 M= 尺
+逊,a position holds more than one part,LD=辶 孙 M=孙
+那,only one part (incomplete),R=阝
+鉴,a position holds more than one part,LU=丨 丨 D=金 RU=丿 一 丶
+销,a position holds more than one part,L=钅 肖 M=钅 肖
+间,a position holds more than one part,M=门  Mi=日
+阳,a position holds more than one part,L=阝 M= 日
+阵,a position holds more than one part,L=阝 M= 车
+陋,a position holds more than one part,L=阝 M=丨 一 R=丙
+雗,a position holds more than one part,L=龺 RU=丿 一 RD=隹
+雚,a position holds more than one part,U=艹 M=口 口 D=隹
+饰,a position holds more than one part,L=饣 RU=丿 一 RD=巾
+首,a position holds more than one part,U=丷 一 M=自
+高,a position holds more than one part,U=亠 M=口 D=冂 口
+鷇,a position holds more than one part,LU=士 L=冖一 LD=鸟 R=殳
+鹰,a position holds more than one part,LU=广 M=亻隹 D=鸟
+麦,a position holds more than one part,U=丰 D= 夂
+黎,a position holds more than one part,LU=禾 M=人 D=水 RU=勹 丿
+鼠,a position holds more than one part,LD=𠄌 丶 丶 U=臼 D=𠄌 丶 丶 RD=𠄌
+齐,a position holds more than one part,U=文 D=丿 丨
+龟,a position holds more than one part,U=刀  D=电

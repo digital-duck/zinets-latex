@@ -98,6 +98,27 @@ def test_review_page_lists_what_to_review(zx_db):
     assert not at.exception and any(len(d.value) for d in at.dataframe)
 
 
+def test_review_page_opens_a_character_picked_in_the_list(zx_db):
+    """Regression: "Open X" used to assign st.session_state["char"] after the Character box was drawn, which Streamlit refuses."""
+    at = _app("pages/1_Review_decompositions.py", zx_db).run()
+    next(s for s in at.selectbox if s.label == "List").select("quarantine").run()
+    rows = [r for r in zxdb_quarantine_chars(zx_db)]
+    assert rows, "the synthetic database should have a left-out row"
+    from streamlit.util import AttributeDictionary                    # what st.dataframe(on_select=...) hands back
+    at.session_state["table-quarantine"] = AttributeDictionary({"selection": AttributeDictionary({"rows": [0], "columns": []})})
+    at.run()
+    assert not at.exception, at.exception
+    button = next(b for b in at.button if b.label.startswith("Open "))
+    button.click().run()
+    assert not at.exception, at.exception
+    assert at.session_state["char"] == rows[0] and f"## {rows[0]}" in _texts(at)
+
+
+def zxdb_quarantine_chars(db):
+    from zitex.review import load_review
+    return [q[0] for q in load_review(db).quarantine]
+
+
 # ---- page 2: generate ---------------------------------------------------------------------------------------------
 
 def test_generate_page_runs_and_reads_the_character_list(zx_db):
@@ -107,6 +128,8 @@ def test_generate_page_runs_and_reads_the_character_list(zx_db):
     assert area.value == "器,藻,佛" or area.value
     area.set_value("器 時，藻").run()
     assert any("3 characters" in c.value for c in at.caption)
+    area.set_value("守株待兔").run()
+    assert any("4 characters: 守 株 待 兔" in c.value for c in at.caption)
 
 
 @needs_xelatex

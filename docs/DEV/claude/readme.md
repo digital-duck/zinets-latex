@@ -266,3 +266,73 @@ Tick them off here. The worklists are in `db/` (`zitex-quarantine*.csv`) and in 
 - **LuaLaTeX**: only XeLaTeX is supported.
 - The `qi-top` example in tutorial section 6 is a placeholder.
 - One full test run showed 5 failures that could not be explained or reproduced (several later runs were green).
+
+## 16. Resolve decomposition DQ issue - TODO
+
+The design is settled, and what is left is data quality. This section is the working loop for fixing it. The four worklists below were exported on 2026-10-02 from `db/zitex.sqlite3`, and they match the numbers at the top of the review page.
+
+| Worklist (`db/`) | Rows | What is wrong | How to fix it in the review app |
+|---|---|---|---|
+| `review-elemental-decomposed.csv` | 160 | elemental characters that still have a decomposition (三 = 一/一/一, 丈 = 一/乂) | open the character, delete all rows of the **Revise** table, tick *elemental*, **Save revision** (most should become primitives) |
+| `review-left-out.csv` | 222 | rows that could not be converted (211 with two or more parts in one position, such as `L = 冖 一`; 6 with one part; 5 with `?`; 1 inactive) | open the character (it says "not in this database"), enter its parts and positions, **Check the change**, **Save revision** |
+| `review-with-warnings.csv` | 102 | W8 (a radical labelled `M`, 88) and W7 (overlapping regions, 14, mostly `U-L-R` that should be `U-LD-RD`). The `codes` column separates them | change the positions in the **Revise** table so the warning clears, or leave it and write the reason in **Why** when it is a real exception to the radical rule |
+| `review-revised.csv` | 2 | revisions made so far (弗, 他). Not an error list: it is the record of what you already changed | check that each one is still what you want |
+
+Each file has a `char` column. Sort and filter in a spreadsheet to plan the work, and use the app to make each change.
+
+### The planned route: fix in the original app, then rebuild here
+
+The author's original Streamlit app, the one used to decompose the 6,000 characters, edits the master database (`zi.sqlite3`). It is fast and knows the data, so the main route is:
+
+1. Use `db/review-*.csv` as the worklist, and fix the characters in the original app.
+2. Take the finished `zi.sqlite3` and put it somewhere outside the repository (zitex only reads it, and the master is not committed).
+3. Rebuild the derived database here:
+   ```bash
+   zitex db-build -i path/to/zi.sqlite3 -o db/zitex.sqlite3 --report db/zitex-quarantine.csv
+   ```
+4. Check, export the worklists again, and commit `db/`:
+   ```bash
+   zitex check -i db/zitex.sqlite3
+   zitex review-export -i db/zitex.sqlite3 -o db
+   ```
+   The metrics and the CSV files should have shrunk by what you fixed. Whatever is still listed is what remains.
+
+**Before step 3, deal with the two existing revisions** (弗 and 他, in `db/review-revised.csv`). They live only in the zitex file, and `db-build` applies them again on top of the new master. If the master already has the same fix (弗 as a primitive in `t_ele_zi` with no parts, 他 = 亻 + 也), nothing changes. If you change either character differently in the master, the old revision would override you. So either make the master agree, or revert the revision in the review app first. After the rebuild, `review-revised.csv` should list only revisions you still want.
+
+The review app in this repository is then for **checking the result**, and for the odd one-off fix: after the rebuild, look at the lists and open any character that still looks wrong.
+
+### The loop (fixing in this repository's review app instead)
+
+1. **Fix** a batch in the review app (`streamlit run src/ui/streamlit/app.py`). Each **Save revision** is stored in `zx_revision` of the zitex file, with the original row so **Revert to the original** works. Work on `db/zitex.sqlite3` itself, or on a copy that you later copy back.
+2. **Check progress** in the metrics row at the top of the page. The goal is `left out` 0, `elemental, decomposed` 0 (or the number you decide to keep), and `with warnings` down to the real exceptions.
+3. **Export again** when you want a fresh worklist:
+   ```bash
+   zitex review-export -i db/zitex.sqlite3 -o db
+   ```
+   It only reads the database, and it overwrites the four `db/review-*.csv` files.
+4. **Rebuild** when the batch is done and you want the master data to carry the fixes:
+   ```bash
+   zitex db-build -i path/to/zi.sqlite3 -o db/zitex.sqlite3 --report db/zitex-quarantine.csv
+   ```
+   It builds the tables afresh from the master database, and **applies your revisions again on top** (it prints `re-applied N revision(s)`). The master database is opened read only and is never changed.
+5. **Check after the rebuild.** Open the review page again: the metrics should show your fixes, and `zitex check -i db/zitex.sqlite3` should agree. Then commit `db/` (the database and the CSV files).
+
+### Decide where the truth lives
+
+There are two places to fix a character, and you should choose one for each batch.
+
+- **In the app, as a revision** (steps 1 to 4 above). The fix lives in the zitex file. It survives every `db-build`, but the master database still has the old row.
+- **In the master database** (`t_zi_part`, `t_ele_zi`), then `db-build`. The fix is part of the source. Once you have done this for a character, **revert or delete its revision in the app**: a revision is applied on top of the rebuilt row, so a stale one would override the master.
+
+The revisions list (`review-revised.csv`, or **Download the revisions (CSV)** on the page) is what to copy into the master database when you want the two to agree. After that the revisions can be reverted, and the master alone is the truth again.
+
+### Suggested order
+
+Start with the groups that remove the most noise for the least thought:
+
+- [ ] **Elemental, decomposed (160).** Mostly mechanical: make each a primitive. This also removes false structure from every character that uses it.
+- [ ] **W7 (14).** Mostly one pattern, `U-L-R` to `U-LD-RD`.
+- [ ] **W8 (88).** One decision per character: a data error, or an exception to the radical rule. Write the reason in **Why** for the exceptions, so it is kept with the revision.
+- [ ] **Left out (222).** The 211 multi-part cells need a choice each (a nested level, or a corrected cell). Do the 6 one-part rows, the 5 `?` and the inactive row by hand.
+- [ ] **Then** the 469 undecomposed components and the 113 `Mi` patterns (section 14, B), which are not in these four lists.
+- [ ] **Rebuild and commit** `db/zitex.sqlite3` and the CSV files after each batch.

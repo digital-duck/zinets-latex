@@ -14,14 +14,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-from .workspace import MAX_CHARS
-
-SPLIT = re.compile(r"[,，、\s]+")
+from .workspace import MAX_CHARS, split_chars
 
 
 def parse_chars(text: str) -> list[str]:
-    """Characters from a string such as "器,藻 佛": separated by commas or spaces, each once, in the order given."""
-    return list(dict.fromkeys(c for c in SPLIT.split(text or "") if c))
+    """Characters from a phrase such as "守株待兔" or "器,藻 佛": each once, in the order given, no delimiter needed."""
+    return split_chars(text)
 
 
 @dataclass
@@ -111,7 +109,7 @@ def _skipped(extract_output: str) -> list[str]:
     for line in extract_output.splitlines():
         m = re.match(r"not in .*?: (.+)$", line.strip())
         if m:
-            found += [c for c in SPLIT.split(m.group(1)) if c]
+            found += split_chars(m.group(1))
     return found
 
 

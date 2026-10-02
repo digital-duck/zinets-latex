@@ -294,7 +294,7 @@ def test_help_is_spelled_out(command, width):
 
 def test_every_command_has_a_complete_one_line_summary():
     summaries = {name: cmd.short_help for name, cmd in main.commands.items()}
-    assert set(summaries) == {"check", "shape", "fonts", "render", "install-sty", "patterns", "db-build", "extract", "setup"}
+    assert set(summaries) == {"check", "shape", "fonts", "render", "install-sty", "patterns", "db-build", "extract", "setup", "review-export"}
     assert all(s and s.endswith(".") for s in summaries.values()), summaries
 
 

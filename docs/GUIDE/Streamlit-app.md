@@ -26,10 +26,9 @@ The app opens at <http://localhost:8501>. It needs `xelatex` (page 2, and the pi
 **Save revision writes to the zitex file.** It never touches your working database (`zi.sqlite3`), but it does change whatever file is named in the sidebar. So validate on a copy:
 
 ```bash
-cp db/zitex.sqlite3 /tmp/zitex-try.sqlite3
+# backup
+cp db/zitex.sqlite3 db/zitex-orig.sqlite3
 ```
-
-Paste `/tmp/zitex-try.sqlite3` into the sidebar box **zitex database (zx_ tables)**. When you are happy, point the box back at `db/zitex.sqlite3` and make the real revisions.
 
 ## 3. Page 1: Review decompositions
 
@@ -100,7 +99,7 @@ Start with the copy in the sidebar. Tick each box as you go.
 
 ## 5. Page 2: Generate main.pdf
 
-1. Type characters in **Characters**, separated by commas, spaces or new lines (`器,藻,佛` is filled in). Duplicates are dropped, and at most 60 are used (the caption says so).
+1. Type characters in **Characters**: a word or phrase with no separator (`守株待兔` becomes 守 株 待 兔), or characters separated by commas, spaces or new lines (`器,藻,佛` is filled in). Punctuation is skipped, repeats are dropped, and at most 60 are used. The caption lists the characters it found.
 2. Press **Generate main.pdf**. A status box shows the three steps as they run.
 3. The result: page images, **Download main.pdf**, and an expander **What each step printed** with the logs, `main.tex` and `chars.yaml`.
 

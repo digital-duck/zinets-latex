@@ -24,9 +24,10 @@ if not need_tools("xelatex"):
     st.stop()
 
 text = st.text_area("Characters", value=st.session_state.get("chars", "器,藻,佛"), key="chars_text",
-                    help="Separated by commas or spaces. At most %d are used." % MAX_CHARS, height=90)
+                    help="Type a word or phrase such as 守株待兔 (no separator needed), or characters separated by commas or spaces. Each character is used once. At most %d are used." % MAX_CHARS, height=90)
 chars = parse_chars(text)
-st.caption(f"{len(chars)} characters" + (f", the first {MAX_CHARS} will be used" if len(chars) > MAX_CHARS else ""))
+st.caption(f"{len(chars)} character{'' if len(chars) == 1 else 's'}" + (f": {' '.join(chars[:MAX_CHARS])}" if chars else "")
+           + (f". Only the first {MAX_CHARS} will be used." if len(chars) > MAX_CHARS else ""))
 
 if st.button("Generate main.pdf", type="primary", disabled=not chars):
     with st.status("Working ...", expanded=True) as status:

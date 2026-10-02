@@ -132,9 +132,10 @@ if table:
     picked = sel.selection.rows if sel and sel.selection else []
     if picked:
         chosen = frame.iloc[picked[0]]["char"]
-        if chosen != zi and st.button(f"Open {chosen}"):
-            st.session_state["char"] = chosen
-            st.rerun()
+        if chosen != zi:
+            # a callback, not an assignment after the button: the "char" box already exists in this run, and Streamlit
+            # only lets session state of a widget change before it is drawn (callbacks run first)
+            st.button(f"Open {chosen}", on_click=lambda c=chosen: st.session_state.update(char=c))
 else:
     st.info("Nothing in this list.")
 

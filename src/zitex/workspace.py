@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -17,6 +18,15 @@ from .render import esc
 TEMPLATES = Path(__file__).with_name("templates")
 STY = Path(__file__).with_name("zitex.sty")
 MAX_CHARS = 60           # `zitex extract` keeps at most this many characters: more would make main.tex a book
+
+
+def split_chars(text: str) -> list[str]:
+    """The characters of a phrase, each once, in the order they first appear: "守株待兔" gives 守 株 待 兔.
+
+    No delimiter is needed, and commas, spaces and other punctuation (including the Chinese ones) are skipped, so
+    "器,藻 佛" and "器藻佛" are the same list.
+    """
+    return list(dict.fromkeys(c for c in text or "" if unicodedata.category(c)[0] not in "PSZC"))
 
 
 def fonts_yaml_text(choice: FontChoice) -> str:

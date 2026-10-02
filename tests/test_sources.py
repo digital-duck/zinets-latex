@@ -453,3 +453,24 @@ def test_db_build_reports_elemental_characters_that_still_have_a_decomposition(r
     assert "elemental characters still have a decomposition" in r.output
     rows = (tmp_path / "q-elemental-decomposed.csv").read_text(encoding="utf-8").splitlines()
     assert rows[0] == "zi,decomposition" and any(line.startswith("寺,") for line in rows)
+
+
+def test_review_export_writes_the_four_lists(raw_db, tmp_path):
+    import csv
+    from zitex.review import EXPORTS, load_review
+    zx = zxdb.write_zx(zxdb.build_from_raw(raw_db), tmp_path / "zitex.sqlite3")
+    zxdb.revise(zx, "時", [("L", "日"), ("R", "寸")], note="try")
+    r = _run(["review-export", "-i", str(zx), "-o", "lists"], tmp_path)
+    assert r.exit_code == 0, r.output
+    data = load_review(zx)
+    expected = {"review-with-warnings.csv": len(data.warnings), "review-left-out.csv": len(data.quarantine),
+                "review-elemental-decomposed.csv": len(data.elemental_decomposed), "review-revised.csv": 1}
+    assert set(EXPORTS.values()) == set(expected)
+    for name, n in expected.items():
+        raw = (tmp_path / "lists" / name).read_bytes()
+        assert raw.startswith(b"\xef\xbb\xbf")                                  # a BOM, for spreadsheets
+        rows = list(csv.reader(raw.decode("utf-8-sig").splitlines()))
+        assert len(rows) == n + 1 and rows[0][0] == "char", name
+        assert f"{n} rows" in r.output
+    assert "時" in (tmp_path / "lists" / "review-revised.csv").read_text(encoding="utf-8-sig")
+    assert _run(["review-export", "-i", str(DATA / "chars.yaml"), "-o", "x"], tmp_path).exit_code == 2     # YAML: nothing to export
