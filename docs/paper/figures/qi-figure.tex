@@ -1,0 +1,67 @@
+% Side-by-side figure for the 器 discussion: ancient forms next to zitex matrices.
+%   python fetch_glyphs.py                 (glyph images, public domain, from Wikimedia Commons)
+%   zitex setup -o . ; zitex extract -c 器,嚣,哭,武,犬 -o .     (the zitex snippets; delete the generated main.tex)
+%   xelatex qi-figure.tex
+\documentclass[11pt]{article}
+\usepackage[margin=1.8cm]{geometry}
+\usepackage{zitex}
+\setCJKmainfont{Noto Serif CJK SC}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+\pagestyle{empty}
+
+% \glyph{char}{kind}: the ancient form if the source has one, a dash if not
+\newcommand{\cell}[2]{\parbox[c][2.7cm][c]{#1}{\centering #2}}      % a cell of fixed height, centred
+\newcommand{\lab}[1]{\cell{2.4cm}{\large #1}}
+\newcommand{\none}[1][2.2cm]{\cell{#1}{\textcolor{gray}{--}}}
+\newcommand{\glyph}[2]{\IfFileExists{glyphs/#1-#2.pdf}{\cell{2.2cm}{\includegraphics[height=1.5cm]{glyphs/#1-#2.pdf}}}{\none}}
+\newcommand{\zibox}[1]{\cell{3cm}{\resizebox{!}{2.4cm}{\zimatrix{#1}}}}
+
+\begin{document}
+
+\begin{figure}[ht]
+\centering
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}c c c c c@{}}
+\toprule
+ & Oracle bone & Bronze & Seal & Zi-Matrix \\
+\midrule
+\lab{器} & \glyph{器}{oracle} & \glyph{器}{bronze} & \glyph{器}{seal} & \zibox{器} \\
+\lab{囂 (嚣)} & \glyph{囂}{oracle} & \glyph{囂}{bronze} & \glyph{囂}{seal} & \zibox{嚣} \\
+\lab{哭} & \glyph{哭}{oracle} & \glyph{哭}{bronze} & \glyph{哭}{seal} & \zibox{哭} \\
+\lab{喪} & \glyph{喪}{oracle} & \glyph{喪}{bronze} & \glyph{喪}{seal} & \cell{3cm}{\textcolor{gray}{\footnotesize not in the database}} \\
+\bottomrule
+\end{tabular}
+\caption{A dog, or a head, among mouths. 器 (vessel), 囂 (clamour) and 哭 (to cry) all place 口 (mouth) around or above a central part: in 嚣 the centre is 页 (head), and in 哭 the dog is below two mouths. 喪 (mourning) is shown because Wiktionary lists it as another theory of where 器 comes from. A dash means the source has no form of that kind. In particular it shows \emph{no oracle-bone form of 器}, so the
+earliest form here is bronze. Glyph images: Wikimedia Commons (public domain), see \texttt{CREDITS.md}.}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}c c c c c@{}}
+\toprule
+ & Oracle bone & Bronze & Seal & Zi-Matrix \\
+\midrule
+\lab{戈 (halberd)} & \glyph{戈}{oracle} & \glyph{戈}{bronze} & \glyph{戈}{seal} & \none[3cm] \\
+\lab{武} & \glyph{武}{oracle} & \glyph{武}{bronze} & \glyph{武}{seal} & \zibox{武} \\
+\lab{兵} & \glyph{兵}{oracle} & \glyph{兵}{bronze} & \glyph{兵}{seal} & \none[3cm] \\
+\bottomrule
+\end{tabular}
+
+\bigskip
+\begin{tabular}{@{}c c c c c c@{}}
+\zibox{武} & \cell{1cm}{\Large +} & \zibox{器} & \cell{1cm}{\Large $\rightarrow$} & \cell{2.4cm}{\Large 武器}\\
+\multicolumn{6}{c}{\footnotesize wǔ (martial) \quad + \quad qì (vessel, tool) \quad $\rightarrow$ \quad wǔqì (weapon)}
+\end{tabular}
+\caption{The weapon dimension. The database decomposes 武 as 一, 止 and 弋, and the traditional reading is 止 (foot) and 戈 (halberd). In the word 武器 (weapon), 器 is the generic ``implement'', as in 兵器 and 利器.
+If the early picture of 器 is a dog caught among mouths, that could point to a trap as one of the earliest
+implements of hunting, so that ``implement'' grew out of ``trapping device''. This is a hypothesis to test against
+the early forms and their uses, and not an established etymology.}
+\end{figure}
+
+\end{document}

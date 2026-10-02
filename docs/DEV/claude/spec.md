@@ -195,7 +195,7 @@ components:
 
 Resolution for each component: override, then primary font, then fallbacks, then a boxed label (`U+20009` or the name), reported as missing. Coverage is read from the font files with fontTools. A font that cannot be inspected is assumed to cover everything, so a build never fails on a guess.
 
-Commands: `zitex fonts data.yaml --fonts fonts.yaml [--strict]` prints the report, and `zitex render ... --fonts fonts.yaml` applies it. Snippets that use a fallback begin with `\providecommand` lines for `\zifont`, `\zisvg` and `\zimissing`, so they stay self-contained. SVG glyphs are converted to `zitex-out/glyphs/*.pdf`.
+Commands: `zitex fonts -i data.yaml --fonts fonts.yaml [--strict]` prints the report, and `zitex render ... --fonts fonts.yaml` applies it. Snippets that use a fallback begin with `\providecommand` lines for `\zifont`, `\zisvg` and `\zimissing`, so they stay self-contained. SVG glyphs are converted to `zitex-out/glyphs/*.pdf`.
 
 On this machine all 60 components of the original 23-character test set are in Noto Serif CJK SC. No installed font has U+20009, which makes it a good test of the missing path.
 

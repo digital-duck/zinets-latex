@@ -2,7 +2,7 @@
 \ProvidesPackage{zitex}[2026/10/01 zitex: Chinese character decompositions (XeLaTeX)]
 %
 % Thin by design: all parsing and layout is done by the Python tool.
-%   zitex render chars.yaml --scan main.tex -o zitex-out
+%   zitex render -i chars.yaml --scan main.tex -o zitex-out
 % writes one snippet per character and style; this package only \input's them.
 %
 %   \zi[style=tree|matrix|formula|math, lang=fr, reading=author]{藻}

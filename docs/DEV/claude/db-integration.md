@@ -72,7 +72,7 @@ flowchart LR
     raw -. "in memory, nothing written" .-> sq
     ya --> entries["entries + lexicon"]
     sq --> entries
-    sq -- "zitex extract" --> yaml2["db-chars.yaml<br/>db-lexicon.yaml"]
+    sq -- "zitex extract" --> yaml2["work/: chars.yaml, lexicon.yaml,<br/>main.tex, zitex-out/"]
     entries --> r["check, shape, patterns, fonts, render"]
 ```
 
@@ -80,7 +80,7 @@ Both adapters return **entries** (decomposition trees) and a **lexicon** (pinyin
 
 - **`YamlSource`** is the prototype path, unchanged: `chars.yaml` plus lexicon files.
 - **`SqliteSource`** reads the `zx_*` tables, or the raw working tables (converted in memory, nothing written). For each character it builds the **same dictionary a `chars.yaml` entry loads from**, and calls the same `entry_from_dict`. After that there is one code path: validation, rendering and export are shared.
-- **YAML is the intermediate form.** `zitex extract` writes the database (or just the characters you name) as `db-chars.yaml` and `db-lexicon.yaml` in the same compact style as the hand-written files. The export round-trips exactly (5,982 entries compared field by field in the tests), so the YAML can be reviewed, diffed and fed to `render` like any other.
+- **YAML is the intermediate form.** `zitex extract` writes the database (or just the characters you name) as `chars.yaml` and `lexicon.yaml` in a folder in the same compact style as the hand-written files. The export round-trips exactly (5,982 entries compared field by field in the tests), so the YAML can be reviewed, diffed and fed to `render` like any other.
 
 ### The `zx_*` tables
 
@@ -107,16 +107,28 @@ Both adapters return **entries** (decomposition trees) and a **lexicon** (pinyin
 ## 4. Commands
 
 ```bash
-zitex db-build path/to/zi.sqlite3 -o db/zitex.sqlite3 --report db/zitex-quarantine.csv   # once, and after the database changes
-zitex patterns db/zitex.sqlite3                                  # the table behind Figure 5
-zitex check db/zitex.sqlite3                                     # validate every converted character
-zitex render db/zitex.sqlite3 -c 器,藻 -o figs/                  # render straight from the database
-zitex extract db/zitex.sqlite3 -c 器,藻                          # or extract them as YAML for review
+zitex db-build -i path/to/zi.sqlite3 -o db/zitex.sqlite3 --report db/zitex-quarantine.csv   # once, and after the database changes
+zitex patterns -i db/zitex.sqlite3                                  # the table behind Figure 5
+zitex check -i db/zitex.sqlite3                                     # validate every converted character
+zitex render -i db/zitex.sqlite3 -c 器,藻 -o figs/                  # render straight from the database
+zitex setup -o work/                                             # a self-contained folder: zitex.sty, fonts.yaml, samples
+zitex extract -c 器,藻,佛 -o work/                                # chars.yaml, lexicon.yaml, main.tex, zitex-out/ (db/zitex.sqlite3 by default)
+(cd work && xelatex main.tex)                                    # the PDF
 ```
 
 All of them also accept the raw `zi.sqlite3` (converted in memory, nothing written). `db-build` is what makes the clean copy persistent, and keeps a record of what was left out.
 
-## 5. Open points
+## 5. Revisions
+
+A correction made by hand is a **revision**: the new parts of one character (or none, which makes it a primitive), an optional *elemental* flag, a note, and what it replaced. It is stored in `zx_revision` of the zitex file, and applied to `zx_part` and `zx_char`. Three properties matter:
+
+- **The working database is never touched.** Revisions are written only to the zitex file.
+- **They survive a rebuild.** `zitex db-build` reads the revisions first, builds the tables afresh, and applies them again on top (it says `re-applied N revision(s)`). The "original" a later revert returns to is the freshly built row.
+- **They are reversible.** The first revision of a character remembers its original parts, whether it was a root, whether it was elemental, and any quarantine row.
+
+An elemental character is never expanded inside other characters, so marking 弗 elemental and giving it no parts makes 佛 `⿰亻弗`, and 拂 and 沸 `⿰扌弗` and `⿰氵弗`. The first revision in the repository is exactly that. `zitex db-build` also writes `*-elemental-decomposed.csv`: the elemental characters that still have a decomposition (160 at the time of writing, for example 三 = 一/一/一 and 丈 = 一/乂), which is the worklist for making most of them primitives. The Streamlit app (`src/ui/streamlit/`) is the way to do it one by one.
+
+## 6. Open points
 
 1. **The 223 left-out rows.** The 211 multi-part cells are the largest group. They need a decision for each: split into a nested level, or fix in the database. They are in `zitex-quarantine.csv`, written by `--report`.
 2. **The 469 undecomposed components.** Either add rows for them, or add them to the elemental set. They are in `zitex-quarantine-undecomposed.csv`.

@@ -7,6 +7,7 @@ dependencies = ["pyyaml", "click", "fonttools"]
 
 [project.optional-dependencies]
 dev = ["pytest"]
+ui = ["streamlit>=1.50", "pandas"]      # the review and generate app: streamlit run src/ui/streamlit/app.py
 
 [project.scripts]
 zitex = "zitex.cli:main"
@@ -23,4 +24,4 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-zitex = ["zitex.sty"]      # the LaTeX package ships inside the Python package, for `zitex install-sty`
+zitex = ["zitex.sty", "templates/*"]      # the LaTeX package (for `zitex install-sty`) and the files `zitex setup` writes

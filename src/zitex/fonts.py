@@ -188,3 +188,47 @@ def coverage_report(entries, cfg: FontConfig) -> Report:
             users.setdefault(ch, []).append(e.char)
     rows = sorted(((c, resolve(cfg, c), u) for c, u in users.items()), key=lambda r: (r[1].kind != "missing", r[0]))
     return Report(rows, cmap(cfg.primary) is not None)
+
+
+# ---- finding fonts on this computer (used by `zitex setup`) ------------------------------------------------
+
+PRIMARY_CANDIDATES = ("Noto Serif CJK SC", "Noto Serif CJK TC", "Noto Serif CJK JP", "Source Han Serif SC",
+                      "Noto Sans CJK SC", "Source Han Sans SC", "WenQuanYi Zen Hei", "AR PL UMing CN",
+                      "Droid Sans Fallback")
+FALLBACK_CANDIDATES = ("Noto Sans CJK SC", "Noto Serif CJK TC", "Noto Serif CJK JP", "Noto Serif CJK KR",
+                       "Noto Serif CJK HK", "Source Han Serif SC", "Source Han Sans SC", "AR PL UMing CN",
+                       "AR PL UMing TW", "WenQuanYi Zen Hei", "Droid Sans Fallback", "Unifont", "Unifont Upper",
+                       "BabelStone Han", "HanaMin", "Hanazono Mincho A", "Hanazono Mincho B", "Sun-ExtA", "SimSun-ExtB")
+_CJK_RANGES = ((0x2E80, 0x2FDF), (0x3400, 0x4DBF), (0x4E00, 0x9FFF), (0xF900, 0xFAFF), (0x20000, 0x2FA1F))
+
+
+def _cjk(codes) -> set[int]:
+    return {c for c in codes if any(a <= c <= b for a, b in _CJK_RANGES)}
+
+
+@dataclass
+class FontChoice:
+    primary: str | None                                   # None: none of the candidates is installed
+    fallbacks: list[tuple[str, int]] = field(default_factory=list)   # (family, CJK characters it adds)
+    primary_size: int = 0                                 # CJK characters the primary font has
+
+
+def detect_fonts() -> FontChoice:
+    """The primary font is the first installed candidate. The fallbacks are chosen greedily: each one is the
+    installed font that adds the most CJK characters that nothing chosen so far has, and a font that adds none
+    is left out. Needs fontconfig and fontTools; without them nothing is found."""
+    installed = _font_files()
+    primary = next((f for f in PRIMARY_CANDIDATES if f in installed and cmap(f) is not None), None)
+    if primary is None:
+        return FontChoice(None)
+    have = _cjk(cmap(primary) or ())
+    choice = FontChoice(primary, [], len(have))
+    pool = {f: _cjk(cmap(f) or ()) for f in FALLBACK_CANDIDATES if f in installed and f != primary}
+    while pool:
+        best = max(pool, key=lambda f: (len(pool[f] - have), -FALLBACK_CANDIDATES.index(f)))
+        gain = len(pool[best] - have)
+        if gain == 0:
+            break
+        choice.fallbacks.append((best, gain))
+        have |= pool.pop(best)
+    return choice

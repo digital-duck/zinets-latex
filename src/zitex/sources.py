@@ -27,6 +27,8 @@ from .ops import pattern_of
 from .tree import node_from_dict, to_shape
 
 SQLITE_MAGIC = b"SQLite format 3\x00"
+DB_RELATIVE = Path("db") / "zitex.sqlite3"
+ENV_DB = "ZITEX_DB"
 DEFAULT_DEPTH = 12          # a guard against cycles and runaway nesting, far deeper than any real character
 
 
@@ -46,6 +48,30 @@ def is_sqlite(path: str | Path) -> bool:
 def open_source(path: str | Path, depth: int | None = None) -> "YamlSource | SqliteSource":
     """A SQLite file (recognised by its header, whatever its name) or a decomposition YAML."""
     return SqliteSource(path, depth=depth) if is_sqlite(path) else YamlSource(path)
+
+
+def _checkout_root() -> Path:
+    """The folder above src/zitex when zitex runs from a checkout (an editable install); elsewhere it is not a project."""
+    return Path(__file__).resolve().parents[2]
+
+
+def find_default_database(start: Path | None = None) -> Path | None:
+    """Where `zitex extract` looks when no --input is given:
+
+      1. $ZITEX_DB, if set and the file exists
+      2. db/zitex.sqlite3 in the current folder or in the nearest parent that has one (the project root)
+      3. db/zitex.sqlite3 of the zitex checkout this code runs from
+    """
+    import os
+    env = os.environ.get(ENV_DB)
+    if env and Path(env).is_file():
+        return Path(env)
+    here = (start or Path.cwd()).resolve()
+    for folder in (here, *here.parents):
+        if (folder / DB_RELATIVE).is_file():
+            return folder / DB_RELATIVE
+    root = _checkout_root() / DB_RELATIVE
+    return root if root.is_file() else None
 
 
 # ---- YAML ------------------------------------------------------------------------------------------
@@ -134,7 +160,7 @@ class SqliteSource:
                 d["meaning"] = info.meaning
             if not info.has_parts:
                 d["shape"], d["tree"] = zi, {"c": zi}
-                d["note"] = "no decomposition in the database"
+                d["note"] = "a primitive: it has no decomposition"
                 self.report.no_decomposition.append(zi)
             else:
                 flags: set[str] = set()

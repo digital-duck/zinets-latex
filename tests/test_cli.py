@@ -20,7 +20,7 @@ def _render(args, tmp_path):
     old = os.getcwd()
     os.chdir(tmp_path)
     try:
-        return CliRunner().invoke(main, ["render", DATA, *args])
+        return CliRunner().invoke(main, ["render", "-i", DATA, *args])
     finally:
         os.chdir(old)
 
@@ -32,13 +32,13 @@ def _names(path):
 # ---- check, shape ---------------------------------------------------------------------------
 
 def test_check():
-    r = CliRunner().invoke(main, ["check", DATA])
+    r = CliRunner().invoke(main, ["check", "-i", DATA])
     assert r.exit_code == 0
     assert "29 entries, 0 warnings" in r.output
 
 
 def test_shape():
-    r = CliRunner().invoke(main, ["shape", DATA])
+    r = CliRunner().invoke(main, ["shape", "-i", DATA])
     assert r.exit_code == 0
     assert "品\t∴口口口" in r.output
     assert "哭\t∵口口犬" in r.output
@@ -284,7 +284,7 @@ def test_sty_reading_end_to_end(tmp_path):
 # ---- help text -------------------------------------------------------------------------------
 
 @pytest.mark.parametrize("width", ["60", "80", "120"])
-@pytest.mark.parametrize("command", [[], ["check"], ["shape"], ["fonts"], ["render"], ["install-sty"], ["patterns"], ["db-build"], ["extract"]])
+@pytest.mark.parametrize("command", [[], ["check"], ["shape"], ["fonts"], ["render"], ["install-sty"], ["patterns"], ["db-build"], ["extract"], ["setup"]])
 def test_help_is_spelled_out(command, width):
     """No help page may cut its text short with '...' (click does that to a derived short help)."""
     r = CliRunner().invoke(main, [*command, "-h"], env={"COLUMNS": width})
@@ -294,7 +294,7 @@ def test_help_is_spelled_out(command, width):
 
 def test_every_command_has_a_complete_one_line_summary():
     summaries = {name: cmd.short_help for name, cmd in main.commands.items()}
-    assert set(summaries) == {"check", "shape", "fonts", "render", "install-sty", "patterns", "db-build", "extract"}
+    assert set(summaries) == {"check", "shape", "fonts", "render", "install-sty", "patterns", "db-build", "extract", "setup"}
     assert all(s and s.endswith(".") for s in summaries.values()), summaries
 
 
@@ -356,3 +356,10 @@ def test_install_sty_makes_plain_xelatex_work(tmp_path):
     assert p.returncode == 0, p.stdout[-600:]
     assert "Missing zitex-out" not in p.stdout          # the snippet was found: no stray @ in the name
     assert (tmp_path / "main.pdf").exists()
+
+
+def test_scan_tex_skips_comments_and_verbatim(tmp_path):
+    t = tmp_path / "p.tex"
+    t.write_text("\\zimath{森}\n% \\zitree{木}  and \\zitexsetlang{fr}\n50\\% \\zimatrix{國}\n"
+                 "\\begin{verbatim}\n\\zitexsetlang{de}\n\\zimath{藻}\n\\end{verbatim}\n\\zimath{悔}\n", encoding="utf-8")
+    assert scan_tex(t) == {("森", "math", None, None), ("國", "matrix", None, None), ("悔", "math", None, None)}

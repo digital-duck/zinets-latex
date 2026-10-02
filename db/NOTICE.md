@@ -21,6 +21,10 @@ The definitions were adapted for use as short labels:
 
 CC BY-SA asks you to keep this attribution when you share the data, to say that changes were made, and to share an adapted version under the same licence. In short: this derived data is shared under **CC BY-SA 4.0**. The same text is stored inside the database file (table `zx_meta`, key `attribution`) and written at the top of every YAML file that `zitex extract` produces, so it travels with the data.
 
+## Revisions made by hand
+
+`zitex.sqlite3` also holds corrections made by the author (table `zx_revision`, with a note and a date for each). They replace the decomposition that came from the working database, and `zitex db-build` keeps them. The first one makes 弗 a primitive elemental character, so that 佛 is 亻 + 弗.
+
 ## Not from CC-CEDICT
 
 - The curated one-word meanings of the elemental characters and radicals, the decompositions and the positions come from the ZiNets database, which is the author's own work.

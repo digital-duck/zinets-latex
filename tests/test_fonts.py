@@ -102,10 +102,10 @@ def test_real_data_fully_covered_by_default_font():
 
 @needs_fonts
 def test_fonts_command_and_strict():
-    r = CliRunner().invoke(main, ["fonts", str(D / "fallback.yaml"), "--fonts", str(D / "fonts.yaml")])
+    r = CliRunner().invoke(main, ["fonts", "-i", str(D / "fallback.yaml"), "--fonts", str(D / "fonts.yaml")])
     assert r.exit_code == 0
     assert "MISSING" in r.output and "font AR PL UMing CN" in r.output and "svg glyphs/demo.svg" in r.output
-    r = CliRunner().invoke(main, ["fonts", str(D / "fallback.yaml"), "--fonts", str(D / "fonts.yaml"), "--strict"])
+    r = CliRunner().invoke(main, ["fonts", "-i", str(D / "fallback.yaml"), "--fonts", str(D / "fonts.yaml"), "--strict"])
     assert r.exit_code == 1
 
 

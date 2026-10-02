@@ -216,3 +216,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# the Streamlit app's generated working folder (zitex setup, extract, xelatex)
+/workspace/

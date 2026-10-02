@@ -133,3 +133,12 @@ def op_for_pattern(labels) -> str:
     (the long flat ones, and anything with Mi) gets the general form <pattern>."""
     labels = tuple(labels)
     return _OP_OF.get(labels) or GENERAL_OPEN + pattern_of(labels) + GENERAL_CLOSE
+
+
+def order_pairs(pairs) -> list[tuple[str, str]]:
+    """(label, part) pairs in the canonical reading order of their labels (repeated labels keep their order)."""
+    pairs = list(pairs)
+    pool: dict[str, list[str]] = {}
+    for pos, part in pairs:
+        pool.setdefault(pos, []).append(part)
+    return [(lab, pool[lab].pop(0)) for lab in reading_order([pos for pos, _ in pairs])]

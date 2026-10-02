@@ -64,18 +64,26 @@ You also need XeLaTeX with `tikz`, `xeCJK`, `fontspec` and `amsmath`, and a CJK 
 ## Quick start
 
 ```bash
-zitex check tests/data/chars.yaml                     # validate
-zitex render tests/data/chars.yaml -c 森 -s math \
+zitex check -i tests/data/chars.yaml                     # validate
+zitex render -i tests/data/chars.yaml -c 森 -s math \
       -x tests/data/lexicon.yaml --collapse -o -      # print one equation
-zitex render tests/data/chars.yaml -c 森,作 -o figs/   # .tex and .pdf, every style, into figs/
+zitex render -i tests/data/chars.yaml -c 森,作 -o figs/   # .tex and .pdf, every style, into figs/
 make -C examples/demo                                  # build a small paper
 ```
 
 From the ZiNets SQLite database instead of a YAML file:
 
 ```bash
-zitex db-build path/to/zi.sqlite3 -o db/zitex.sqlite3  # once: a clean zx_ copy, the original untouched
-zitex render db/zitex.sqlite3 -c 器,藻 -o figs/       # the same render command
+zitex db-build -i path/to/zi.sqlite3 -o db/zitex.sqlite3  # once: a clean zx_ copy, the original untouched
+zitex render -i db/zitex.sqlite3 -c 器,藻 -o figs/       # the same render command
+```
+
+Or a self-contained folder, with everything `xelatex` needs (including `zitex.sty`):
+
+```bash
+zitex setup -o work/                                   # fonts.yaml for this computer, zitex.sty, samples
+zitex extract -c 器,藻,佛 -o work/                     # chars.yaml, lexicon.yaml, main.tex and its snippets (db/zitex.sqlite3 by default; -i PATH for another)
+cd work && xelatex main.tex
 ```
 
 In a document:
@@ -88,9 +96,11 @@ In a document:
 
 ```bash
 zitex install-sty                                      # once: lets plain xelatex find zitex.sty
-zitex render chars.yaml --scan main.tex -x lexicon.yaml
+zitex render -i chars.yaml --scan main.tex -x lexicon.yaml
 xelatex main.tex
 ```
+
+A browser app does the same, and lets you review and correct decompositions: `pip install -e ".[ui]"`, then `streamlit run src/ui/streamlit/app.py` (see [`src/ui/streamlit/README.md`](src/ui/streamlit/README.md)).
 
 The step-by-step guide is in [`docs/GUIDE/TUTORIAL.md`](docs/GUIDE/TUTORIAL.md).
 

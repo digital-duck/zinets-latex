@@ -6,7 +6,7 @@ ZLEX  = ../../tests/data/lexicon.yaml
 export TEXINPUTS := ../../src/zitex:
 
 main.pdf: main.tex
-	zitex render $(ZDATA) --scan main.tex -x $(ZLEX) -l en -l fr --collapse --arrow role
+	zitex render -i $(ZDATA) --scan main.tex -x $(ZLEX) -l en -l fr --collapse --arrow role
 	xelatex -interaction=nonstopmode main.tex
 
 clean:

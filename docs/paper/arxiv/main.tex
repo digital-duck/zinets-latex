@@ -1,0 +1,158 @@
+% zitex: arXiv manuscript. Build with XeLaTeX, twice:   xelatex main.tex
+% The folder is self-contained: zitex.sty, fonts.yaml and zitex-out/ (the snippets) were made by
+%   zitex setup -o . ; zitex extract -c 器,藻,佛 -o .     and this file replaces the generated main.tex.
+\documentclass[11pt]{article}
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{zitex}
+\setCJKmainfont{Noto Serif CJK SC}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage[hidelinks]{hyperref}
+\captionsetup{font=small,labelfont=bf}
+\newcommand{\cmd}[1]{\texttt{\textbackslash #1}}
+
+\title{Decomposing Chinese Characters:\\ \LaTeX{} Typesetting with \texttt{zitex}}
+\author{Wen G. Gong\\ \texttt{wen.gong.research@gmail.com}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Chinese characters are built from smaller components, and the arrangement of those components (side by side,
+stacked, enclosing) carries information that running text cannot show. Writers draw such decompositions by hand,
+so the figures are slow to make, inconsistent, and detached from the data behind them. We present \texttt{zitex}, an
+extension for XeLaTeX that makes the figure a function of the data. A character is a short entry giving its shape
+and the position of each part in the eleven-position Zi-Matrix notation. A Python program validates the data and writes
+a self-contained snippet per character and view: a one-line formula, a typeset equation with pinyin and glosses, a
+nested-box matrix, or a tree. A package of about sixty lines only includes those snippets. We describe the notation, the
+design, the handling of fonts and of the source database, and the limits of the present version.
+\end{abstract}
+
+\section{Introduction}
+A Chinese character can be read as the product of a reaction in which its parts go in and the character comes out, for example
+\ziformula{佛}\unskip. This view is used to teach characters, to study how the writing system is organised, and to analyse its
+structure computationally~\cite{gong2025}. Papers on these topics need figures of decompositions, and today they are drawn by
+hand in a graphics program or in TikZ. A hand-drawn figure is slow to produce, differs from its neighbours, and must be redrawn
+when the underlying analysis changes.
+
+This paper describes \texttt{zitex}, which typesets decompositions directly from data. Its aims are: (i) a figure is generated
+from a record, so that revising the record revises the figure; (ii) the notation records \emph{where} each part sits, which
+a flat sequence of components does not; (iii) the LaTeX side stays small, and the data and layout logic live in
+a program that can be tested; and (iv) the source database is never modified.
+
+\section{Notation}
+A character is described level by level. At each level the parts have positions from a fixed set of eleven codes.
+
+\begin{table}[ht]
+\centering\small
+\begin{tabular}{@{}ll@{}}
+\toprule
+Code & Region \\
+\midrule
+\texttt{L}, \texttt{R}, \texttt{U}, \texttt{D} & left, right, up, down \\
+\texttt{LU}, \texttt{LD}, \texttt{RU}, \texttt{RD} & the four corners \\
+\texttt{M} & the centre of gravity of the level \\
+\texttt{Mi}, \texttt{Mo} & inside and outside (enclosing) \\
+\bottomrule
+\end{tabular}
+\caption{The Zi-Matrix position codes, introduced in~\cite{gong2025}.}
+\label{tab:codes}
+\end{table}
+
+The \emph{pattern} of a level is its position codes in reading order, such as \texttt{L-M} for 佛 or
+\texttt{LU-RU-M-LD-RD} for 器. A pattern determines the matching Unicode ideographic description operator where one exists:
+for instance \texttt{L-M} and \texttt{L-R} map to the left--right operator, and the enclosing patterns \texttt{Mo-D},
+\texttt{Mo-U}, \texttt{Mo-R} and \texttt{Mo-M} map to the surrounding operators. Some arrangements have no single operator,
+for example four mouths around a dog in 器. For these \texttt{zitex} adds a few operators (such as ∴ ∵ ∷) and a general form
+that names the pattern. A \emph{radical rule} resolves the ambiguity of two-part levels: a Kangxi radical is peripheral, so the
+radical is placed at \texttt{L} and the other part at \texttt{M}, as in 佛 (亻 and 弗). Positions are stored on every level, so a
+part that is itself decomposed (澡 inside 藻) carries its own pattern.
+
+\section{Design}
+Python does the parsing and layout, and \LaTeX{} does the typesetting (Figure~\ref{fig:flow}). \texttt{zitex extract} selects characters
+from a database and writes \texttt{chars.yaml}, \texttt{lexicon.yaml}, a \texttt{main.tex}, and every snippet the document asks for.
+The only interface between the two halves is the file name of a snippet,
+\texttt{<char>-<style>[-<lang>][@reading].tex}, and the package looks the file up and inputs it. A missing file gives a warning
+and a red mark, so a long build is not stopped.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{flow.pdf}
+\caption{The workflow. Python writes one self-contained snippet per character and style, and XeLaTeX includes them.}
+\label{fig:flow}
+\end{figure}
+
+\paragraph{Views.} The equation view uses only \cmd{text}, \cmd{overset}, \cmd{underbrace} and \cmd{xrightarrow}, so it also works in MathJax. The matrix
+and the tree are TikZ pictures with coordinates computed in Python, which allows patterns of any size without a TikZ tree library.
+
+\paragraph{Readings.} Which part carries the meaning and which the sound is an interpretation. A character may store several named
+\emph{readings}, selected per call with \texttt{reading=}, so that two interpretations can be set in one document without duplicating the data.
+
+\paragraph{Validation.} \texttt{zitex check} reports unknown positions, patterns an operator does not allow, overlapping regions, and a radical placed
+at the centre. These are warnings and not errors, because the data being typeset is itself under review.
+
+\paragraph{Fonts.} A component is resolved in a fixed order: an explicit override, the primary font, fallback fonts, an image, and finally a boxed code point
+with a warning. Components that have no Unicode code point can therefore be set like any other.
+
+\paragraph{Data.} Decompositions come from YAML files or from a SQLite database. The database is opened read only. \texttt{zitex} derives its own tables from it, and
+a hand revision is stored together with what it replaced, so that it can be reverted and is re-applied when the tables are rebuilt.
+A Streamlit application reviews and revises decompositions, and generates a PDF for a list of characters.
+
+\section{Example}
+The commands below make a self-contained folder and typeset three characters.
+
+\begin{verbatim}
+zitex setup   -o work/
+zitex extract -c 器,藻,佛 -o work/
+cd work && xelatex main.tex
+\end{verbatim}
+
+The document asks for views with \cmd{zimath}\texttt{\{藻\}}, \cmd{zimatrix}\texttt{\{器\}}, \cmd{zitree}\texttt{\{藻\}} and \cmd{ziformula}\texttt{\{佛\}}. They give:
+
+\zimath{藻}
+
+\begin{figure}[ht]
+\centering
+\zimatrix{器}\qquad\zimatrix{佛}
+\caption{Zi-Matrices of 器 (four 口 at the corners and 犬 in the centre) and 佛 (亻 and 弗).}
+\label{fig:matrix}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\resizebox{0.85\linewidth}{!}{\zitree{藻}}
+\caption{The decomposition tree of 藻. Leaves are parts that are not decomposed further.}
+\label{fig:tree}
+\end{figure}
+
+\noindent The matrix keeps the geometry (Figure~\ref{fig:matrix}), and the tree shows the depth (Figure~\ref{fig:tree}): 藻 has four levels, because 澡 and 喿 are decomposed too.
+Inline, \cmd{ziformula}\texttt{\{器\}} gives \ziformula{器}\unskip.
+
+\section{Related work and limitations}
+The Unicode Standard defines ideographic description characters, and community projects distribute ideographic description sequences
+for large character sets~\cite{cjkviids}. These record a character as a string and do not give positions or figures. \texttt{zitex} reads this
+form and adds positions per level. Figures are produced with TikZ~\cite{tikz}, and Chinese text with \texttt{xeCJK}~\cite{xecjk}, which \texttt{zitex} builds on.
+We did not survey other tools for drawing character decompositions, and a comparison is future work.
+
+The present version has these limits. It needs XeLaTeX, and has not been tried with other engines. Snippet file names contain the character itself, which
+works on Linux and macOS and has not been tried on Windows. The decomposition database used for development is a first iteration under review:
+223 rows of about 6,200 cannot be converted yet, and warnings remain on some characters. Glosses are first senses from a dictionary and are not curated.
+We make no claim about the etymology of any character: the figures show the data.
+
+\section{Availability}
+\texttt{zitex} is released under the MIT licence at \url{https://github.com/digital-duck/zinets-latex}. The English glosses are derived from
+CC-CEDICT (CC BY-SA 4.0)~\cite{cedict} and are attributed in the data.
+
+\section*{Acknowledgements}
+This work began as a conversation with Google Gemini, and the building, testing and writing phases were assisted by Claude Code of Anthropic. The character decompositions, solution design, and result validation are the author’s.
+
+\begin{thebibliography}{9}
+\bibitem{gong2025} Wen G. Gong. \emph{A New Exploration into Chinese Characters: from Simplification to Deeper Understanding}. arXiv:2502.19428, 2025.
+\bibitem{cjkviids} \emph{cjkvi-ids: Ideographic Description Sequences for CJKV characters}. \url{https://github.com/cjkvi/cjkvi-ids}.
+\bibitem{cedict} \emph{CC-CEDICT: a Chinese-English dictionary}. \url{https://cc-cedict.org}.
+\bibitem{tikz} Till Tantau. \emph{The TikZ and PGF Packages}. CTAN, \url{https://ctan.org/pkg/pgf}.
+\bibitem{xecjk} \emph{The xeCJK package}. CTAN, \url{https://ctan.org/pkg/xecjk}.
+\end{thebibliography}
+\end{document}

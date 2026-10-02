@@ -1,0 +1,12 @@
+# Sample entries for trying the font fallback. They are SYNTHETIC: not real decompositions.
+#
+#   zitex fonts fallback.yaml --fonts fonts.yaml          which font (or image) draws each component
+#   zitex render fallback.yaml --fonts fonts.yaml -o figs/  render them, with the fallbacks applied
+#
+# What you see depends on the fonts on this computer.
+- char: 甲        # 𠂉 (U+20089): drawn by the primary font if it has it, else by a fallback font
+  shape: "⿰日𠂉"
+- char: 乙        # 𠀉 (U+20009): most fonts lack it, so it can end up as a boxed label with its code point
+  shape: "⿰日𠀉"
+- char: 丙        # {demo}: a component with no Unicode code point, drawn from glyphs/demo.svg (needs inkscape)
+  shape: "⿰日{demo}"

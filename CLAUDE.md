@@ -13,14 +13,16 @@ Use the `zinets2` conda env (`/home/papagame/anaconda3/envs/zinets2`). The packa
 ```bash
 pytest -q                          # all tests (pytest finds the package via pythonpath = ["src"])
 pytest tests/test_render.py::test_math_collapse_and_wrap   # one test
-zitex check tests/data/chars.yaml  # validate decompositions (warnings never fail the run)
-zitex render tests/data/chars.yaml --scan main.tex -x tests/data/lexicon.yaml   # only what main.tex asks for, into zitex-out/ (-x defaults to ./lexicon.yaml if it exists)
-zitex render tests/data/chars.yaml -c 森 -s math --collapse -o -   # one snippet to stdout
-zitex render tests/data/chars.yaml                      # no -c: every character, every style, .tex and .pdf, into zitex-out/
-zitex render tests/data/chars.yaml -c 森,作 -o figs/       # -o dir/: that folder; -o x.tex or x.pdf: one output, that format only
-zitex fonts tests/data/chars.yaml --fonts tests/data/fonts.yaml   # glyph coverage report
-zitex db-build path/to/zi.sqlite3 -o db/zitex.sqlite3 --report db/zitex-quarantine.csv   # derive zitex's own zx_* tables from the working DB (read only)
-zitex patterns db/zitex.sqlite3     # pattern counts; check, shape, render, extract also take a database
+zitex check -i tests/data/chars.yaml  # validate decompositions (warnings never fail the run)
+zitex render -i tests/data/chars.yaml --scan main.tex -x tests/data/lexicon.yaml   # only what main.tex asks for, into zitex-out/ (-x defaults to ./lexicon.yaml if it exists)
+zitex render -i tests/data/chars.yaml -c 森 -s math --collapse -o -   # one snippet to stdout
+zitex render -i tests/data/chars.yaml                      # no -c: every character, every style, .tex and .pdf, into zitex-out/
+zitex render -i tests/data/chars.yaml -c 森,作 -o figs/       # -o dir/: that folder; -o x.tex or x.pdf: one output, that format only
+zitex fonts -i tests/data/chars.yaml --fonts tests/data/fonts.yaml   # glyph coverage report
+zitex db-build -i path/to/zi.sqlite3 -o db/zitex.sqlite3 --report db/zitex-quarantine.csv   # derive zitex's own zx_* tables from the working DB (read only)
+zitex patterns -i db/zitex.sqlite3     # pattern counts; check, shape, render, extract also take a database
+zitex setup -o work/                # self-contained folder: zitex.sty, fonts.yaml (detected), fallback.yaml, glyphs/
+zitex extract -c 器,藻 -o work/    # chars.yaml, lexicon.yaml, main.tex, zitex-out/ (-i PATH, default db/zitex.sqlite3 found upward from cwd; at most 60 chars); then `cd work && xelatex main.tex`
 zitex install-sty                  # copy zitex.sty into TEXMFHOME so plain xelatex finds it (--dir DIR: another tree)
 make -C examples/demo              # scan, render and typeset the demo with xelatex (uses TEXINPUTS, no install needed)
 ```
@@ -51,6 +53,9 @@ flowchart LR
 - **Language-dependent styles and readings.** `math` and `formula` depend on `lang`, and their snippet names carry it (`藻-math-fr.tex`). A named reading adds `@reading` (`虹-math-en@dictionary.tex`). `snippet_name()` in `build.py` and `\zitex@name` in `tex/zitex.sty` must stay in sync, and `scan_tex()` must mirror what the sty does with `\zitexsetlang` / `\zitexsetreading` (it reads the file in order).
 - **Fonts (`fonts.py`).** Resolution order is override (svg, font or alias), primary font, fallback fonts, then a boxed `U+XXXX` label reported as missing. Glyph coverage is read from font files with fontTools through fontconfig. A font that cannot be inspected is assumed to cover everything. Config keys written `{name}` are stored without braces.
 - **Data adapters (`sources.py`, `zxdb.py`).** Two sources give the same entries and lexicon: `YamlSource` (chars.yaml plus lexicon files) and `SqliteSource` (zitex's own `zx_*` tables, or the raw working database converted in memory). `open_source()` picks one by the file header. `SqliteSource` builds, per character, the **same dict a chars.yaml entry loads from** and runs it through `entry_from_dict`, so validation, rendering and `zitex extract` (YAML as the intermediate form) share one path. **zitex must never write to the working database `path/to/zi.sqlite3`**: it is opened `mode=ro`, and `db-build` writes the `zx_*` tables to a separate file and re-checks the source's SHA-256 afterwards. Rows that cannot be converted safely go to `zx_quarantine`, not into guesses. Details and findings: `docs/DEV/claude/db-integration.md`.
+- **Working folders (`workspace.py`).** `zitex setup -o DIR` writes `zitex.sty` (copied from the package, and kept in step with it because it defines the snippet names), a `fonts.yaml` detected from the installed fonts (`fonts.detect_fonts`: first usable primary, greedy fallbacks by CJK characters added), `fallback.yaml` and `glyphs/` (from `templates/`). `zitex extract SOURCE -c ... -o DIR` writes `chars.yaml`, `lexicon.yaml`, `main.tex` (primary font taken from the folder's fonts.yaml; the template is `templates/main.tex` (minimal), or `templates/demo.tex` (an annotated paper) with `--annotation demo`; either way the file written is main.tex) and renders the snippets `main.tex` asks for, so `xelatex main.tex` in DIR works with nothing installed. It overwrites chars.yaml, lexicon.yaml, main.tex and the snippets on a re-run.
+- **Revisions (`zxdb.revise`).** Corrections made by hand are stored in `zx_revision` of the *zitex* file (never in the working database): the new parts, what they replaced (so `revert` works), a note, and an optional elemental flag (an elemental character is never expanded inside others). `write_zx` re-applies them after every rebuild, so `zitex db-build` does not lose them.
+- **Streamlit app (`src/ui/streamlit/`).** Page 1 reviews and revises, page 2 runs setup, extract and xelatex in `workspace/` (git-ignored). The logic is in `zitex.review` and `zitex.pipeline`; the pages are thin, and `tests/test_ui.py` drives them headless with `streamlit.testing.v1.AppTest`. Do not add an `__init__.py` to `src/ui/streamlit/`: a package named `streamlit` would shadow the real one.
 - **Data files.** `tests/data/chars.yaml` is the 29-character test set (partly reviewed by the author), and its `decision:` fields record the author's choices, so do not "correct" them. `lexicon.yaml` holds pinyin and glosses (English and French, my drafts). `fallback.yaml` and `fonts.yaml` are synthetic data for the fallback tests.
 
 ## Conventions and gotchas

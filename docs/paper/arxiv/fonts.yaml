@@ -1,0 +1,14 @@
+# Fonts for zitex. Made by `zitex setup` from the fonts installed on this computer.
+# The primary font was found on this computer and has 30,551 CJK characters.
+#
+# primary:    the main CJK font. main.tex sets it with \setCJKmainfont, and zitex checks every component against it,
+#             so the two must name the same font.
+# fallbacks:  tried in order when the primary font has no glyph for a component.
+#             Chosen here: WenQuanYi Zen Hei adds 593; AR PL UMing CN adds 102; Unifont adds 94; Noto Sans CJK SC adds 58.
+# components: overrides for single components: an image (svg), a font, or an alias to another character.
+primary: "Noto Serif CJK SC"
+fallbacks: ["WenQuanYi Zen Hei", "AR PL UMing CN", "Unifont", "Noto Sans CJK SC"]
+components:
+  "{demo}": {svg: glyphs/demo.svg}      # a placeholder for a component with no Unicode code point (needs inkscape)
+  # 甲: {alias: 日}                      # draw another character instead
+  # 𠀉: {font: Some Font}                # force a font for one component

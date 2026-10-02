@@ -34,14 +34,20 @@ _CALL = re.compile(
 )
 
 
+_VERBATIM = re.compile(r"\\begin\{(verbatim\*?|lstlisting|minted)\}.*?\\end\{\1\}", re.S)
+_COMMENT = re.compile(r"(?<!\\)%[^\n]*")
+
+
 def scan_tex(path: str | Path) -> set[tuple[str, str, str | None, str | None]]:
     """(char, style, lang, reading) a .tex file asks for. lang and reading are None when not given.
 
     Follows the file in order, so a ``\\zitexsetlang{fr}`` or ``\\zitexsetreading{author}`` applies to the
-    calls after it, the way zitex.sty applies it. (Grouping is not tracked.)"""
+    calls after it, the way zitex.sty applies it. (Grouping is not tracked.) Text LaTeX does not run is skipped:
+    ``%`` comments and verbatim, lstlisting and minted blocks, so a listing can show ``\\zitexsetlang{fr}``."""
     found = set()
     lang = reading = None
-    for m in _CALL.finditer(Path(path).read_text(encoding="utf-8")):
+    text = _COMMENT.sub("", _VERBATIM.sub("", Path(path).read_text(encoding="utf-8")))
+    for m in _CALL.finditer(text):
         if m.group(1) is not None:
             lang = m.group(1).strip() or None
         elif m.group(2) is not None:

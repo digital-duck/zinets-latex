@@ -1,6 +1,8 @@
 # zitex Tutorial
 
-This tutorial takes you from one hand-written character to a typeset paper page. About 20 minutes. The commands in sections 1 to 5 were run as written; the fallback example in section 6 uses placeholder names (`qi-top`) and was not run.
+This tutorial takes you from one hand-written character to a typeset paper page. About 20 minutes. The commands in sections 2 to 5 and 7 were run as written from an empty folder, and section 8 was run against the derived database in `db/`. The fallback example in section 6 uses a placeholder name (`qi-top`) and was not run.
+
+Every command that reads data takes it with **`-i` / `--input`** (there are no positional file arguments). Without `-i`, the commands read `./chars.yaml`.
 
 You need Python 3.10+, XeLaTeX with the `tikz`, `xeCJK`, `fontspec` and `amsmath` packages, and a CJK font. The examples use Noto Serif CJK SC.
 
@@ -54,11 +56,14 @@ The ZiNets operators are not Unicode IDS. They keep a level with three or more p
 Check the file:
 
 ```bash
-zitex check chars.yaml
+zitex check -i ./tests/data/chars.yaml
 # chars.yaml: 3 entries, 0 warnings
-zitex shape chars.yaml
+zitex shape -i ./tests/data/chars.yaml
 # 好	⿰女子
+
 ```
+
+`check` also takes several files, separated by commas, as `-c` does: `zitex check -i chars.yaml,another.yaml`.
 
 ## 3. Positions
 
@@ -104,7 +109,7 @@ Characters in `chars.yaml` already carry their own pinyin and English meaning, s
 Print one equation (`-o -` means stdout):
 
 ```bash
-zitex render chars.yaml -c 好 -s math -x lexicon.yaml -o -
+zitex render -i chars.yaml -c 好 -s math -x lexicon.yaml -o -
 ```
 
 ```latex
@@ -113,13 +118,13 @@ zitex render chars.yaml -c 好 -s math -x lexicon.yaml -o -
 
 That is plain LaTeX math. In a document it shows pinyin above each piece, its gloss below, and the result as an equation, like a chemical reaction. The same string works in MathJax or KaTeX on a web page.
 
-`render` takes the YAML file first, then options. By default it renders **every character** in the file, in every style, as `<char>-<style>.tex` and `.pdf`, into a `zitex-out/` folder (the folder `zitex.sty` reads). Choose characters with `--char` (`-c`) and say where the output goes with `-o`:
+`render` reads the file you name with `-i` (`--input`), or `./chars.yaml` when you leave `-i` out. By default it renders **every character** in the file, in every style, as `<char>-<style>.tex` and `.pdf`, into a `zitex-out/` folder (the folder `zitex.sty` reads). Choose characters with `--char` (`-c`) and say where the output goes with `-o`:
 
 | Command | Result |
 |---|---|
-| `zitex render my.yaml -x lex.yaml` | everything, into `zitex-out/` |
-| `zitex render my.yaml -c 好,森 -x lex.yaml -o figs/` | every style for 好 and 森, into `figs/` |
-| `zitex render my.yaml -c 好 -s math -x lex.yaml -o hao` | `hao.tex` and `hao.pdf` (one character, one style: a file stem) |
+| `zitex render -i my.yaml -x lex.yaml` | everything, into `zitex-out/` |
+| `zitex render -i my.yaml -c 好,森 -x lex.yaml -o figs/` | every style for 好 and 森, into `figs/` |
+| `zitex render -i my.yaml -c 好 -s math -x lex.yaml -o hao` | `hao.tex` and `hao.pdf` (one character, one style: a file stem) |
 | `... -o hao.tex` | `hao.tex` only (the suffix picks the format) |
 | `... -o hao.pdf` | `hao.pdf` only |
 | `... -o -` | print the snippet to stdout |
@@ -141,21 +146,24 @@ There are four styles (`-s`):
 Options for `math`:
 
 ```bash
-zitex render chars.yaml -c 森 -s math -x lexicon.yaml -o - --collapse # 3 × 木 = 森
-zitex render chars.yaml -c 森 -s math -x lexicon.yaml -o - -l fr # glosses in French
-zitex render chars.yaml -c 好 -s math -x lexicon.yaml -o - --arrow reaction # use an arrow
-zitex render chars.yaml -c 好 -s math -x lexicon.yaml -o - --result paren # 好 (good) instead of gloss below
-zitex render chars.yaml -c 好 -s math -x lexicon.yaml -o - --show-pos # subscript each piece with its position
+zitex render -i chars.yaml -c 森 -s math -x lexicon.yaml -o - --collapse # 3 × 木 = 森
+zitex render -i chars.yaml -c 森 -s math -x lexicon.yaml -o - -l fr # glosses in French
+zitex render -i chars.yaml -c 好 -s math -x lexicon.yaml -o - --arrow reaction # use an arrow
+zitex render -i chars.yaml -c 好 -s math -x lexicon.yaml -o - --result paren # 好 (good) instead of gloss below
+zitex render -i chars.yaml -c 好 -s math -x lexicon.yaml -o - --show-pos # subscript each piece with its position
 ```
 
 `--arrow role` labels the arrow with the phonetic component when the entry has a `role:` mapping (for example `忄 + 每 —(sound: měi)→ 悔`). If a language has no gloss for a character, zitex falls back to English.
 
 ### Several readings of one character
 
-Which part of a character carries the meaning and which the sound is an interpretation, and interpretations differ. An entry can keep several, and you choose one when you render:
+Which part of a character carries the meaning and which the sound is an interpretation, and interpretations differ. An entry can keep several, and you choose one when you render. Add this entry to your `chars.yaml`, and these two lines to `lexicon.yaml`:
 
 ```yaml
+# chars.yaml
 - char: 虹
+  pinyin: hóng
+  meaning: rainbow
   shape: "⿰虫工"
   readings:
     - name: author
@@ -164,9 +172,15 @@ Which part of a character carries the meaning and which the sound is an interpre
       role: {虫: semantic, 工: phonetic}
 ```
 
+```yaml
+# lexicon.yaml
+虫: {pinyin: chóng, gloss: {en: insect}}
+工: {pinyin: gōng, gloss: {en: work}}
+```
+
 ```bash
-zitex render chars.yaml -c 虹 -s math -x lexicon.yaml -o - --arrow role # the first reading: 虫 + 工 = 虹
-zitex render chars.yaml -c 虹 -s math -x lexicon.yaml -o - --arrow role --reading dictionary # 虫 + 工 —(sound: gōng)→ 虹
+zitex render -i chars.yaml -c 虹 -s math -x lexicon.yaml -o - --arrow role # the first reading: 虫 + 工 = 虹
+zitex render -i chars.yaml -c 虹 -s math -x lexicon.yaml -o - --arrow role --reading dictionary # 虫 + 工 —(sound: gōng)→ 虹
 ```
 
 The first reading is the default. A reading changes the colours of the pieces and the label on the arrow, and nothing else. In a paper, write `\zimath[reading=dictionary]{虹}`, or `\zitexsetreading{dictionary}` to change the default for the rest of the document.
@@ -192,18 +206,24 @@ Commands: `\zi[style=…,lang=…]{字}`, and the shorthands `\zitree`, `\zimatr
 Render only what the document uses, then typeset:
 
 ```bash
-zitex render chars.yaml --scan main.tex -x lexicon.yaml -l en -l fr --collapse
+zitex render -i chars.yaml --scan main.tex -x lexicon.yaml -l en -l fr --collapse
 xelatex main.tex
 ```
 
-`--scan` reads `main.tex` and writes just those snippets (`.tex` only, since LaTeX typesets them) into `zitex-out/` (here `好-math-en.tex`, `森-math-fr.tex` and `森-matrix.tex`). XeLaTeX must be able to find `zitex.sty`. Install it once with `zitex install-sty`, which copies it into your personal TeX folder (`TEXMFHOME`, usually `~/texmf`), and plain `xelatex main.tex` works from then on. Run it again after upgrading zitex. If you would rather not install it, put the file next to your document, or give XeLaTeX its folder for one run: `TEXINPUTS=<folder of zitex.sty>: xelatex main.tex`. The folder is the `zitex` package folder (`python -c "import zitex, pathlib; print(pathlib.Path(zitex.__file__).parent)"`). `zitex install-sty --dir DIR` installs into another TeX tree. Options such as `--collapse` apply to every `math` snippet. In the document, `\zitexsetlang{fr}` changes the default language and `\zitexsetpath{dir}` changes where snippets are read from.
+`--scan` reads `main.tex` and writes just those snippets (`.tex` only, since LaTeX typesets them) into `zitex-out/` (here `好-math-en.tex`, `森-math-fr.tex` and `森-matrix.tex`). XeLaTeX must be able to find `zitex.sty`. There are three ways, and the first is the simplest:
 
-If a snippet is missing, LaTeX prints a warning (`Missing zitex-out/…; run zitex render`) and shows `[字]` in the page, so the build does not break.
+- **Put it next to your document.** `zitex setup -o .` copies `zitex.sty` into the folder (and writes a `fonts.yaml` for your computer, see section 8). The folder is then self-contained, and you can zip it or upload it to Overleaf.
+- **Install it once for every document.** `zitex install-sty` copies it into your personal TeX folder (`TEXMFHOME`, usually `~/texmf`), and plain `xelatex main.tex` works from then on. Run it again after upgrading zitex. `zitex install-sty --dir DIR` installs into another TeX tree.
+- **Point XeLaTeX at it for one run:** `TEXINPUTS=<folder of zitex.sty>: xelatex main.tex`. The folder is the `zitex` package folder (`python -c "import zitex, pathlib; print(pathlib.Path(zitex.__file__).parent)"`).
+
+Options such as `--collapse` apply to every `math` snippet. In the document, `\zitexsetlang{fr}` changes the default language and `\zitexsetpath{dir}` changes where snippets are read from.
+
+If a snippet is missing, LaTeX prints a warning (`Missing zitex-out/…; run zitex render`) and shows a red `[字?]` in the page, so the build does not break.
 
 To get stand-alone figures instead, leave out `--scan`:
 
 ```bash
-zitex render chars.yaml -c 好,森 -s math,matrix -x lexicon.yaml -o figs/
+zitex render -i chars.yaml -c 好,森 -s math,matrix -x lexicon.yaml -o figs/
 ```
 
 `--emit` is `both` by default (snippets and compiled PDFs); `tex` or `pdf` writes just one. PDFs use Noto Serif CJK SC unless you pass `--font`.
@@ -215,12 +235,12 @@ A complete example is in `examples/demo/`; run `make -C examples/demo`.
 Some of the paper's 422 elemental characters have no Unicode code point, and some rare ones are missing from common fonts. Check what you have:
 
 ```bash
-zitex fonts chars.yaml
+zitex fonts -i chars.yaml
 # primary: Noto Serif CJK SC   fallbacks: -
 # 6 components: 6 in the primary font, 0 via fallback, 0 missing
 ```
 
-Describe fallbacks in `fonts.yaml`:
+`zitex setup -o .` writes a `fonts.yaml` made for the fonts on your computer (section 8). To write one by hand, describe the fallbacks in `fonts.yaml`:
 
 ```yaml
 primary: Noto Serif CJK SC
@@ -230,7 +250,7 @@ components:
   甲: {alias: 日}                          # draw a different character instead
 ```
 
-Write such a component by name in `shape`: `⿰日{qi-top}`. Then pass `--fonts fonts.yaml` to `render`. A glyph that nothing can draw is shown as a boxed `U+20009` (or the name) and listed in the build output. `zitex fonts --strict` exits with status 1 if any component is missing. SVG glyphs are converted with Inkscape into `zitex-out/glyphs/`.
+Write such a component by name in `shape`: `⿰日{qi-top}`. Then pass `--fonts fonts.yaml` to `render` (and to `fonts`: `zitex fonts -i chars.yaml --fonts fonts.yaml`). A glyph that nothing can draw is shown as a boxed `U+20009` (or the name) and listed in the build output. `zitex fonts --strict` exits with status 1 if any component is missing. SVG glyphs are converted with Inkscape into `zitex-out/glyphs/`.
 
 ## 7. From Python
 
@@ -252,10 +272,10 @@ print(render_snippet(hao, "formula", lex=lex))
 Everything above reads a `chars.yaml`. The same commands also read the ZiNets SQLite database, through a second data adapter, so you can render the thousands of characters in it without writing YAML by hand.
 
 ```bash
-zitex db-build path/to/zi.sqlite3 -o db/zitex.sqlite3 --report db/zitex-quarantine.csv   # once, and again after the database changes
-zitex patterns db/zitex.sqlite3                                  # how often each pattern occurs
-zitex render db/zitex.sqlite3 -c 器,藻 -o figs/                  # render straight from the database
-zitex extract db/zitex.sqlite3 -c 器,藻                          # or extract them as YAML, to read and review
+zitex db-build -i path/to/zi.sqlite3 -o db/zitex.sqlite3 --report db/zitex-quarantine.csv   # once, and again after the database changes
+zitex patterns -i db/zitex.sqlite3                                  # how often each pattern occurs
+zitex render -i db/zitex.sqlite3 -c 器,藻 -o figs/                  # render straight from the database
+zitex extract -c 器,藻 -o work/                                  # or extract them into a folder, to read and typeset
 ```
 
 - **Your database is never changed.** `db-build` opens it read only, and writes a small separate file, `zitex.sqlite3`, next to it (four tables, all starting with `zx_`). It checks at the end that your file is byte for byte what it was. You can delete the new file and rebuild it any time.
@@ -263,7 +283,28 @@ zitex extract db/zitex.sqlite3 -c 器,藻                          # or extract 
 - **Every command accepts the database in place of the YAML:** `check`, `shape`, `patterns`, `fonts`, `render` and `extract`. You can also point them at the raw working database (`zi.sqlite3`): it is converted in memory and nothing is written.
 - **Pinyin and glosses** come from the database too (tone numbers are converted to tone marks), so equations have labels without a lexicon file. A `lexicon.yaml` in the current folder, or `-x`, replaces what the database says for the characters it names.
 - **`--depth N`** limits how many levels a tree is expanded (default: all, so 藻 goes down to 口 and 木).
-- **`zitex extract`** writes `db-chars.yaml` and `db-lexicon.yaml` for the characters you name with `-c` (all of them without it), then prints the render command to use: `zitex render db-chars.yaml -x db-lexicon.yaml`. They load like hand-written files, and are a good way to read what the database says. The default names start with `db-` so they never replace your own `chars.yaml`. Add `--force` to overwrite.
+
+### A self-contained working folder: setup, extract, xelatex
+
+Three commands take you from the database to a PDF, in one folder that has everything it needs:
+
+```bash
+zitex setup -o work/                                       # once per folder
+zitex extract -c 器,藻,佛 -o work/                          # as often as you like
+cd work && xelatex main.tex
+```
+
+- **`zitex setup -o work/`** writes `zitex.sty`, `fonts.yaml`, `fallback.yaml` and `glyphs/demo.svg`.
+  - `zitex.sty` is copied **into the folder**, so `xelatex` finds it next to `main.tex`. Nothing is installed in your home folder, and you can zip the folder and send it, or upload it to Overleaf. (`zitex install-sty` still installs it globally, if you prefer.) It is brought up to date whenever it differs from your version of zitex, because it has to match the file names zitex writes.
+  - `fonts.yaml` is made for **this computer**. The primary font is the first of the usual CJK fonts found (Noto Serif CJK SC first). Each fallback is chosen because it adds characters the others lack, and a font that adds none is left out. The primary font and the `\setCJKmainfont` line of `main.tex` name the same font, so the two cannot drift apart.
+  - `fallback.yaml` and `glyphs/` are samples for trying the fallback (see section 6). Files you may have edited are kept unless you pass `--force`.
+- **`zitex extract -c ... -o work/`** writes `chars.yaml` and `lexicon.yaml` for the characters you name with `-c` (in that order, and with no `db-` prefix), then `main.tex`, a document with every style for every character, like `examples/demo/main.tex`. It also renders the snippets `main.tex` uses into `work/zitex-out/`, using the folder's `fonts.yaml`, so the next command needs nothing else.
+  - **The database** is `-i PATH` (`--input`). Without it, `extract` uses `db/zitex.sqlite3`, looked for in this folder and then in each parent folder (like git finds its repository, so it works from `work/` too), then in the zitex checkout, and `$ZITEX_DB` is tried first. It says which file it used. If it finds none, it says where it looked.
+  - **At most 60 characters** are extracted, because that is as much as `main.tex` should hold. With more (for instance no `-c` at all, which means "all of them"), the first 60 are kept and a warning says so. Name the ones you want with `-c`.
+  - Running it again on the same folder **overwrites** `chars.yaml`, `lexicon.yaml`, `main.tex` and the snippets. Keep a `main.tex` you wrote yourself in another folder (or copy it back after extracting).
+  - `-o` defaults to the current folder.
+  - `--annotation minimal|demo` picks the `main.tex`. `minimal` (the default) lists every style for every character. `demo` writes an annotated paper for your characters: abstract, figures, a table, a **Syntax** note after each block of markup, and a summary of the commands. Use it as a starting point for a real paper (copy it before you edit, because `extract` writes it again each time). `zitex render --scan` ignores `%` comments and verbatim listings, so a listing can show `\zitexsetlang{fr}` without changing the output.
+- **Afterwards** the YAML files are ordinary input: `zitex render --fonts fonts.yaml -o figs/` works in that folder (`chars.yaml` and `lexicon.yaml` are picked up by default), and you can edit `main.tex` and run `zitex render --scan main.tex` again.
 
 How the adapters work, what was found in the database, and what is still open is in `docs/DEV/claude/db-integration.md`.
 
@@ -271,11 +312,15 @@ How the adapters work, what was found in the database, and what is still open is
 
 | Symptom | Cause and fix |
 |---|---|
-| `Missing character: There is no ∴` | the triangle operators must be declared CJK: `\xeCJKDeclareCharClass{CJK}{"2234,"2235}`. `zitex.sty` and `--emit pdf` do this for you |
-| `Invalid value for 'FILES...': File … does not exist` | wrong path to the YAML file |
+| `Missing character: There is no ∴` | the ZiNets operators must be declared CJK: `\xeCJKDeclareCharClass{CJK}{"2234,"2235,"2237}`. `zitex.sty` and `--emit pdf` do this for you |
+| `Got unexpected extra argument (chars.yaml)` | files are given with `-i`, not as an argument: `zitex render -i chars.yaml` |
+| `no input: there is no chars.yaml in this folder` | pass `-i PATH`, or run the command in the folder that holds `chars.yaml` |
+| `Invalid value for '-i' / '--input': File … does not exist` | wrong path. For `check -i a.yaml,b.yaml` the message is `input '…' is not a file` |
+| `not in chars.yaml: 虹` | the character has no entry in the file. Add it (section 4 shows one), or check the spelling |
 | `mapping values are not allowed here` (YAML) | a value containing `: ` must be in quotes |
-| `W2` warnings | a position that does not match the operator default. Fix the data, or ignore if it is intended |
-| `[字]` in the page | the snippet was not built. Run `zitex render chars.yaml --scan main.tex` |
+| `W2` warnings | the positions of a level make a pattern the operator does not allow (see section 3). Fix the data, or ignore if it is intended |
+| a red `[字?]` in the page | the snippet was not built. Run `zitex render -i chars.yaml --scan main.tex` in the folder that holds `main.tex` |
+| `File 'zitex.sty' not found` | see section 5: `zitex setup -o .`, or `zitex install-sty` |
 | a box labelled `U+XXXXX` | no font draws that code point. Add a fallback font or an SVG in `fonts.yaml` |
 
 ## Where next

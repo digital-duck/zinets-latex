@@ -197,7 +197,7 @@ def _run(args, cwd):
 
 
 def test_db_build_default_output_and_report(raw_db, tmp_path):
-    r = _run(["db-build", str(raw_db), "--report", str(tmp_path / "q.csv")], tmp_path)
+    r = _run(["db-build", "-i", str(raw_db), "--report", str(tmp_path / "q.csv")], tmp_path)
     assert r.exit_code == 0, r.output
     assert (raw_db.parent / "zitex.sqlite3").exists() and "source unchanged" in r.output
     assert (tmp_path / "q.csv").read_text(encoding="utf-8").startswith("zi,reason,cells")
@@ -207,49 +207,52 @@ def test_db_build_default_output_and_report(raw_db, tmp_path):
 
 def test_db_build_will_not_write_into_the_source_without_in_place(raw_db, tmp_path):
     before = _sha(raw_db)
-    r = _run(["db-build", str(raw_db), "-o", str(raw_db)], tmp_path)
+    r = _run(["db-build", "-i", str(raw_db), "-o", str(raw_db)], tmp_path)
     assert r.exit_code == 2 and "--in-place" in r.output and _sha(raw_db) == before
-    assert _run(["db-build", str(raw_db), "--in-place"], tmp_path).exit_code == 0
+    assert _run(["db-build", "-i", str(raw_db), "--in-place"], tmp_path).exit_code == 0
     assert zxdb.has_zx(raw_db) and list(raw_db.parent.glob("*.bak-*"))
 
 
 def test_db_build_needs_a_working_database(tmp_path):
-    r = _run(["db-build", str(DATA / "chars.yaml")], tmp_path)
+    r = _run(["db-build", "-i", str(DATA / "chars.yaml")], tmp_path)
     assert r.exit_code == 2
 
 
-def test_extract_writes_yaml_and_will_not_overwrite(raw_db, tmp_path):
-    r = _run(["extract", str(raw_db), "-c", "時,器"], tmp_path)
+def test_extract_fills_a_folder_and_will_not_overwrite(raw_db, tmp_path):
+    r = _run(["extract", "-i", str(raw_db), "-c", "時,器", "-o", "work"], tmp_path)
     assert r.exit_code == 0, r.output
-    assert [e.char for e in load_yaml(tmp_path / "db-chars.yaml")] == ["器", "時"]
-    assert "日" in (tmp_path / "db-lexicon.yaml").read_text(encoding="utf-8")
-    assert "next: zitex render db-chars.yaml -x db-lexicon.yaml" in r.output
-    again = _run(["extract", str(raw_db)], tmp_path)
-    assert again.exit_code == 2 and "--force" in again.output
-    assert _run(["extract", str(raw_db), "--force"], tmp_path).exit_code == 0
-    assert _run(["extract", str(DATA / "chars.yaml")], tmp_path).exit_code == 2           # YAML has nothing to extract
+    names = {p.name for p in (tmp_path / "work").iterdir()}
+    assert {"chars.yaml", "lexicon.yaml", "main.tex", "zitex-out"} <= names and "db-chars.yaml" not in names   # no db- prefix
+    assert [e.char for e in load_yaml(tmp_path / "work" / "chars.yaml")] == ["時", "器"]                   # in the order named
+    assert "日" in (tmp_path / "work" / "lexicon.yaml").read_text(encoding="utf-8")
+    (tmp_path / "work" / "main.tex").write_text("old\n", encoding="utf-8")
+    assert _run(["extract", "-i", str(raw_db), "-c", "時", "-o", "work"], tmp_path).exit_code == 0        # a re-run overwrites
+    assert [e.char for e in load_yaml(tmp_path / "work" / "chars.yaml")] == ["時"]
+    assert (tmp_path / "work" / "main.tex").read_text(encoding="utf-8") != "old\n"
+    assert _run(["extract", "-i", str(raw_db), "-o", "work", "--force"], tmp_path).exit_code == 2          # the flag is gone
+    assert _run(["extract", "-i", str(DATA / "chars.yaml"), "-o", "w2"], tmp_path).exit_code == 2             # YAML has nothing to extract
 
 
 def test_check_shape_patterns_and_render_accept_a_database(raw_db, tmp_path):
-    assert "entries" in _run(["check", str(raw_db)], tmp_path).output
-    shape = _run(["shape", str(raw_db)], tmp_path).output
+    assert "entries" in _run(["check", "-i", str(raw_db)], tmp_path).output
+    shape = _run(["shape", "-i", str(raw_db)], tmp_path).output
     assert "器\t⁙口口犬口口" in shape
-    pat = _run(["patterns", str(raw_db)], tmp_path).output
+    pat = _run(["patterns", "-i", str(raw_db)], tmp_path).output
     assert "L-M" in pat and "LU-RU-M-LD-RD" in pat and "⁙" in pat
-    assert "levels" in _run(["patterns", str(raw_db), "--all-levels"], tmp_path).output
-    r = _run(["render", str(raw_db), "-c", "時", "-s", "math", "-o", "-"], tmp_path)
+    assert "levels" in _run(["patterns", "-i", str(raw_db), "--all-levels"], tmp_path).output
+    r = _run(["render", "-i", str(raw_db), "-c", "時", "-s", "math", "-o", "-"], tmp_path)
     assert r.exit_code == 0 and r"_{\text{sun}}" in r.output and r"\overset{\text{shí}}" in r.output   # glosses from the DB
 
 
 def test_render_a_database_into_a_directory(raw_db, tmp_path):
-    r = _run(["render", str(raw_db), "-c", "器,哭", "-s", "tree", "--emit", "tex", "-o", "o/"], tmp_path)
+    r = _run(["render", "-i", str(raw_db), "-c", "器,哭", "-s", "tree", "--emit", "tex", "-o", "o/"], tmp_path)
     assert r.exit_code == 0, r.output
     assert sorted(p.name for p in (tmp_path / "o").iterdir()) == ["哭-tree.tex", "器-tree.tex"]
 
 
 def test_a_local_lexicon_yaml_overrides_the_database(raw_db, tmp_path):
     (tmp_path / "lexicon.yaml").write_text("日: {pinyin: rì, gloss: {en: day}}\n", encoding="utf-8")
-    r = _run(["render", str(raw_db), "-c", "時", "-s", "math", "-o", "-"], tmp_path)
+    r = _run(["render", "-i", str(raw_db), "-c", "時", "-s", "math", "-o", "-"], tmp_path)
     assert r"_{\text{day}}" in r.output
 
 
@@ -289,12 +292,12 @@ def test_attribution_is_stored_in_the_database_file(raw_db, tmp_path):
 
 
 def test_extract_writes_the_attribution_at_the_top(raw_db, tmp_path):
-    r = _run(["extract", str(raw_db), "-c", "時"], tmp_path)
+    r = _run(["extract", "-i", str(raw_db), "-c", "時"], tmp_path)
     assert r.exit_code == 0, r.output
-    for name in ("db-chars.yaml", "db-lexicon.yaml"):
+    for name in ("chars.yaml", "lexicon.yaml"):
         head = (tmp_path / name).read_text(encoding="utf-8").split("\n\n")[0]
         assert "CC-CEDICT" in head and "CC BY-SA 4.0" in head and head.startswith("# Generated by zitex")
-    assert load_yaml(tmp_path / "db-chars.yaml")[0].char == "時"                        # the header is only comments
+    assert load_yaml(tmp_path / "chars.yaml")[0].char == "時"                        # the header is only comments
 
 
 def test_the_repository_carries_the_notice():
@@ -308,9 +311,145 @@ def test_the_repository_carries_the_notice():
 
 def test_extracted_files_go_straight_into_render(raw_db, tmp_path):
     """The point of `extract`: its two files are what the ordinary render command reads."""
-    assert _run(["extract", str(raw_db), "-c", "時,器"], tmp_path).exit_code == 0
-    r = _run(["render", "db-chars.yaml", "-x", "db-lexicon.yaml", "-c", "器", "-s", "math", "-o", "-"], tmp_path)
+    assert _run(["extract", "-i", str(raw_db), "-c", "時,器"], tmp_path).exit_code == 0
+    r = _run(["render", "-i", "chars.yaml", "-c", "器", "-s", "math", "-o", "-"], tmp_path)           # lexicon.yaml is picked up by default
     assert r.exit_code == 0 and r"_{\text{mouth}}" in r.output and r"\overset{\text{kǒu}}" in r.output
-    direct = _run(["render", str(raw_db), "-c", "器", "-s", "math", "-o", "-"], tmp_path).output
+    direct = _run(["render", "-i", str(raw_db), "-c", "器", "-s", "math", "-o", "-"], tmp_path).output
     # extracting and then rendering equals rendering directly (the raw source adds a note on stderr first)
     assert direct.splitlines()[-1] == r.output.splitlines()[-1]
+
+
+# ---- revisions: corrections made by hand ----------------------------------------------------------------------------
+
+@pytest.fixture
+def zx_file(raw_db, tmp_path):
+    return zxdb.write_zx(zxdb.build_from_raw(raw_db), tmp_path / "zitex.sqlite3")
+
+
+def _shapes(path):
+    return {e.char: e.shape for e in SqliteSource(path).entries()}
+
+
+def test_revise_changes_the_character_and_everything_built_on_it(zx_file):
+    assert _shapes(zx_file)["藻"] == "⿱艹澡(⿰氵喿(⿱品(∴口口口)木))"
+    ordered = zxdb.revise(zx_file, "品", [("RD", "木"), ("U", "口"), ("LD", "口")], note="test")
+    assert ordered == [("U", "口"), ("LD", "口"), ("RD", "木")]                      # stored in reading order
+    s = _shapes(zx_file)
+    assert s["品"] == "∴口口木" and "∴口口木" in s["藻"]                              # the change shows in 藻 as well
+
+
+def test_a_character_can_be_made_a_primitive(zx_file):
+    zxdb.revise(zx_file, "寺", [])
+    s = _shapes(zx_file)
+    assert s["寺"] == "寺" and s["時"] == "⿰日寺"
+    by = {e.char: e for e in SqliteSource(zx_file).entries()}
+    assert by["寺"].tree.is_leaf
+
+
+def test_revise_checks_what_it_is_given(zx_file):
+    for bad in ([("L", "日")], [("L", "日"), ("X", "月")], [("L", "日月"), ("R", "月")], [("L", "?"), ("R", "月")]):
+        with pytest.raises(ValueError):
+            zxdb.revise(zx_file, "時", bad)
+    assert _shapes(zx_file)["時"] == "⿰日寺"                                         # nothing changed
+
+
+def test_revert_puts_back_the_original(zx_file):
+    before = _shapes(zx_file)
+    zxdb.revise(zx_file, "時", [("L", "月"), ("M", "寺")])
+    zxdb.revise(zx_file, "時", [("U", "日"), ("D", "寺")])                           # revised twice
+    assert _shapes(zx_file)["時"] == "⿱日寺"
+    assert [r["zi"] for r in zxdb.list_revisions(zx_file)] == ["時"]
+    assert zxdb.revert(zx_file, "時") is True
+    assert _shapes(zx_file) == before and zxdb.list_revisions(zx_file) == []
+    assert zxdb.revert(zx_file, "時") is False                                       # nothing left to undo
+
+
+def test_a_left_out_row_can_be_revised_and_reverted(zx_file):
+    assert "嗀" not in _shapes(zx_file)
+    zxdb.revise(zx_file, "嗀", [("L", "冖"), ("M", "一"), ("R", "殳")], note="fixed the two parts in one cell")
+    assert _shapes(zx_file)["嗀"]
+    con = sqlite3.connect(zx_file)
+    assert con.execute("select count(*) from zx_quarantine where zi='嗀'").fetchone()[0] == 0
+    con.close()
+    zxdb.revert(zx_file, "嗀")
+    assert "嗀" not in _shapes(zx_file)
+    con = sqlite3.connect(zx_file)
+    assert con.execute("select reason from zx_quarantine where zi='嗀'").fetchone()[0].startswith("a position holds")
+    con.close()
+
+
+def test_revisions_survive_a_rebuild(raw_db, zx_file):
+    zxdb.revise(zx_file, "寺", [], note="kept whole")
+    zxdb.revise(zx_file, "嗀", [("L", "冖"), ("R", "殳")])
+    zxdb.write_zx(zxdb.build_from_raw(raw_db), zx_file)                              # `zitex db-build` again
+    s = _shapes(zx_file)
+    assert s["寺"] == "寺" and s["嗀"]
+    assert {r["zi"] for r in zxdb.list_revisions(zx_file)} == {"寺", "嗀"}
+    assert dict(sqlite3.connect(zx_file).execute("select key, value from zx_meta"))["revisions_reapplied"] == "2"
+    assert zxdb.revert(zx_file, "寺") and _shapes(zx_file)["寺"] == "⿱土寸"            # "original" is the freshly built row
+
+
+def test_revise_will_not_touch_a_database_without_zx_tables(raw_db):
+    before = _sha(raw_db)
+    with pytest.raises(ValueError, match="db-build"):
+        zxdb.revise(raw_db, "時", [("L", "月"), ("R", "寺")])
+    assert _sha(raw_db) == before
+
+
+def test_an_older_zx_file_without_the_revision_table_still_works(zx_file):
+    con = sqlite3.connect(zx_file)
+    con.execute("drop table zx_revision")
+    con.commit()
+    con.close()
+    assert zxdb.has_zx(zx_file) and zxdb.list_revisions(zx_file) == []
+    zxdb.revise(zx_file, "寺", [])                                                   # the table is created when needed
+    assert [r["zi"] for r in zxdb.list_revisions(zx_file)] == ["寺"]
+
+
+def test_db_build_says_how_many_revisions_it_re_applied(raw_db, tmp_path):
+    out = tmp_path / "zitex.sqlite3"
+    assert _run(["db-build", "-i", str(raw_db), "-o", str(out)], tmp_path).exit_code == 0
+    zxdb.revise(out, "寺", [])
+    r = _run(["db-build", "-i", str(raw_db), "-o", str(out)], tmp_path)
+    assert r.exit_code == 0 and "re-applied 1 revision" in r.output and _shapes(out)["寺"] == "寺"
+
+
+def test_a_revision_can_make_a_character_elemental_and_revert_restores_the_flag(zx_file):
+    def flags(zi):
+        con = sqlite3.connect(zx_file)
+        try:
+            return con.execute("select is_elemental, has_parts from zx_char where zi=?", (zi,)).fetchone()
+        finally:
+            con.close()
+    assert flags("藻") == (0, 1)
+    zxdb.revise(zx_file, "藻", [], note="a primitive", elemental=True)
+    assert flags("藻") == (1, 0)
+    assert zxdb.list_revisions(zx_file)[0]["elemental"] is True
+    assert zxdb.revert(zx_file, "藻") and flags("藻") == (0, 1)               # the flag goes back too
+    zxdb.revise(zx_file, "藻", [("U", "艹"), ("D", "澡")])                      # elemental=None leaves the flag alone
+    assert flags("藻") == (0, 1) and zxdb.list_revisions(zx_file)[0]["elemental"] is None
+
+
+def test_an_elemental_character_is_not_expanded_inside_others(zx_file):
+    assert _shapes(zx_file)["時"] == "⿰日寺"
+    zxdb.revise(zx_file, "日", [("U", "一"), ("D", "口")], elemental=True)    # decomposed, but elemental: it stays whole in 時
+    s = _shapes(zx_file)
+    assert s["日"] == "⿱一口" and s["時"] == "⿰日寺"
+
+
+def test_the_elemental_flag_and_the_revision_survive_a_rebuild(raw_db, zx_file):
+    zxdb.revise(zx_file, "藻", [], note="primitive", elemental=True)
+    zxdb.write_zx(zxdb.build_from_raw(raw_db), zx_file)
+    con = sqlite3.connect(zx_file)
+    assert con.execute("select is_elemental, has_parts from zx_char where zi='藻'").fetchone() == (1, 0)
+    con.close()
+    assert zxdb.list_revisions(zx_file)[0]["elemental"] is True
+
+
+def test_db_build_reports_elemental_characters_that_still_have_a_decomposition(raw_db, tmp_path):
+    # in the synthetic database 寺 and 日 are elemental; 寺 has a decomposition row, 日 has none
+    r = _run(["db-build", "-i", str(raw_db), "-o", str(tmp_path / "z.sqlite3"), "--report", str(tmp_path / "q.csv")], tmp_path)
+    assert r.exit_code == 0, r.output
+    assert "elemental characters still have a decomposition" in r.output
+    rows = (tmp_path / "q-elemental-decomposed.csv").read_text(encoding="utf-8").splitlines()
+    assert rows[0] == "zi,decomposition" and any(line.startswith("寺,") for line in rows)

@@ -26,7 +26,7 @@ All commands run from this folder.
 ```bash
 cd examples/demo
 
-zitex render ../../tests/data/chars.yaml --scan main.tex -x ../../tests/data/lexicon.yaml -l en -l fr --collapse --arrow role
+zitex render -i ../../tests/data/chars.yaml --scan main.tex -x ../../tests/data/lexicon.yaml -l en -l fr --collapse --arrow role
 
 xelatex main.tex
 ```
@@ -37,7 +37,7 @@ What the first command does:
 
 | Part | Meaning |
 |---|---|
-| `../../tests/data/chars.yaml` | the decompositions (shape, pinyin, meaning, roles) |
+| `-i ../../tests/data/chars.yaml` | the decompositions (shape, pinyin, meaning, roles) |
 | `--scan main.tex` | render only what `main.tex` asks for, as snippets (`.tex` files) into `zitex-out/` |
 | `-x ../../tests/data/lexicon.yaml` | pinyin and glosses for the components, in English and French |
 | `-l en -l fr` | render glosses in both languages (`\zimath[lang=fr]{悔}` needs French) |

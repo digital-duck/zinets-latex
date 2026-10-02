@@ -11,11 +11,16 @@ zitex never changes it. This module does two separate things:
     zx_part        one row per component, in reading order: (zi, ord, pos, part)
     zx_quarantine  working-table rows that could not be converted safely, with the reason
 
-Because the copy is derived, it can be thrown away and rebuilt at any time.
+A fifth table, zx_revision, holds corrections made by hand (see revise()). They are kept when the tables are rebuilt:
+write_zx() re-applies them on top of the fresh data, so a correction is not lost by `zitex db-build`.
+
+Because the copy is derived, it can be thrown away and rebuilt at any time. The one thing that cannot be recreated
+from the working database is a revision, so zx_revision is the part of this file worth keeping.
 """
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import shutil
 import sqlite3
@@ -24,9 +29,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import pinyin
-from .ops import pattern_of, reading_order
+from .ops import POSITIONS, order_pairs, pattern_of, reading_order
 
-ZX_TABLES = ("zx_meta", "zx_char", "zx_part", "zx_quarantine")
+ZX_TABLES = ("zx_meta", "zx_char", "zx_part", "zx_quarantine", "zx_revision")
+REQUIRED = ZX_TABLES[:4]         # a file without zx_revision (an older build) is still a zx file; revise() adds the table
 
 # The dictionary definitions in the working database (t_zi.desc_en, and the pinyin of t_zi) are CEDICT entries.
 # CC-CEDICT is licensed CC BY-SA, which asks for attribution, a note of the changes, and the same licence for
@@ -58,6 +64,14 @@ CREATE TABLE zx_part (
 );
 CREATE INDEX zx_part_part ON zx_part (part);
 CREATE TABLE zx_quarantine (zi TEXT PRIMARY KEY, reason TEXT NOT NULL, cells TEXT);
+CREATE TABLE zx_revision (
+    zi TEXT PRIMARY KEY,
+    parts TEXT NOT NULL,       -- JSON [[pos, part], ...]: the revised level ([] = no decomposition)
+    original TEXT,             -- JSON {"parts": [...], "root": bool, "quarantine": [reason, cells] | null}: what it was
+    note TEXT,
+    ts TEXT,
+    elemental INTEGER          -- NULL: leave the elemental flag alone; 1 or 0: set it
+);
 """
 
 # t_zi_part: one row per character, one column per position (an empty cell means "no part there")
@@ -128,7 +142,7 @@ def _tables(con: sqlite3.Connection) -> set[str]:
 def has_zx(path: str | Path) -> bool:
     con = _connect_ro(path)
     try:
-        return set(ZX_TABLES) <= _tables(con)
+        return set(REQUIRED) <= _tables(con)
     finally:
         con.close()
 
@@ -233,6 +247,7 @@ def write_zx(zx: ZxData, out: str | Path, source: str | Path | None = None, in_p
         if foreign and in_place:
             backup = out.with_name(f"{out.name}.bak-{time.strftime('%Y%m%d-%H%M%S')}")
             shutil.copy2(out, backup)
+    kept = _read_revisions(out) if out.exists() else []          # corrections made by hand survive a rebuild
     con = sqlite3.connect(out)
     try:
         with con:
@@ -246,6 +261,9 @@ def write_zx(zx: ZxData, out: str | Path, source: str | Path | None = None, in_p
             con.executemany("INSERT INTO zx_part (zi, ord, pos, part) VALUES (?,?,?,?)",
                             [(zi, i, pos, part) for zi, lst in sorted(zx.parts.items()) for i, (pos, part) in enumerate(lst)])
             con.executemany("INSERT INTO zx_quarantine (zi, reason, cells) VALUES (?,?,?)", zx.quarantine)
+            for zi, parts, note, ts, el in kept:                 # on top of the fresh data, with the new data as "original"
+                _apply(con, zi, [tuple(p) for p in parts], note, ts, el)
+            zx.meta["revisions_reapplied"] = str(len(kept))
             from . import __version__
             meta = {**zx.meta, "built_at": time.strftime("%Y-%m-%d %H:%M:%S"), "zitex_version": __version__}
             con.executemany("INSERT INTO zx_meta (key, value) VALUES (?,?)", sorted(meta.items()))
@@ -268,3 +286,125 @@ def read_zx(path: str | Path) -> ZxData:
         return zx
     finally:
         con.close()
+
+
+# ---- revisions: corrections made by hand ---------------------------------------------------------------------
+
+def _read_revisions(path: Path) -> list[tuple[str, list, str | None, str | None, int | None]]:
+    con = _connect_ro(path)
+    try:
+        if "zx_revision" not in _tables(con):
+            return []
+        cols = {r[1] for r in con.execute("PRAGMA table_info(zx_revision)")}
+        sel = "elemental" if "elemental" in cols else "NULL"
+        return [(zi, json.loads(parts), note, ts, el) for zi, parts, note, ts, el in
+                con.execute(f"SELECT zi, parts, note, ts, {sel} FROM zx_revision ORDER BY zi")]
+    finally:
+        con.close()
+
+
+def check_parts(zi: str, parts) -> list[tuple[str, str]]:
+    """The (label, part) pairs of a level, cleaned and in reading order. A level has no parts (a primitive) or at
+    least two; each part is one character; each label is one of the 11 positions. Raises ValueError otherwise."""
+    pairs = [(str(p).strip(), str(c).strip()) for p, c in parts if str(p).strip() or str(c).strip()]
+    if not pairs:
+        return []
+    bad = [f"{p or '?'}={c or '?'}" for p, c in pairs if p not in POSITIONS or len(c) != 1 or c == "?"]
+    if bad:
+        raise ValueError(f"{zi}: each part needs one of the positions {' '.join(POSITIONS)} and a single character "
+                         f"(not: {', '.join(bad)})")
+    if len(pairs) < 2:
+        raise ValueError(f"{zi}: a level needs at least two parts, or none for a primitive")
+    return order_pairs(pairs)
+
+
+def _apply(con: sqlite3.Connection, zi: str, parts: list[tuple[str, str]], note: str | None, ts: str | None,
+           elemental: int | None = None) -> None:
+    """Make `parts` the decomposition of `zi` (and set its elemental flag, if given), and record the revision with
+    what it replaced."""
+    con.execute("CREATE TABLE IF NOT EXISTS zx_revision (zi TEXT PRIMARY KEY, parts TEXT NOT NULL, original TEXT, note TEXT, ts TEXT, elemental INTEGER)")
+    if "elemental" not in {r[1] for r in con.execute("PRAGMA table_info(zx_revision)")}:     # a file from before the flag
+        con.execute("ALTER TABLE zx_revision ADD COLUMN elemental INTEGER")
+    prior = con.execute("SELECT original FROM zx_revision WHERE zi = ?", (zi,)).fetchone()
+    if prior:
+        original = prior[0]                                     # revising again: still revert to the true original
+    else:
+        cur = [(p, c) for p, c in con.execute("SELECT pos, part FROM zx_part WHERE zi = ? ORDER BY ord", (zi,))]
+        row = con.execute("SELECT is_root, is_elemental FROM zx_char WHERE zi = ?", (zi,)).fetchone()
+        quar = con.execute("SELECT reason, cells FROM zx_quarantine WHERE zi = ?", (zi,)).fetchone()
+        original = json.dumps({"parts": cur, "root": bool(row and row[0]), "elemental": bool(row and row[1]),
+                               "quarantine": list(quar) if quar else None}, ensure_ascii=False)
+    con.execute("DELETE FROM zx_part WHERE zi = ?", (zi,))
+    con.executemany("INSERT INTO zx_part (zi, ord, pos, part) VALUES (?,?,?,?)", [(zi, i, p, c) for i, (p, c) in enumerate(parts)])
+    con.execute("INSERT INTO zx_char (zi, is_root, has_parts) VALUES (?, 1, ?) "
+                "ON CONFLICT(zi) DO UPDATE SET is_root = 1, has_parts = excluded.has_parts", (zi, int(bool(parts))))
+    if elemental is not None:
+        con.execute("UPDATE zx_char SET is_elemental = ? WHERE zi = ?", (int(bool(elemental)), zi))
+    for _, c in parts:
+        con.execute("INSERT OR IGNORE INTO zx_char (zi) VALUES (?)", (c,))
+    con.execute("DELETE FROM zx_quarantine WHERE zi = ?", (zi,))
+    con.execute("INSERT OR REPLACE INTO zx_revision (zi, parts, original, note, ts, elemental) VALUES (?,?,?,?,?,?)",
+                (zi, json.dumps(parts, ensure_ascii=False), original, note, ts or time.strftime("%Y-%m-%d %H:%M:%S"),
+                 None if elemental is None else int(bool(elemental))))
+
+
+def revise(path: str | Path, zi: str, parts, note: str | None = None, elemental: bool | None = None) -> list[tuple[str, str]]:
+    """Replace the decomposition of `zi` by `parts` ([(label, part), ...]; none at all means "a primitive").
+
+    `elemental` sets whether `zi` counts as an elemental character (True or False), or leaves that alone (None). An
+    elemental character is never expanded inside other characters.
+
+    Only the zx tables of a zx file are touched, never the working database's own tables. The first revision of a
+    character remembers what it replaced, so revert() can put it back. Returns the parts as stored (in reading order).
+    """
+    path = Path(path)
+    if not has_zx(path):
+        raise ValueError(f"{path} has no zx_ tables: run `zitex db-build` first")
+    ordered = check_parts(zi, parts)
+    con = sqlite3.connect(path)
+    try:
+        with con:
+            _apply(con, zi, ordered, note, None, elemental)
+    finally:
+        con.close()
+    return ordered
+
+
+def revert(path: str | Path, zi: str) -> bool:
+    """Undo the revision of `zi`. Returns False if it had none."""
+    path = Path(path)
+    con = sqlite3.connect(path)
+    try:
+        with con:
+            row = con.execute("SELECT original FROM zx_revision WHERE zi = ?", (zi,)).fetchone() \
+                if "zx_revision" in _tables(con) else None
+            if not row:
+                return False
+            orig = json.loads(row[0])
+            con.execute("DELETE FROM zx_part WHERE zi = ?", (zi,))
+            con.executemany("INSERT INTO zx_part (zi, ord, pos, part) VALUES (?,?,?,?)",
+                            [(zi, i, p, c) for i, (p, c) in enumerate(orig["parts"])])
+            con.execute("UPDATE zx_char SET is_root = ?, has_parts = ? WHERE zi = ?",
+                        (int(orig["root"]), int(bool(orig["parts"])), zi))
+            if orig.get("elemental") is not None:
+                con.execute("UPDATE zx_char SET is_elemental = ? WHERE zi = ?", (int(orig["elemental"]), zi))
+            if orig["quarantine"]:
+                con.execute("INSERT OR REPLACE INTO zx_quarantine (zi, reason, cells) VALUES (?,?,?)", (zi, *orig["quarantine"]))
+            con.execute("DELETE FROM zx_revision WHERE zi = ?", (zi,))
+            return True
+    finally:
+        con.close()
+
+
+def list_revisions(path: str | Path) -> list[dict]:
+    """The revisions in a zx file, newest first, as dictionaries."""
+    con = _connect_ro(path)
+    try:
+        if "zx_revision" not in _tables(con):
+            return []
+        sel = "elemental" if "elemental" in {r[1] for r in con.execute("PRAGMA table_info(zx_revision)")} else "NULL"
+        rows = con.execute(f"SELECT zi, parts, original, note, ts, {sel} FROM zx_revision ORDER BY ts DESC, zi").fetchall()
+    finally:
+        con.close()
+    return [{"zi": zi, "parts": json.loads(p), "original": json.loads(o) if o else None, "note": note, "ts": ts,
+             "elemental": None if el is None else bool(el)} for zi, p, o, note, ts, el in rows]
