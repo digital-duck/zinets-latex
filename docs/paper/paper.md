@@ -64,7 +64,7 @@ come from CC-CEDICT [@cedict], and are attributed in the data.
 
 Python does the parsing and the layout, and LaTeX does the typesetting (\autoref{fig:flow}). `zitex extract`
 selects characters from a database and writes `chars.yaml`, `lexicon.yaml`, a `main.tex` and the snippets it needs.
-Each snippet is self-contained (`u<hex>-<style>[-<lang>][@reading].tex`, named by the code point so that file names are plain ASCII, with a `build_manifest.json` that maps them back), and `zitex.sty` finds it by the
+Each snippet is self-contained (`u<hex>-<char>-<style>[-<lang>][@reading].tex`, the code point and then the character, with a `build_manifest.json` that lists them), and `zitex.sty` finds it by the
 file name, so the package stays about 60 lines.
 
 ![The workflow. Python writes one snippet per character and style, and XeLaTeX includes them.\label{fig:flow}](flow.pdf){ width=100% }

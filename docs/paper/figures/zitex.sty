@@ -38,15 +38,15 @@
 \define@key{zitex}{lang}{\def\zitex@lang{#1}}
 \define@key{zitex}{reading}{\def\zitex@reading{#1}}
 
-% The character is named by its code point in lower-case hex, so every snippet file name is plain ASCII: 藻 (U+85FB)
-% is u85fb. Python writes the same names (snippet_name() in build.py); build_manifest.json maps them back.
+% A snippet is named <code point in hex>-<character>-<style>...: 藻 (U+85FB) is u85fb-藻-tree.tex. Python writes the same
+% names (snippet_name() in build.py); build_manifest.json lists them.
 \ExplSyntaxOn
 \newcommand\zitex@cp[1]{u\int_to_hex:n{`#1}}
 \ExplSyntaxOff
 
 % Language only matters for the styles that print glosses.
 \newcommand\zitex@name[1]{%
-  \zitex@cp{#1}-\zitex@style
+  \zitex@cp{#1}-#1-\zitex@style
   \ifx\zitex@style\zitex@math -\zitex@lang\fi
   \ifx\zitex@style\zitex@formula -\zitex@lang\fi
   \ifx\zitex@reading\zitex@empty\else @\zitex@reading\fi}

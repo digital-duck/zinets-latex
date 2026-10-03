@@ -173,7 +173,7 @@ def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, o
                collapse, arrow, show_pos, result) -> None:
     """Render the characters of a decomposition YAML, or of a SQLite database, to LaTeX snippets and PDF figures.
 
-    The input is --input, or ./chars.yaml when it is not given. With no other options, every character is rendered in every style, as u<hex>-<style>.tex (the character's code point in hex, such as u85fb for 藻) and .pdf,
+    The input is --input, or ./chars.yaml when it is not given. With no other options, every character is rendered in every style, as u<hex>-<char>-<style>.tex (the code point in hex, then the character: u85fb-藻-tree.tex) and .pdf,
     into ./zitex-out/ (the folder zitex.sty reads). Choose what to render with --char, and where
     the output goes with -o:
 

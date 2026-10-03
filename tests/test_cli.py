@@ -52,11 +52,11 @@ def test_build_command_is_gone():
 # ---- naming and scanning (library level) -----------------------------------------------------
 
 def test_snippet_name():
-    assert snippet_name("藻", "tree") == "u85fb-tree"
-    assert snippet_name("藻", "math", "fr") == "u85fb-math-fr"
-    assert snippet_name("藻", "formula") == "u85fb-formula-en"
-    assert snippet_name("虹", "tree", reading="author") == "u8679-tree@author"
-    assert snippet_name("虹", "math", "fr", "author") == "u8679-math-fr@author"
+    assert snippet_name("藻", "tree") == "u85fb-藻-tree"
+    assert snippet_name("藻", "math", "fr") == "u85fb-藻-math-fr"
+    assert snippet_name("藻", "formula") == "u85fb-藻-formula-en"
+    assert snippet_name("虹", "tree", reading="author") == "u8679-虹-tree@author"
+    assert snippet_name("虹", "math", "fr", "author") == "u8679-虹-math-fr@author"
 
 
 def test_scan_tex(tmp_path):
@@ -88,7 +88,7 @@ def test_render_everything_by_default(tmp_path):
     assert r.exit_code == 0, r.output
     names = _names(tmp_path / "zitex-out")                        # default folder: the one zitex.sty reads
     assert len(names) == 29 * 4                                   # every character, every style
-    assert {"u85fb-tree.tex", "u85fb-matrix.tex", "u85fb-math-en.tex", "u85fb-formula-en.tex"} <= set(names)
+    assert {"u85fb-藻-tree.tex", "u85fb-藻-matrix.tex", "u85fb-藻-math-en.tex", "u85fb-藻-formula-en.tex"} <= set(names)
     assert "29" in r.output or "116" in r.output
 
 
@@ -104,28 +104,28 @@ def test_render_char_selection(tmp_path):
 def test_render_character_list_forms(tmp_path, arg):
     r = _render([*arg, "-s", "tree", "--emit", "tex", "-o", "o/"], tmp_path)
     assert r.exit_code == 0, r.output
-    assert _names(tmp_path / "o") == ["u4f5c-tree.tex", "u53d5-tree.tex"]                    # duplicates are ignored
+    assert _names(tmp_path / "o") == ["u4f5c-作-tree.tex", "u53d5-叕-tree.tex"]                    # duplicates are ignored
 
 
 def test_render_some_characters_missing(tmp_path):
     r = _render(["-c", "叕,好,作", "-s", "tree", "--emit", "tex", "-o", "o/"], tmp_path)
     assert r.exit_code == 0 and "not in" in r.output and "好" in r.output
-    assert _names(tmp_path / "o") == ["u4f5c-tree.tex", "u53d5-tree.tex"]
+    assert _names(tmp_path / "o") == ["u4f5c-作-tree.tex", "u53d5-叕-tree.tex"]
     assert _render(["-c", "好,也", "-s", "tree"], tmp_path).exit_code == 1               # none found
 
 
 def test_render_styles(tmp_path):
     r = _render(["-c", "森", "-s", "tree,matrix", "--emit", "tex", "-o", "o/"], tmp_path)
-    assert r.exit_code == 0 and _names(tmp_path / "o") == ["u68ee-matrix.tex", "u68ee-tree.tex"]
+    assert r.exit_code == 0 and _names(tmp_path / "o") == ["u68ee-森-matrix.tex", "u68ee-森-tree.tex"]
     assert _render(["-c", "森", "-s", "nope"], tmp_path).exit_code != 0
 
 
 def test_render_languages(tmp_path):
     r = _render(["-c", "藻", "-x", LEX, "-l", "en", "-l", "fr", "--emit", "tex", "-o", "o/"], tmp_path)
     assert r.exit_code == 0, r.output
-    assert _names(tmp_path / "o") == ["u85fb-formula-en.tex", "u85fb-formula-fr.tex", "u85fb-math-en.tex", "u85fb-math-fr.tex",
-                                      "u85fb-matrix.tex", "u85fb-tree.tex"]                  # tree and matrix: one file
-    assert r"_{\text{algue}}" in (tmp_path / "o" / "u85fb-math-fr.tex").read_text(encoding="utf-8")
+    assert _names(tmp_path / "o") == ["u85fb-藻-formula-en.tex", "u85fb-藻-formula-fr.tex", "u85fb-藻-math-en.tex", "u85fb-藻-math-fr.tex",
+                                      "u85fb-藻-matrix.tex", "u85fb-藻-tree.tex"]                  # tree and matrix: one file
+    assert r"_{\text{algue}}" in (tmp_path / "o" / "u85fb-藻-math-fr.tex").read_text(encoding="utf-8")
     assert "shí, temps" in _render(["-c", "時", "-s", "formula", "-x", LEX, "-l", "fr", "-o", "-"], tmp_path).output
 
 
@@ -133,7 +133,7 @@ def test_render_languages(tmp_path):
 
 def test_render_dash_prints_to_stdout(tmp_path):
     r = _render(["-c", "森", "-s", "math", "-x", LEX, "-o", "-"], tmp_path)
-    assert r.exit_code == 0 and r.output.startswith(r"\[") and list(tmp_path.iterdir()) == []
+    assert r.exit_code == 0 and r.output.startswith(r"{\Large \[") and list(tmp_path.iterdir()) == []
 
 
 def test_render_dash_needs_one_character_one_style_and_tex(tmp_path):
@@ -146,7 +146,7 @@ def test_render_dash_needs_one_character_one_style_and_tex(tmp_path):
 def test_render_suffix_picks_the_format(tmp_path):
     r = _render(["-c", "森", "-s", "math", "-x", LEX, "-o", "sen.tex"], tmp_path)
     assert r.exit_code == 0 and _names(tmp_path) == ["sen.tex"]
-    assert (tmp_path / "sen.tex").read_text(encoding="utf-8").startswith(r"\[")
+    assert (tmp_path / "sen.tex").read_text(encoding="utf-8").startswith(r"{\Large \[")
 
 
 def test_render_a_file_defaults_to_the_tree_style(tmp_path):
@@ -163,7 +163,7 @@ def test_render_bare_name_is_a_stem_for_one_output_and_a_directory_for_several(t
     assert _render(["-c", "森", "-s", "tree", "-o", "sen", "--emit", "tex"], tmp_path).exit_code == 0
     assert (tmp_path / "sen.tex").is_file()
     assert _render(["-c", "森,作", "-s", "tree", "-o", "many", "--emit", "tex"], tmp_path).exit_code == 0
-    assert _names(tmp_path / "many") == ["u4f5c-tree.tex", "u68ee-tree.tex"]
+    assert _names(tmp_path / "many") == ["u4f5c-作-tree.tex", "u68ee-森-tree.tex"]
     assert _render(["-c", "森", "-o", "alltrees", "--emit", "tex"], tmp_path).exit_code == 0   # one char, all styles
     assert len(_names(tmp_path / "alltrees")) == 4
 
@@ -190,8 +190,8 @@ def test_render_unknown_character_writes_nothing(tmp_path):
 def test_render_default_emit_is_both(tmp_path):
     r = _render(["-c", "叕", "-s", "math", "-x", LEX, "-o", "o/"], tmp_path)
     assert r.exit_code == 0, r.output
-    assert _names(tmp_path / "o") == ["u53d5-math-en.pdf", "u53d5-math-en.tex"]
-    assert (tmp_path / "o" / "u53d5-math-en.pdf").stat().st_size > 1000
+    assert _names(tmp_path / "o") == ["u53d5-叕-math-en.pdf", "u53d5-叕-math-en.tex"]
+    assert (tmp_path / "o" / "u53d5-叕-math-en.pdf").stat().st_size > 1000
 
 
 @needs_xelatex
@@ -223,7 +223,7 @@ def test_render_reading(tmp_path):
     assert r"\xrightarrow" not in a and r"\xrightarrow" in d
     r = _render(["-c", "虹", "-s", "tree,math", "-x", LEX, "--reading", "dictionary", "--emit", "tex", "-o", "o/"],
                 tmp_path)
-    assert r.exit_code == 0 and _names(tmp_path / "o") == ["u8679-math-en@dictionary.tex", "u8679-tree@dictionary.tex"]
+    assert r.exit_code == 0 and _names(tmp_path / "o") == ["u8679-虹-math-en@dictionary.tex", "u8679-虹-tree@dictionary.tex"]
 
 
 # ---- render --scan and the .sty --------------------------------------------------------------
@@ -240,7 +240,7 @@ def test_scan_writes_snippets_only_by_default(tmp_path):
     doc.write_text(r"\zi{藻} \zimath{森}", encoding="utf-8")
     r = _render(["--scan", str(doc), "-x", LEX], tmp_path)
     assert r.exit_code == 0, r.output
-    assert _names(tmp_path / "zitex-out") == ["u68ee-math-en.tex", "u85fb-tree.tex"]            # tex: the paper is typeset by LaTeX
+    assert _names(tmp_path / "zitex-out") == ["u68ee-森-math-en.tex", "u85fb-藻-tree.tex"]            # tex: the paper is typeset by LaTeX
 
 
 @needs_xelatex
@@ -260,7 +260,7 @@ def test_sty_end_to_end(tmp_path):
     assert "Missing character" not in p.stdout
     missing = [l for l in p.stdout.splitlines() if "Warning: Missing zitex-out" in l]
     assert len(missing) == 1 and f"u{ord('好'):x}-" in missing[0]      # only 好 is not rendered; a warning, not an error
-    assert not any(n in p.stdout for n in ("u85fb-tree@", "u570b-matrix@", "u68ee-math-fr@"))   # no stray @ in a file name
+    assert not any(n in p.stdout for n in ("u85fb-藻-tree@", "u570b-國-matrix@", "u68ee-森-math-fr@"))   # no stray @ in a file name
     text = subprocess.run(["pdftotext", str(tmp_path / "main.pdf"), "-"], capture_output=True, text=True).stdout \
         if shutil.which("pdftotext") else "[好?]"
     assert "[藻" not in text and "[國" not in text and "[哭" not in text   # the figures are there, not placeholders
@@ -274,7 +274,7 @@ def test_sty_reading_end_to_end(tmp_path):
                               r"\end{document}"]), encoding="utf-8")
     r = _render(["--scan", str(doc), "-x", LEX, "--arrow", "role"], tmp_path)
     assert r.exit_code == 0, r.output
-    assert _names(tmp_path / "zitex-out") == ["u8679-math-en@dictionary.tex", "u8679-tree@author.tex"]
+    assert _names(tmp_path / "zitex-out") == ["u8679-虹-math-en@dictionary.tex", "u8679-虹-tree@author.tex"]
     env = {**os.environ, "TEXINPUTS": f"{STY}:"}
     p = subprocess.run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", "main.tex"],
                        cwd=tmp_path, env=env, capture_output=True, text=True)
@@ -366,10 +366,11 @@ def test_scan_tex_skips_comments_and_verbatim(tmp_path):
     assert scan_tex(t) == {("森", "math", None, None), ("國", "matrix", None, None), ("悔", "math", None, None)}
 
 
-def test_snippet_names_are_ascii_code_points():
-    assert snippet_name("藻", "tree") == "u85fb-tree" and snippet_name("𠀉", "matrix") == "u20009-matrix"
-    assert snippet_name("虹", "math", "fr", "author") == "u8679-math-fr@author"
-    assert all(ord(c) < 128 for c in snippet_name("藻", "formula", "en", "dictionary"))
+def test_snippet_names_are_code_point_then_character():
+    assert snippet_name("藻", "tree") == "u85fb-藻-tree" and snippet_name("𠀉", "matrix") == "u20009-𠀉-matrix"
+    assert snippet_name("虹", "math", "fr", "author") == "u8679-虹-math-fr@author"
+    assert snippet_name("藻", "formula", "en", "dictionary") == "u85fb-藻-formula-en@dictionary"
+    assert snippet_name("藻", "math").startswith("u85fb-")                      # the code point first: files sort by it
 
 
 def test_build_manifest_maps_files_back_to_characters(tmp_path):
@@ -378,7 +379,7 @@ def test_build_manifest_maps_files_back_to_characters(tmp_path):
     assert r.exit_code == 0, r.output
     m = json.loads((tmp_path / "o" / "build_manifest.json").read_text(encoding="utf-8"))
     files = {s["file"]: s for s in m["snippets"]}
-    assert set(files) == {"u85fb-tree.tex", "u85fb-math-en.tex"} and files["u85fb-tree.tex"]["char"] == "藻"
-    assert files["u85fb-tree.tex"]["codepoint"] == "U+85FB" and files["u85fb-math-en.tex"]["lang"] == "en"
-    assert files["u85fb-tree.tex"]["lang"] is None and "好" not in json.dumps(m, ensure_ascii=False)
+    assert set(files) == {"u85fb-藻-tree.tex", "u85fb-藻-math-en.tex"} and files["u85fb-藻-tree.tex"]["char"] == "藻"
+    assert files["u85fb-藻-tree.tex"]["codepoint"] == "U+85FB" and files["u85fb-藻-math-en.tex"]["lang"] == "en"
+    assert files["u85fb-藻-tree.tex"]["lang"] is None and "好" not in json.dumps(m, ensure_ascii=False)
     assert all((tmp_path / "o" / f).exists() for f in files) and m["zitex_version"]

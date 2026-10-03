@@ -18,14 +18,15 @@ LANG_STYLES = ("math", "formula")  # styles whose output depends on the language
 
 
 def snippet_name(char: str, style: str, lang: str = "en", reading: str | None = None) -> str:
-    """File stem used for a snippet: ``u85fb-tree`` (藻 is U+85FB), ``u85fb-math-fr``, ``u8679-math-en@author``.
+    """File stem used for a snippet: ``u85fb-藻-tree``, ``u85fb-藻-math-fr``, ``u8679-虹-math-en@author``.
 
-    The character is named by its code point in lower-case hex, so every file name is plain ASCII and works on any
-    file system, in any archive, and with any TeX engine. ``build_manifest.json`` maps the names back to the
-    characters. The language is part of the name only for the styles that print glosses, and ``@reading`` only when
-    a named reading was asked for. zitex.sty uses the same rule (``\\zitex@name``)."""
-    cp = f"u{ord(char):x}"
-    stem = f"{cp}-{style}-{lang}" if style in LANG_STYLES else f"{cp}-{style}"
+    The name is ``<unicode>-<char>-<style>[-<lang>][@<reading>]``. The code point (lower-case hex after a ``u``) comes first
+    so the files sort by code point, and the character itself follows so a person can see which character a file is
+    for. The language is part of the name only for the styles that print glosses, and ``@reading`` only when a named
+    reading was asked for. zitex.sty uses the same rule (``\\zitex@name``). Note that the character makes the name
+    non-ASCII: ``build_manifest.json`` lists the pairs of names and characters."""
+    head = f"u{ord(char):x}-{char}"
+    stem = f"{head}-{style}-{lang}" if style in LANG_STYLES else f"{head}-{style}"
     return f"{stem}@{reading}" if reading else stem
 
 

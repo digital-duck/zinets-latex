@@ -74,7 +74,7 @@ part that is itself decomposed (澡 inside 藻) carries its own pattern.
 Python does the parsing and layout, and \LaTeX{} does the typesetting (Figure~\ref{fig:flow}). \texttt{zitex extract} selects characters
 from a database and writes \texttt{chars.yaml}, \texttt{lexicon.yaml}, a \texttt{main.tex}, and every snippet the document asks for.
 The only interface between the two halves is the file name of a snippet,
-\texttt{u<hex>-<style>[-<lang>][@reading].tex}, where \texttt{u<hex>} is the code point of the character in hex, so that file names are plain ASCII, and the package looks the file up and inputs it. A missing file gives a warning
+\texttt{u<hex>-<char>-<style>[-<lang>][@reading].tex}, where \texttt{u<hex>} is the code point of the character in hex, followed by the character itself, and the package looks the file up and inputs it. A missing file gives a warning
 and a red mark, so a long build is not stopped.
 
 \begin{figure}[ht]
@@ -136,8 +136,8 @@ for large character sets~\cite{cjkviids}. These record a character as a string a
 form and adds positions per level. Figures are produced with TikZ~\cite{tikz}, and Chinese text with \texttt{xeCJK}~\cite{xecjk}, which \texttt{zitex} builds on.
 We did not survey other tools for drawing character decompositions, and a comparison is future work.
 
-The present version has these limits. It needs XeLaTeX, and has not been tried with other engines. The snippet file names are ASCII, which
-should work on any file system, but we have only tried Linux. The decomposition database used for development is a first iteration under review:
+The present version has these limits. It needs XeLaTeX, and has not been tried with other engines. The snippet file names contain the character, as well as its code point, which
+works on Linux; we have not tried Windows. The decomposition database used for development is a first iteration under review:
 223 rows of about 6,200 cannot be converted yet, and warnings remain on some characters. Glosses are first senses from a dictionary and are not curated.
 We make no claim about the etymology of any character: the figures show the data.
 

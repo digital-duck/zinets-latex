@@ -170,7 +170,7 @@ def test_extract_writes_main_tex_and_its_snippets(raw_db, tmp_path):
     assert {"chars.yaml", "lexicon.yaml", "main.tex", "fonts.yaml", "zitex.sty", "zitex-out"} <= {p.name for p in work.iterdir()}
     snippets = sorted(p.name for p in (work / "zitex-out").iterdir() if p.suffix == ".tex")
     assert (work / "zitex-out" / "build_manifest.json").exists()
-    assert snippets == sorted(f"u{ord(c):x}-{s}" + (".tex" if s in ("matrix", "tree") else "-en.tex")
+    assert snippets == sorted(f"u{ord(c):x}-{c}-{s}" + (".tex" if s in ("matrix", "tree") else "-en.tex")
                               for c in "器時" for s in ("formula", "math", "matrix", "tree"))
     primary = FontConfig.load(work / "fonts.yaml").primary
     assert rf"\setCJKmainfont{{{primary}}}" in (work / "main.tex").read_text(encoding="utf-8")   # the font follows fonts.yaml
@@ -424,7 +424,7 @@ def test_extract_annotation_demo_makes_a_paper_that_compiles(raw_db, tmp_path):
     assert r.exit_code == 0, r.output
     work = tmp_path / "work"
     assert "research paper" in (work / "main.tex").read_text(encoding="utf-8")
-    assert (work / "zitex-out" / "u5668-tree.tex").exists() and (work / "zitex-out" / "u6642-matrix.tex").exists()
+    assert (work / "zitex-out" / "u5668-器-tree.tex").exists() and (work / "zitex-out" / "u6642-時-matrix.tex").exists()
     for _ in range(2):
         p = subprocess.run(["xelatex", "-interaction=nonstopmode", "-halt-on-error", "main.tex"], cwd=work, capture_output=True, text=True)
         assert p.returncode == 0, p.stdout[-1500:]

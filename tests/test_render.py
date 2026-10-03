@@ -83,7 +83,11 @@ def test_math_matches_conceptbook_grammar():
 
 def test_math_collapse_and_wrap():
     s = render_math(ENTRIES["品"], LEX, collapse=True)
-    assert s.startswith(r"\[ 3\times ") and s.endswith(r"\]")
+    assert s.startswith(r"{\Large \[ 3\times ") and s.endswith(r"\]}")           # sized by config.MATH_FONT, in a group
+    bare = render_math(ENTRIES["品"], LEX, collapse=True, wrap="none")
+    assert r"\Large" not in bare and not bare.startswith("{") and bare.startswith("3\\times ")   # "none": the bare expression, for MathJax
+    inline = render_math(ENTRIES["品"], LEX, collapse=True, wrap="inline")
+    assert inline.startswith(r"{\Large \( ") and inline.endswith(r"\)}")
     assert s.count(r"\underbrace") == 2  # the repeated piece and the result
     assert render_math(ENTRIES["品"], LEX).count(r"\underbrace") == 4
 
@@ -260,3 +264,30 @@ def test_flat_rects_give_every_part_its_own_cell_when_rows_and_columns_mix():
             for x2, y2, w2, h2 in rects[i + 1:]:
                 assert x + w <= x2 + 1e-9 or x2 + w2 <= x + 1e-9 or y + h <= y2 + 1e-9 or y2 + h2 <= y + 1e-9, labels
     assert flat_rects(["L", "R"]) == [(0.0, 0.0, 0.5, 1.0), (0.5, 0.0, 0.5, 1.0)]    # the usual patterns are unchanged
+
+
+def test_matrix_size_comes_from_the_config(monkeypatch):
+    import re
+    from zitex import config
+    e = load_yaml(DATA)[0]
+    def side(snippet):          # the outermost rectangle is drawn first, from (0,0)
+        return float(re.search(r"rectangle \(([\d.]+),", snippet.split("\\draw")[1]).group(1))
+    default = render(e, "matrix")
+    assert side(default) == config.MATRIX_SIZE_CM == 2.2                      # half of the old 4.4
+    assert side(render_matrix_with_size(e, 4.4)) == 4.4                       # an explicit size still wins
+    monkeypatch.setattr(config, "MATRIX_SIZE_CM", 3.0)
+    assert side(render(e, "matrix")) == 3.0                                   # and the config is read at render time
+
+
+def render_matrix_with_size(e, size):
+    from zitex.render import render_matrix
+    return render_matrix(e, size=size)
+
+
+def test_math_size_is_configurable_and_formula_is_not_sized(monkeypatch):
+    from zitex import config
+    monkeypatch.setattr(config, "MATH_FONT", r"\huge")
+    assert render_math(ENTRIES["森"], LEX).startswith(r"{\huge \[ ")
+    monkeypatch.setattr(config, "MATH_FONT", "")
+    assert render_math(ENTRIES["森"], LEX).startswith(r"\[ ")                   # empty: the document's own size
+    assert r"\Large" not in render_formula(ENTRIES["森"], lex=LEX)             # the inline formula keeps the sentence's size

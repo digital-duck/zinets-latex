@@ -23,6 +23,8 @@ from pathlib import Path
 
 import yaml
 
+from . import config as cfg
+
 DEFAULT_PRIMARY = "Noto Serif CJK SC"
 
 
@@ -117,8 +119,9 @@ PRELUDE = "\n".join([
     r"\providecommand\zitexpath{zitex-out}",
     r"\providecommand\zifont[3]{{\expandafter\ifx\csname zifam@#1\endcsname\relax"
     r"\setCJKfamilyfont{zifam@#1}{#2}\expandafter\gdef\csname zifam@#1\endcsname{}\fi\CJKfamily{zifam@#1}#3}}",
-    r"\providecommand\zisvg[1]{\raisebox{-0.12em}{\includegraphics[height=0.9em]{\zitexpath/glyphs/#1}}}",
-    r"\providecommand\zimissing[1]{\fbox{\scriptsize #1}}",
+    r"\providecommand\zisvg[1]{\raisebox{" + cfg.IMAGE_GLYPH_RAISE + r"}{\includegraphics[height=" + cfg.IMAGE_GLYPH_HEIGHT
+    + r"]{\zitexpath/glyphs/#1}}}",
+    r"\providecommand\zimissing[1]{\fbox{" + cfg.MISSING_GLYPH_FONT + " #1}}",
 ])
 
 
