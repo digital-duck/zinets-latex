@@ -18,3 +18,12 @@
 犬: {pinyin: "quǎn", gloss: {en: "dog"}}
 艹: {pinyin: "cǎo", gloss: {en: "grass"}}
 藻: {pinyin: "zǎo", gloss: {en: "aquatic grasses"}}
+
+# Added by hand for the picture-row examples (section 4): glosses in English and Chinese written for this paper, and an
+# emoji pict for each character. The oracle bone glyphs are the picture set obs (obs/lexicon.yaml).
+日: {pinyin: "rì",   gloss: {en: "sun",     zh: "太阳"}, pict: "☀️"}
+月: {pinyin: "yuè",  gloss: {en: "moon",    zh: "月亮"}, pict: "🌙"}
+明: {pinyin: "míng", gloss: {en: "bright",  zh: "明亮"}, pict: "✨"}
+虫: {pinyin: "chóng", gloss: {en: "insect", zh: "虫子"}, pict: "🐛"}
+工: {pinyin: "gōng", gloss: {en: "work",    zh: "工作"}, pict: "🛠️"}
+虹: {pinyin: "hóng", gloss: {en: "rainbow", zh: "彩虹"}, pict: "🌈"}

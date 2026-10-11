@@ -12,9 +12,9 @@ from pathlib import Path
 from .lexicon import Lexicon
 from .loader import Entry
 from .fonts import FontConfig, svg_to_pdf
-from .render import STYLES, document, render_with
+from .render import DEFAULT_STYLES, LANG_STYLES, document, math_chars, render_with, split_style
 
-LANG_STYLES = ("math", "formula")  # styles whose output depends on the language
+MATH_STYLES = ("math", "pictmath")
 
 
 def snippet_name(char: str, style: str, lang: str = "en", reading: str | None = None) -> str:
@@ -25,7 +25,7 @@ def snippet_name(char: str, style: str, lang: str = "en", reading: str | None = 
     characters. The language is part of the name only for the styles that print glosses, and ``@reading`` only when
     a named reading was asked for. zitex.sty uses the same rule (``\\zitex@name``)."""
     cp = f"u{ord(char):x}"
-    stem = f"{cp}-{style}-{lang}" if style in LANG_STYLES else f"{cp}-{style}"
+    stem = f"{cp}-{style}-{lang}" if split_style(style)[0] in LANG_STYLES else f"{cp}-{style}"
     return f"{stem}@{reading}" if reading else stem
 
 
@@ -58,8 +58,13 @@ def scan_tex(path: str | Path) -> set[tuple[str, str, str | None, str | None]]:
             reading = m.group(2).strip() or None
         else:
             style, opts, ch = m.group(3), m.group(4) or "", m.group(5)
-            kv = dict(p.split("=", 1) for p in (x.strip() for x in opts.split(",")) if "=" in p)
-            found.add((ch, style or kv.get("style", "tree"), kv.get("lang", lang), kv.get("reading", reading)))
+            items = [x.strip() for x in opts.split(",") if x.strip()]
+            kv = dict(p.split("=", 1) for p in items if "=" in p)
+            st = style or kv.get("style", "tree")
+            pict = kv.get("pict", "true" if "pict" in items else "false")
+            if st == "math" and pict != "false":     # \zimath[pict]{字}: the grid with a picture row
+                st = "pictmath" if pict == "true" else f"pictmath-{pict}"   # [pict=obs]: the set of pictures obs
+            found.add((ch, st, kv.get("lang", lang), kv.get("reading", reading)))
     return found
 
 
@@ -136,8 +141,8 @@ def build(entries: list[Entry], outdir: str | Path, jobs: set[tuple[str, str, st
     outdir.mkdir(parents=True, exist_ok=True)
     langs = langs or ["en"]
     if jobs is None:
-        jobs = {(c, s, l, reading) for c in (chars or list(by_char)) for s in (styles or list(STYLES)) for l in langs}
-    jobs = {(c, st, l if st in LANG_STYLES else langs[0], rd) for c, st, l, rd in jobs}   # tree/matrix: one file whatever -l
+        jobs = {(c, s, l, reading) for c in (chars or list(by_char)) for s in (styles or DEFAULT_STYLES) for l in langs}
+    jobs = {(c, st, l if split_style(st)[0] in LANG_STYLES else langs[0], rd) for c, st, l, rd in jobs}   # tree/matrix: one file whatever -l
     res = BuildResult()
     converted: set[str] = set()
     for ch, style, lang, rd in sorted(jobs, key=lambda j: tuple(x or "" for x in j)):
@@ -146,13 +151,15 @@ def build(entries: list[Entry], outdir: str | Path, jobs: set[tuple[str, str, st
             if ch not in res.missing:
                 res.missing.append(ch)
             continue
-        kw = dict(math_opts or {}) if style == "math" else {}
-        if style in LANG_STYLES:
+        base, pict_set = split_style(style)
+        kw = dict(math_opts or {}) if base in MATH_STYLES else {}
+        if base in LANG_STYLES:
             kw["lang"], kw["lex"] = lang, lex
         stem = snippet_name(ch, style, lang, rd)
         snippet, resolver = render_with(e, style, fonts, reading=rd, **kw)
-        record = {"char": ch, "codepoint": f"U+{ord(ch):04X}", "style": style, "lang": lang if style in LANG_STYLES else None,
-                  "reading": rd, "file": f"{stem}.pdf" if emit == "pdf" else f"{stem}.tex", "fallback_fonts": [], "images": [], "no_glyph": []}
+        picts = lex.stage_picts(math_chars(e), outdir, pict_set) if base == "pictmath" and lex else []
+        record = {"char": ch, "codepoint": f"U+{ord(ch):04X}", "style": style, "lang": lang if base in LANG_STYLES else None,
+                  "reading": rd, "file": f"{stem}.pdf" if emit == "pdf" else f"{stem}.tex", "fallback_fonts": [], "images": [], "no_glyph": [], "picts": picts}
         if resolver:
             record.update(fallback_fonts=sorted(resolver.fonts), images=sorted(Path(s).name for s in resolver.svgs),
                           no_glyph=sorted(resolver.missing))

@@ -148,10 +148,14 @@ def preview_png(entry, style: str = "matrix", lex=None, fonts=None, dpi: int = 1
     from .build import compile_pdf
     from .render import render_with
     kw: dict = {}
-    if style in ("math", "formula"):
+    from .render import LANG_STYLES, split_style
+    if split_style(style)[0] in LANG_STYLES:
         kw.update(lang="en", lex=lex)
     snippet, _ = render_with(entry, style, fonts, **kw)
     with tempfile.TemporaryDirectory() as tmp:
+        if split_style(style)[0] == "pictmath" and lex:
+            from .render import math_chars
+            lex.stage_picts(math_chars(entry), tmp, split_style(style)[1])
         pdf = Path(tmp) / "p.pdf"
         if not compile_pdf(snippet, pdf, fonts.primary if fonts else "Noto Serif CJK SC", tmp):
             return None

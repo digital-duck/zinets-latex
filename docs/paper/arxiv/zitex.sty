@@ -7,9 +7,11 @@
 %
 %   \zi[style=tree|matrix|formula|math, lang=fr, reading=author]{藻}
 %   \zitree{藻}  \zimatrix{藻}  \ziformula{藻}  \zimath{藻}
+%   \zimath[pict]{藻}   the equation as a grid with a picture row (pinyin / character / meaning / pict)
+%   \zimath[pict=obs]{藻}   the same with the named set of pictures obs (lexicon key pict_obs)
 %   \zitexsetlang{fr}   \zitexsetreading{author}   \zitexsetpath{zitex-out}
 %
-% The default CJK font is Noto Serif CJK SC. Call \setCJKmainfont again to change it.
+% The default CJK font is Noto Serif CJK SC (FandolSong if that is missing). Call \setCJKmainfont again to change it.
 \RequirePackage{fontspec}
 \RequirePackage{xeCJK}
 \RequirePackage{amsmath}
@@ -17,7 +19,10 @@
 \RequirePackage{tikz}
 \RequirePackage{xkeyval}
 
-\setCJKmainfont{Noto Serif CJK SC}
+% Noto Serif CJK SC when installed, else FandolSong (shipped with TeX Live), else the document must set one.
+\IfFontExistsTF{Noto Serif CJK SC}{\setCJKmainfont{Noto Serif CJK SC}}{%
+  \IfFontExistsTF{FandolSong-Regular}{\setCJKmainfont{FandolSong-Regular}[BoldFont=FandolSong-Bold]}{%
+    \PackageWarning{zitex}{No CJK font found: set one with \string\setCJKmainfont}}}
 % the ZiNets operators U+2234 ∴, U+2235 ∵ and U+2237 ∷ must be typeset with the CJK font
 \xeCJKDeclareCharClass{CJK}{"2234,"2235,"2237}
 
@@ -33,10 +38,16 @@
 
 \def\zitex@math{math}
 \def\zitex@formula{formula}
+\def\zitex@pictmath{pictmath}
+\def\zitex@true{true}
+\def\zitex@false{false}
+% pictmath and pictmath-<set> print glosses too
+\def\zitex@pictstyle#1-#2\relax{\def\zitex@tmp{#1}\ifx\zitex@tmp\zitex@pictmath\zitex@haslangtrue\fi}
 
 \define@key{zitex}{style}{\def\zitex@style{#1}}
 \define@key{zitex}{lang}{\def\zitex@lang{#1}}
 \define@key{zitex}{reading}{\def\zitex@reading{#1}}
+\define@key{zitex}{pict}[true]{\def\zitex@pict{#1}}
 
 % The character is named by its code point in lower-case hex, so every snippet file name is plain ASCII: 藻 (U+85FB)
 % is u85fb. Python writes the same names (snippet_name() in build.py); build_manifest.json maps them back.
@@ -44,11 +55,11 @@
 \newcommand\zitex@cp[1]{u\int_to_hex:n{`#1}}
 \ExplSyntaxOff
 
-% Language only matters for the styles that print glosses.
+% Language only matters for the styles that print glosses (pictmath, or pictmath-<set>, included).
+\newif\ifzitex@haslang
 \newcommand\zitex@name[1]{%
   \zitex@cp{#1}-\zitex@style
-  \ifx\zitex@style\zitex@math -\zitex@lang\fi
-  \ifx\zitex@style\zitex@formula -\zitex@lang\fi
+  \ifzitex@haslang -\zitex@lang\fi
   \ifx\zitex@reading\zitex@empty\else @\zitex@reading\fi}
 
 \newcommand\zi[2][]{%
@@ -56,7 +67,16 @@
     \def\zitex@style{tree}%
     \let\zitex@lang\zitexlang
     \let\zitex@reading\zitexreading
+    \def\zitex@pict{false}%
     \setkeys{zitex}{#1}%
+    % pict only changes the math style: \zimath[pict] is the pictmath snippet, \zimath[pict=obs] pictmath-obs
+    \ifx\zitex@pict\zitex@false\else\ifx\zitex@style\zitex@math
+      \ifx\zitex@pict\zitex@true\def\zitex@style{pictmath}\else\edef\zitex@style{pictmath-\zitex@pict}\fi
+    \fi\fi
+    \zitex@haslangfalse
+    \ifx\zitex@style\zitex@math \zitex@haslangtrue\fi
+    \ifx\zitex@style\zitex@formula \zitex@haslangtrue\fi
+    \expandafter\zitex@pictstyle\zitex@style-\relax
     \edef\zitex@file{\zitexpath/\zitex@name{#2}.tex}%
     \IfFileExists{\zitex@file}%
       {\input{\zitex@file}}%

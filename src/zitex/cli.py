@@ -19,7 +19,7 @@ from .build import build as build_snippets, scan_tex, write_snippet
 from .fonts import FontConfig, coverage_report
 from . import zxdb, yamlio
 from .ops import op_for_pattern
-from .render import STYLES, render_with
+from .render import DEFAULT_STYLES, LANG_STYLES, STYLES, math_chars, render_with, split_style
 from .sources import ENV_DB, DB_RELATIVE, SqliteSource, find_default_database, is_sqlite, open_source
 from .tree import ParseError, to_shape
 from .validate import validate_entry
@@ -156,7 +156,7 @@ def fonts(input_, fonts_file, strict, depth) -> None:
 @click.option("-c", "--char", "--chars", "char_args", multiple=True, metavar="CHARS",
               help="characters to render, separated by commas or spaces, e.g. 叕,作 (default: every character in the input)")
 @click.option("-s", "--style", "--styles", default=None, metavar="STYLE[,STYLE]",
-              help=f"{', '.join(sorted(STYLES))} (default: all; tree for a single file)")
+              help=f"{', '.join(sorted(STYLES))}; pictmath-NAME uses the picture set NAME (default: all but pictmath; tree for a single file)")
 @click.option("-l", "--lang", "langs", multiple=True, help="gloss language, repeatable (default: en)")
 @click.option("-x", "--lexicon", "lexicons", multiple=True, type=FILE, help="lexicon YAML (pinyin, glosses), repeatable (default: ./lexicon.yaml, if it exists)")
 @click.option("--fonts", "fonts_file", type=FILE, help="fonts.yaml: primary font, fallbacks, per-component overrides")
@@ -200,7 +200,7 @@ def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, o
     math_opts = {"collapse": collapse, "arrow": arrow, "show_pos": show_pos, "result": result}
 
     styles = [s.strip() for s in style.split(",") if s.strip()] if style else None
-    bad = [s for s in styles or [] if s not in STYLES]
+    bad = [s for s in styles or [] if split_style(s)[0] not in STYLES]
     if bad:
         raise click.BadParameter(f"unknown style(s) {bad}; choose from {sorted(STYLES)}", param_hint="--style")
 
@@ -239,10 +239,10 @@ def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, o
             single = len(found) == 1 and n_styles == 1          # a bare name is a stem only for one named style
         else:
             single = False
-        styles = styles or (["tree"] if single else list(STYLES))
+        styles = styles or (["tree"] if single else list(DEFAULT_STYLES))
         if single and (len(found) > 1 or len(styles) > 1):
             raise click.UsageError("several outputs need a directory: use -o DIR (or no -o), or name one character and one style")
-        if single and len(langs_list) > 1 and styles[0] in ("math", "formula"):
+        if single and len(langs_list) > 1 and split_style(styles[0])[0] in LANG_STYLES:
             raise click.UsageError("one output has one language: give a single -l")
     user_emit = emit
     emit = emit or ("tex" if scan_file else "both")
@@ -251,9 +251,9 @@ def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, o
     if single:
         e, st, lang = found[0], styles[0], langs_list[0]
         kw: dict = {}
-        if st in ("math", "formula"):
+        if split_style(st)[0] in LANG_STYLES:
             kw.update(lang=lang, lex=lex)
-        if st == "math":
+        if split_style(st)[0] in ("math", "pictmath"):
             kw.update(math_opts)
         snippet, resolver = render_with(e, st, fonts, reading=reading, **kw)
         if resolver and resolver.missing:
@@ -264,6 +264,8 @@ def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, o
         path = Path(out)
         suffix = path.suffix.lower()
         stem = path.with_suffix("") if suffix in (".tex", ".pdf") else path
+        if split_style(st)[0] == "pictmath":       # the pictures the snippet names go next to it, in picts/
+            lex.stage_picts(math_chars(e), stem.parent, split_style(st)[1])
         how = user_emit or {".tex": "tex", ".pdf": "pdf"}.get(suffix, "both")   # an explicit --emit wins over the suffix
         try:
             tex, pdf, ok = write_snippet(snippet, resolver, fonts, stem, how, font)

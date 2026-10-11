@@ -132,6 +132,86 @@
    "fallback_fonts": [],
    "images": [],
    "no_glyph": []
+  },
+  {
+   "char": "明",
+   "codepoint": "U+660E",
+   "style": "pictmath",
+   "lang": "en",
+   "reading": null,
+   "file": "u660e-pictmath-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": [],
+   "picts": [
+    "u660e.png",
+    "u65e5.png",
+    "u6708.png"
+   ]
+  },
+  {
+   "char": "明",
+   "codepoint": "U+660E",
+   "style": "pictmath",
+   "lang": "zh",
+   "reading": null,
+   "file": "u660e-pictmath-zh.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": [],
+   "picts": [
+    "u660e.png",
+    "u65e5.png",
+    "u6708.png"
+   ]
+  },
+  {
+   "char": "明",
+   "codepoint": "U+660E",
+   "style": "pictmath-obs",
+   "lang": "zh",
+   "reading": null,
+   "file": "u660e-pictmath-obs-zh.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": [],
+   "picts": [
+    "u660e-obs.png",
+    "u65e5-obs.png",
+    "u6708-obs.png"
+   ]
+  },
+  {
+   "char": "虹",
+   "codepoint": "U+8679",
+   "style": "pictmath",
+   "lang": "en",
+   "reading": null,
+   "file": "u8679-pictmath-en.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": [],
+   "picts": [
+    "u8679.png",
+    "u866b.png",
+    "u5de5.png"
+   ]
+  },
+  {
+   "char": "虹",
+   "codepoint": "U+8679",
+   "style": "pictmath-obs",
+   "lang": "zh",
+   "reading": null,
+   "file": "u8679-pictmath-obs-zh.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": [],
+   "picts": [
+    "u8679-obs.png",
+    "u866b-obs.png",
+    "u5de5-obs.png"
+   ]
   }
  ],
  "characters_not_in_data": [],
