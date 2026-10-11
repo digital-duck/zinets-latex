@@ -1,8 +1,8 @@
-% zitex: arXiv manuscript. Build with XeLaTeX, twice:   xelatex main.tex
+% zitex: arXiv manuscript. Build with XeLaTeX, twice:   xelatex zitex-arxiv.tex
 % The folder is self-contained: zitex.sty, fonts.yaml and zitex-out/ (the snippets) were made by
 %   zitex setup -o . ; zitex extract -c 器,藻,佛 -o .     and this file replaces the generated main.tex.
 % The picture-row examples (section 4) were added with
-%   zitex render -i chars.yaml --scan main.tex -x lexicon.yaml -x obs/lexicon.yaml -l en -l zh
+%   zitex render -i chars.yaml --scan zitex-arxiv.tex -x lexicon.yaml -x obs/lexicon.yaml -l en -l zh
 % where obs/ holds the oracle bone glyphs (exported from Orascope; HUST-OBC, CC BY-NC 4.0).
 \documentclass[11pt]{article}
 \usepackage[margin=2.4cm]{geometry}
@@ -254,8 +254,6 @@ part of a decomposition, in one aligned figure. Oracle bone datasets such as HUS
 characters~\cite{evobc}, provide the glyph images that the picture view can display; \texttt{zitex} does not classify or interpret them. Figures are
 produced with TikZ~\cite{tikz}, and Chinese text with \texttt{xeCJK}~\cite{xecjk}, which \texttt{zitex} builds on. We did not survey other tools for
 drawing character decompositions, and a comparison is future work.
-% TODO (author): candidates named by reviewers and NOT yet checked or cited: ruby (CTAN), Make Me a Hanzi, Hanzi Writer, CHISE IDS, GlyphWiki,
-% Academia Sinica Xiaoxuetang, hanziyuan.net, Unihan. Read them first; cite only what has been confirmed.
 
 \paragraph{Implementation limits.} The tool needs XeLaTeX and has not been tried with other engines. The picture view is not available in MathJax,
 because it uses images. A long equation with long meanings can be wider than the page: the width of a meaning and the number of senses shown are

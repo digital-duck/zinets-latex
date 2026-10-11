@@ -3,6 +3,6 @@
     "compiler": "xelatex"
   },
   "sources": [
-    { "filename": "main.tex", "usage": "toplevel" }
+    { "filename": "zitex-arxiv.tex", "usage": "toplevel" }
   ]
 }
