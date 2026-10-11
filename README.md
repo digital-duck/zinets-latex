@@ -147,6 +147,6 @@ If you use zitex in your work, please cite the paper above:
 
 ## License and data attribution
 
-The code is MIT. See [`LICENSE`](LICENSE).
+The code is MIT. See [`LICENSE`](LICENSE). The images, data and fonts that come with the repository have their own licences, listed in [`NOTICE`](NOTICE): the oracle bone glyphs are from HUST-OBC and are **CC BY-NC 4.0** (non-commercial use only).
 
 The data in [`db/`](https://github.com/digital-duck/zinets-latex/blob/main/db/) is derived from the ZiNets database and uses definitions from **[CC-CEDICT](https://cc-cedict.org)**, which is licensed **CC BY-SA 4.0**. That data is shared under the same licence, with the changes described in [`db/NOTICE.md`](https://github.com/digital-duck/zinets-latex/blob/main/db/NOTICE.md). The attribution is also stored inside the database file and written at the top of every YAML file that `zitex extract` produces.
