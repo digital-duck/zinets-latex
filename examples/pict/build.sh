@@ -23,6 +23,7 @@ fi
 export TEXINPUTS="$REPO/src/zitex:${TEXINPUTS:-}"
 
 command -v xelatex >/dev/null 2>&1 || { echo "build.sh: xelatex not found" >&2; exit 1; }
+kpsewhich xeCJK.sty >/dev/null 2>&1 || { echo "build.sh: xeCJK.sty not found (Debian/Ubuntu: apt install texlive-lang-chinese)" >&2; exit 1; }
 
 # obs/lexicon.yaml adds the picture set obs (oracle bone glyphs exported from Orascope) to the emoji of lexicon.yaml
 "${ZITEX[@]}" render -i chars.yaml --scan main.tex -x lexicon.yaml -x obs/lexicon.yaml -l en -l zh

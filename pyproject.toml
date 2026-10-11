@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Wen G. Gong", email = "wen.gong.research@gmail.com" }]
-keywords = ["latex", "xelatex", "chinese characters", "hanzi", "decomposition", "cjk", "tikz", "etymology"]
+keywords = ["latex", "xelatex", "chinese characters", "hanzi", "decomposition", "cjk", "tikz", "typesetting"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
@@ -25,6 +25,7 @@ Paper = "https://arxiv.org/abs/2502.19428"
 
 [project.optional-dependencies]
 dev = ["pytest"]
+pict = ["pillow"]                       # emoji picts: \zimath[pict] draws an emoji into a PNG
 ui = ["streamlit>=1.50", "pandas"]      # the review and generate app: streamlit run src/ui/streamlit/app.py
 
 [project.scripts]

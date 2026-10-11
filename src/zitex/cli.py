@@ -151,7 +151,7 @@ def fonts(input_, fonts_file, strict, depth) -> None:
         sys.exit(1)
 
 
-@main.command(short_help="Render characters from a decomposition YAML file or SQLite database to LaTeX snippets and PDF figures.")
+@main.command("render", short_help="Render characters from a decomposition YAML file or SQLite database to LaTeX snippets and PDF figures.")
 @input_option
 @click.option("-c", "--char", "--chars", "char_args", multiple=True, metavar="CHARS",
               help="characters to render, separated by commas or spaces, e.g. 叕,作 (default: every character in the input)")
@@ -167,9 +167,10 @@ def fonts(input_, fonts_file, strict, depth) -> None:
               help="tex = snippet, pdf = compiled figure (default: both; tex with --scan; from the -o suffix)")
 @click.option("--font", default=None, help="CJK font for PDF output (default: primary of --fonts, else Noto Serif CJK SC)")
 @click.option("--scan", "scan_file", type=FILE, help="render only what this .tex file asks for with its \\zi, \\zimath, \\zitree, \\zimatrix and \\ziformula commands")
+@click.option("--strict", is_flag=True, help="exit non-zero when a picture, glyph or character is missing")
 @depth_option
 @math_options
-def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, out, emit, font, scan_file, depth,
+def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, out, emit, font, scan_file, strict, depth,
                collapse, arrow, show_pos, result) -> None:
     """Render the characters of a decomposition YAML, or of a SQLite database, to LaTeX snippets and PDF figures.
 
@@ -197,6 +198,8 @@ def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, o
     lex = source.lexicon(lexicons)
     fonts = FontConfig.load(fonts_file) if fonts_file else None
     langs_list = list(dict.fromkeys(langs)) or ["en"]
+    if any("-" in l for l in langs_list):
+        raise click.BadParameter("a language name must not contain '-' (it is a separator in file names)", param_hint="--lang")
     math_opts = {"collapse": collapse, "arrow": arrow, "show_pos": show_pos, "result": result}
 
     styles = [s.strip() for s in style.split(",") if s.strip()] if style else None
@@ -216,7 +219,7 @@ def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, o
             raise click.UsageError("--scan renders what the document asks for: do not combine it with --char, --style or --reading")
         if to_stdout or file_suffix:
             raise click.UsageError("--scan writes several files: -o must be a directory")
-        jobs = {(c, s, l or langs_list[0], rd) for c, s, l, rd in scan_tex(scan_file)}
+        jobs = {(c, s, l or "en", rd) for c, s, l, rd in scan_tex(scan_file)}
         if not jobs:
             click.echo(f"{scan_file}: no \\zi calls found")
             return
@@ -300,13 +303,21 @@ def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, o
         click.echo(f"not in {data}: {' '.join(res.missing)}", err=True)
     if res.glyph_missing:
         click.echo(f"no glyph for: {' '.join(res.glyph_missing)} (drawn as a boxed label; see `zitex fonts`)", err=True)
+    for msg in res.pict_problems:
+        click.echo(f"picture: {msg}", err=True)
+    if res.no_pict:
+        click.echo(f"{len(res.no_pict)} picture snippet(s) have parts without a picture (an empty cell): "
+                   f"{'; '.join(res.no_pict[:5])}{' ...' if len(res.no_pict) > 5 else ''}", err=True)
     if res.failed:
         click.echo(f"failed to compile: {' '.join(str(p) for p in res.failed)}", err=True)
+        sys.exit(1)
+    if strict and (res.pict_problems or res.no_pict or res.missing or res.glyph_missing):
+        click.echo("--strict: some pictures, glyphs or characters are missing (see above)", err=True)
         sys.exit(1)
 
 
 @main.command("db-build", short_help="Copy what zitex needs from the ZiNets database into small zx_ tables, leaving the original untouched.")
-@input_option(required=True, help="the ZiNets working database to read (never changed). No default: it is not part of a checkout")
+@input_option(required=True, help="the ZiNets working database to read (opened read only, except with --in-place). No default: it is not part of a checkout")
 @click.option("-o", "--out", type=click.Path(dir_okay=False), default=None,
               help="the SQLite file to write (default: zitex.sqlite3 next to the input)")
 @click.option("--in-place", is_flag=True,
@@ -317,7 +328,7 @@ def db_build(input_, out, in_place, report_file) -> None:
     """Re-create the data zitex needs as four small tables (zx_meta, zx_char, zx_part, zx_quarantine).
 
     The input is the ZiNets working database (t_zi_part, t_zi, t_ele_zi, t_part). It is opened read only and
-    never changed, and the tables are written to a separate file, so a mistake here cannot damage it. Rows that
+    left unchanged by default: the tables are written to a separate file, so a mistake here cannot damage it. With --in-place the tables are added to the input itself, after a backup. Rows that
     cannot be converted safely are not guessed at: they go to zx_quarantine, and to --report. After the build,
     the command checks that the input is byte for byte what it was.
     """

@@ -34,6 +34,8 @@ Where:  docs/paper/arxiv/fonts/NotoSerifCJKsc-Subset-*.otf (a subset of Noto Ser
 Source: Google Noto fonts, https://github.com/googlefonts/noto-cjk and https://github.com/googlefonts/noto-emoji ;
         licence SIL Open Font License 1.1, https://openfontlicense.org . Check the version you have installed: the licence
         text that ships with the font applies.
+Copyright line carried by the font file: (c) 2017-2022 Adobe (http://www.adobe.com/). The licence text is in
+        docs/paper/arxiv/fonts/OFL.txt.
 Changes: the CJK fonts were subset (glyphs removed, none added).
 
 4. Names

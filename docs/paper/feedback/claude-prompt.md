@@ -29,7 +29,7 @@ verify something, say "not verified" and say what you would need to verify it. D
 ## Materials
 
 - Paper: `docs/paper/arxiv/main.tex` (PDF: `main.pdf`, same folder).
-- Repository: <PASTE GITHUB URL>. Start with `README.md`, `NOTICE`, `docs/DEV/claude/readme-zimath.md` (design of the picture view),
+- Repository: https://github.com/digital-duck/zinets-latex. Start with `README.md`, `NOTICE`, `docs/DEV/claude/readme-zimath.md` (design of the picture view),
   `docs/GUIDE/TUTORIAL.md`, `examples/pict/` (run `./build.sh`), `src/zitex/`, `tests/test_pict.py`.
 - arXiv source: `docs/paper/arxiv/zitex-arxiv-src.tar.gz`.
 

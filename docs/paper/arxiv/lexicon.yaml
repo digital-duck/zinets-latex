@@ -12,7 +12,7 @@
 喿: {pinyin: "sào", gloss: {en: "chirping of birds"}}
 器: {pinyin: "qì", gloss: {en: "device"}}
 弗: {pinyin: "fú", gloss: {en: "not"}}
-木: {pinyin: "mù", gloss: {en: "tree"}}
+木: {pinyin: "mù", gloss: {en: "tree", zh: "树木"}, pict: "🌳"}
 氵: {pinyin: "shuǐ", gloss: {en: "water"}}
 澡: {pinyin: "zǎo", gloss: {en: "bath"}}
 犬: {pinyin: "quǎn", gloss: {en: "dog"}}
@@ -24,6 +24,4 @@
 日: {pinyin: "rì",   gloss: {en: "sun",     zh: "太阳"}, pict: "☀️"}
 月: {pinyin: "yuè",  gloss: {en: "moon",    zh: "月亮"}, pict: "🌙"}
 明: {pinyin: "míng", gloss: {en: "bright",  zh: "明亮"}, pict: "✨"}
-虫: {pinyin: "chóng", gloss: {en: "insect", zh: "虫子"}, pict: "🐛"}
-工: {pinyin: "gōng", gloss: {en: "work",    zh: "工作"}, pict: "🛠️"}
-虹: {pinyin: "hóng", gloss: {en: "rainbow", zh: "彩虹"}, pict: "🌈"}
+林: {pinyin: "lín",  gloss: {en: "woods",   zh: "树林"}, pict: "🌲"}

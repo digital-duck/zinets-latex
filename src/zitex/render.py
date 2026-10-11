@@ -201,7 +201,7 @@ def render_math(e: Entry, lex=None, lang: str = "en", arrow: str = "=", collapse
     sym = _arrow(e, lex, lang, arrow)
 
     res = _tg(e.char)
-    py = lex.get_pinyin(e.char) if lex and pinyin else e.pinyin
+    py = (lex.get_pinyin(e.char) if lex else e.pinyin) if pinyin else None
     if py:
         res = r"\overset{" + _t(py) + "}{" + res + "}"
     g = (lex.get_meaning(e.char, lang) if lex else e.meaning) if gloss else None
@@ -211,7 +211,7 @@ def render_math(e: Entry, lex=None, lang: str = "en", arrow: str = "=", collapse
         rhs = r"\underbrace{" + res + "}_{" + _t(g) + "}"  # same style as the pieces on the left
     else:
         rhs = res
-    body = f"{lhs} {sym} {rhs}"
+    body = rhs if e.tree.is_leaf else f"{lhs} {sym} {rhs}"     # an elemental character is one column, not 日 = 日
     return {"display": "\\[ " + body + " \\]", "inline": "\\( " + body + " \\)"}.get(wrap, body)
 
 
@@ -299,6 +299,8 @@ def render_pictmath(e: Entry, lex=None, lang: str = "en", arrow: str = "=", coll
         add(p, k)
         cols.append({"ch": "+", "op": True})
     cols[-1] = {"ch": _arrow(e, lex, lang, arrow), "op": True}
+    if e.tree.is_leaf:
+        cols = []                            # an elemental character is a single column, not 日 = 日
     cols.append(_pcell(e.char, lex, lang, pinyin, gloss,
                        py_override=None if (lex or not pinyin) else e.pinyin,
                        meaning_override=None if (lex or not gloss) else e.meaning, pict_set=pict_set))

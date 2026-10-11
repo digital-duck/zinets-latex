@@ -1,6 +1,7 @@
 """Pinyin and per-language glosses for components and characters."""
 from __future__ import annotations
 
+import functools
 import shutil
 import subprocess
 from dataclasses import dataclass, field
@@ -16,13 +17,33 @@ EMOJI_FONT_PATHS = ("/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf",
                     "/usr/share/fonts/noto/NotoColorEmoji.ttf", "/System/Library/Fonts/Apple Color Emoji.ttc")
 
 
+@functools.cache
+def _fc_emoji_font() -> str:
+    if not shutil.which("fc-match"):
+        return ""
+    r = subprocess.run(["fc-match", "-f", "%{file}", "Noto Color Emoji"], capture_output=True, text=True)
+    return r.stdout.strip()
+
+
 def emoji_font() -> str | None:
-    """Colour emoji font file, or None. XeLaTeX cannot print colour emoji, so an emoji pict is drawn to a picture."""
-    cands = [config.get("ZITEX_EMOJI_FONT"), *EMOJI_FONT_PATHS]
-    if shutil.which("fc-match"):
-        r = subprocess.run(["fc-match", "-f", "%{file}", "Noto Color Emoji"], capture_output=True, text=True)
-        cands.append(r.stdout.strip())
+    """Colour emoji font file, or None. XeLaTeX cannot print colour emoji, so an emoji pict is drawn to a picture.
+    A font named by ZITEX_EMOJI_FONT is used whatever its file name; the others must have "emoji" in the name
+    (fc-match can answer with an unrelated fallback font)."""
+    own = config.get("ZITEX_EMOJI_FONT")
+    if own and Path(own).is_file():
+        return own
+    cands = [*EMOJI_FONT_PATHS, _fc_emoji_font()]
     return next((c for c in cands if c and Path(c).is_file() and "emoji" in Path(c).name.lower()), None)
+
+
+def emoji_available() -> bool:
+    """True when an emoji pict can be drawn: Pillow imports and a colour emoji font is found. Both are needed, so the
+    renderer never names a picture that staging cannot make (XeLaTeX would stop on the missing file)."""
+    try:
+        import PIL  # noqa: F401
+    except ImportError:
+        return False
+    return emoji_font() is not None
 
 
 def emoji_to_png(text: str, dest: Path) -> bool:
@@ -54,6 +75,7 @@ class Lexicon:
     pict: dict[str, str] = field(default_factory=dict)               # char -> picture file or emoji
     pict_base: dict[str, Path] = field(default_factory=dict)         # char -> folder a relative pict file is in
     sets: dict[str, dict[str, str]] = field(default_factory=dict)    # named pict sets: set -> char -> picture or emoji
+    problems: set[str] = field(default_factory=set)                  # pictures asked for that cannot be made (reported)
     set_base: dict[tuple[str, str], Path] = field(default_factory=dict)  # (set, char) -> folder of a relative file
     pict_dir: Path | None = field(default_factory=config.pict_dir)   # u<hex>.png etc. are looked up here
 
@@ -100,7 +122,16 @@ class Lexicon:
         if img := self._image(ch, set):
             return "image", str(img)
         v = self._values(set).get(ch)
-        if v and Path(v).suffix.lower() not in IMAGE_SUFFIXES and emoji_font():
+        where = f"{ch}" + (f" (set {set})" if set else "")
+        if not v:
+            return None
+        if Path(v).suffix.lower() in IMAGE_SUFFIXES:
+            self.problems.add(f"{where}: file not found: {v}")
+        elif v.isascii():                       # a word or a path, not an emoji: it would be drawn as nothing
+            self.problems.add(f"{where}: {v!r} is neither an image file nor an emoji")
+        elif not emoji_available():
+            self.problems.add(f"{where}: emoji {v} cannot be drawn (needs Pillow and a colour emoji font)")
+        else:
             return "emoji", v
         return None
 
@@ -135,6 +166,8 @@ class Lexicon:
                 ok = True
             if ok:
                 done.append(name)
+            else:
+                self.problems.add(f"{ch}: could not draw {p[1]!r} (emoji)")
         return done
 
     @classmethod
@@ -152,6 +185,8 @@ class Lexicon:
         """Add a lexicon YAML; its values override what is already known."""
         data = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
         for ch, v in data.items():
+            if not isinstance(v, dict):         # an empty entry (`日:`) has nothing to add
+                continue
             if v.get("pinyin"):
                 self.pinyin[ch] = v["pinyin"]
             for lang, text in (v.get("gloss") or {}).items():
@@ -164,6 +199,8 @@ class Lexicon:
                 self.pict_base[ch] = Path(path).resolve().parent
             for key, val in v.items():             # pict_<set>: the same, for a named set of pictures
                 if key.startswith("pict_") and len(key) > 5 and val:
+                    if "-" in key[5:]:             # file names are style-set-lang: a hyphen would be ambiguous
+                        raise ValueError(f"{path}: picture set name {key[5:]!r} must not contain '-'")
                     self.sets.setdefault(key[5:], {})[ch] = str(val)
                     self.set_base[(key[5:], ch)] = Path(path).resolve().parent
         return self

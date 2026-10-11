@@ -11,7 +11,7 @@ Write what a character is made of, once, in YAML:
   shape: "⿰日寺"
 ```
 
-A character has three dimensions, and each has a field: **shape** (形, the decomposition), **sound** (音, `pinyin`) and **meaning** (義, `meaning`). The `shape` string uses Unicode's Ideographic Description Sequence notation (plus ZiNets operators for flat patterns). zitex typesets all three together, as a reaction-style equation with pinyin above and a gloss below each piece:
+A character has three dimensions: **sound** (音, `pinyin`), **meaning** (義, `meaning`, or glosses in any language) and **shape** (形). The `shape` field holds how the character is built, a decomposition in Unicode's Ideographic Description Sequence notation (plus ZiNets operators for flat patterns). A *picture* of the glyph, an oracle bone glyph, a small image or an emoji, is a separate optional `pict`. zitex typesets them together, as a reaction-style equation with pinyin above and a gloss below each piece:
 
 ```
  rì     sì          shí
@@ -19,7 +19,16 @@ A character has three dimensions, and each has a field: **shape** (形, the deco
  sun   temple       time
 ```
 
-(See `examples/m2/equations.pdf` for the real output, and `examples/demo/` for a complete paper.)
+and, with the picture row (`\zimath[pict]{明}`), as a grid in which every part carries its sound, its meaning and its shape:
+
+```
+ rì      yuè      míng
+ 日   +   月   =   明
+ sun     moon     bright
+ ☀       🌙       ✨          (the real output has pictures: emoji, or oracle bone glyphs with pict=obs)
+```
+
+(See `examples/pict/` for the picture view, `examples/m2/equations.pdf` for the other styles, and `examples/demo/` for a complete paper.)
 
 zitex is part of the **ZiNets** project. It turns the paper's ideas into something you can put in your own documents: the 422 **elemental characters** (元字), the **Zi-Matrix** with its eleven spatial positions (上 下 左 右 中 左上 右上 左下 右下 中内 中外), and character families that build on one another.
 
@@ -41,10 +50,13 @@ An early sketch of a LaTeX package for this lives in `docs/DEV/gemini/readme.md`
 | `formula` | one line: `日 + 寺 → 時 (shí, time)` |
 | `tree` | a decomposition tree, with the position on each edge |
 | `matrix` | nested boxes laid out by operator: the Zi-Matrix |
+| `pictmath` | the equation as one grid: pinyin / character / meaning / picture, rows aligned across the parts (`\zimath[pict]`; opt-in) |
 
 - **Compact input.** A `shape` string, such as `⿱艹⿰氵喿(⿱品(∴口口口)木)` for 藻, or explicit YAML trees with a position on every component.
 - **The Zi-Matrix positions.** Eleven position codes (`L R M U D Mi Mo LU LD RU RD`), where `M` is the center of gravity and a Kangxi radical is peripheral, so 佛 is 亻(`L`) + 弗(`M`).
 - **ZiNets operators for flat patterns.** `∴` (品, 叒), `∵` (哭), `∷` (叕), `⁙` (器: four 口 around 犬) and a general `<pattern>` form keep a level with three or more parts as one level, which standard IDS cannot.
+- **A picture row (`pict`).** Under each meaning goes a picture: an image file, else an emoji (drawn to PNG, because XeLaTeX cannot print colour emoji), else nothing. Every picture is set in a box of the same size, set in a `.env` file (`.env.example`). Pictures come in **named sets**: `\zimath[pict=obs]{字}` uses the lexicon key `pict_obs`, so one document can show the same equations with emoji and with oracle bone glyphs from [HUST-OBC](https://github.com/Pengjie-W/HUST-OBC).
+- **What goes under a character.** Its gloss, else its `concept` (ALL CAPS, such as `HAND`), else its `category` (`HUMAN-BODY`), else nothing. Concept and category come from the Orascope project.
 - **Chemistry-style extras.** Repeats collapse (`3 × 木 = 森`), and the arrow can carry the reason for the combination (`忄 + 每 —(sound: měi)→ 悔`).
 - **Two data sources.** A hand-written `chars.yaml`, or the ZiNets SQLite database (6,000 characters), through the same commands. The database is read only and never changed.
 - **Several languages.** Glosses come from a lexicon file and fall back to English.
@@ -59,7 +71,7 @@ An early sketch of a LaTeX package for this lives in `docs/DEV/gemini/readme.md`
 pip install -e .          # Python 3.10+, installs the `zitex` command
 ```
 
-You also need XeLaTeX with `tikz`, `xeCJK`, `fontspec` and `amsmath`, and a CJK font (Noto Serif CJK SC by default). Inkscape is needed only for SVG glyphs.
+You also need XeLaTeX with `tikz`, `xeCJK` (on Debian or Ubuntu: `texlive-xetex`, `texlive-lang-chinese`, `texlive-pictures`), `fontspec`, `amsmath` and `graphicx`, and a CJK font (Noto Serif CJK SC by default; `zitex.sty` falls back to FandolSong from TeX Live). Inkscape is needed only for SVG glyphs or SVG pictures. Emoji pictures need Pillow and a colour emoji font (Noto Color Emoji): `pip install -e ".[pict]"`.
 
 ## Quick start
 
@@ -69,6 +81,7 @@ zitex render -i tests/data/chars.yaml -c 森 -s math \
       -x tests/data/lexicon.yaml --collapse -o -      # print one equation
 zitex render -i tests/data/chars.yaml -c 森,作 -o figs/   # .tex and .pdf, every style, into figs/
 make -C examples/demo                                  # build a small paper
+(cd examples/pict && ./build.sh)                       # the picture view: 日 + 月 = 明 and 木 + 木 = 林, with emoji and with oracle bone glyphs
 ```
 
 From the ZiNets SQLite database instead of a YAML file:
@@ -92,6 +105,7 @@ In a document:
 \usepackage{zitex}
 ...
 \zimath{時}   \zimatrix{國}   \zitree{藻}   \ziformula{氢}   \zimath[lang=fr]{森}
+\zimath[pict]{明}   \zimath[pict=obs,lang=zh]{林}     % the picture view; pict=obs is a named set of pictures
 ```
 
 ```bash
@@ -116,9 +130,9 @@ print(render_snippet(entries[0], "math", lex=lex, lang="fr"))
 
 ## Status
 
-A working prototype. Parsing, validation, all four renderers, the LaTeX package, the build command, the language and font handling are done and tested (`pytest -q`).
+A working prototype. Parsing, validation, the renderers (the four styles and the picture view), the LaTeX package, the build command, the language and font handling, the two data adapters (YAML and the read-only SQLite bridge), `setup` and `extract`, hand revisions, the review app, and the picture sets are done and tested (`pytest -q`). A few tests in `test_pipeline.py` and `test_ui.py` fail on the author's machine and are not related to the picture view.
 
-Not done yet: the bridge to the ZiNets SQLite database (the decomposition data there is still under review, so for now zitex works from YAML files), and the hook into the ZiNets app. The data in `tests/data/` is a 29-character sample, partly reviewed, and its glosses and pinyin are drafts.
+Not done yet: the hook into the ZiNets app. The decomposition data in the database is still under review (some rows cannot be converted and are listed in `db/`). The data in `tests/data/` is a 29-character sample, partly reviewed, and its glosses and pinyin are drafts. Only a few dozen oracle bone glyphs have been chosen so far (`data/ele_chars/`, exported from Orascope with `scripts/export_picts.py` in that repository), and a calligraphy set is an idea, not built.
 
 The API will change a little as [conceptbook-app](https://github.com/digital-duck/conceptbook-app) starts to use it as a dependency.
 
@@ -126,13 +140,16 @@ The API will change a little as [conceptbook-app](https://github.com/digital-duc
 
 - [`docs/GUIDE/TUTORIAL.md`](https://github.com/digital-duck/zinets-latex/blob/main/docs/GUIDE/TUTORIAL.md): tutorial
 - [`docs/GUIDE/HOW-IT-WORKS.md`](https://github.com/digital-duck/zinets-latex/blob/main/docs/GUIDE/HOW-IT-WORKS.md): how LaTeX is extended to make zitex work
+- [`docs/DEV/claude/readme-zimath.md`](https://github.com/digital-duck/zinets-latex/blob/main/docs/DEV/claude/readme-zimath.md): design and usage of the picture view (`\zimath[pict]`)
+- [`examples/pict/`](https://github.com/digital-duck/zinets-latex/blob/main/examples/pict/): the picture view with emoji and oracle bone glyphs; `./build.sh` makes `main.pdf`
+- [`docs/paper/arxiv/`](https://github.com/digital-duck/zinets-latex/blob/main/docs/paper/arxiv/): the paper that describes zitex
 - [`docs/DEV/claude/spec.md`](https://github.com/digital-duck/zinets-latex/blob/main/docs/DEV/claude/spec.md): grammar, operators and position rules
 - [`docs/DEV/claude/readme.md`](https://github.com/digital-duck/zinets-latex/blob/main/docs/DEV/claude/readme.md): development plan and milestones
 - [`CLAUDE.md`](CLAUDE.md): architecture notes for working on the code
 
 ## Citing
 
-If you use zitex in your work, please cite the paper above:
+If you use zitex in your work, please cite the paper above (the model). A paper that describes zitex itself is in [`docs/paper/arxiv/`](https://github.com/digital-duck/zinets-latex/blob/main/docs/paper/arxiv/).
 
 ```bibtex
 @misc{gong2025chinese,

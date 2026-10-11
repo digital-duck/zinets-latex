@@ -135,7 +135,7 @@ Keys: `pinyin`, `gloss` (per language), `concept`, `category`, `pict`, and `pict
 ZITEX_PICT_DIR=data/ele_chars zitex render -i chars.yaml --scan main.tex -x data/ele_chars/lexicon.yaml
 ```
 
-`--chars 日月明虫工虹 --set obs` exports just those characters (they need not be elemental) and writes the lexicon as `pict_obs` keys only, so it can be merged after a lexicon that has the glosses. `examples/pict/obs/` was made this way: `main.tex` shows the same equations with emoji (default set) and with these glyphs (`pict=obs`).
+`--chars 日月明木林 --set obs` exports just those characters (they need not be elemental) and writes the lexicon as `pict_obs` keys only, so it can be merged after a lexicon that has the glosses. `examples/pict/obs/` was made this way: `main.tex` shows the same equations with emoji (default set) and with these glyphs (`pict=obs`).
 
 The glyphs come from HUST-OBC (CC BY-NC 4.0): keep the attribution.
 

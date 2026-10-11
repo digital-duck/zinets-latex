@@ -5,6 +5,7 @@ import json
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -59,7 +60,7 @@ def scan_tex(path: str | Path) -> set[tuple[str, str, str | None, str | None]]:
         else:
             style, opts, ch = m.group(3), m.group(4) or "", m.group(5)
             items = [x.strip() for x in opts.split(",") if x.strip()]
-            kv = dict(p.split("=", 1) for p in items if "=" in p)
+            kv = {k.strip(): v.strip() for k, v in (p.split("=", 1) for p in items if "=" in p)}
             st = style or kv.get("style", "tree")
             pict = kv.get("pict", "true" if "pict" in items else "false")
             if st == "math" and pict != "false":     # \zimath[pict]{字}: the grid with a picture row
@@ -76,6 +77,8 @@ class BuildResult:
     failed: list[str] = field(default_factory=list)    # PDF builds that did not compile
     glyph_missing: list[str] = field(default_factory=list)  # components no font or image could draw
     manifest: list[dict] = field(default_factory=list)      # one record per snippet, see write_manifest()
+    pict_problems: list[str] = field(default_factory=list)  # pictures asked for that could not be made
+    no_pict: list[str] = field(default_factory=list)        # "set: parts" with no picture (an empty cell)
 
 
 def compile_pdf(snippet: str, dest: Path, font: str = "Noto Serif CJK SC", zitexpath: str | None = None) -> bool:
@@ -89,6 +92,8 @@ def compile_pdf(snippet: str, dest: Path, font: str = "Noto Serif CJK SC", zitex
                             "-output-directory", tmp, str(tex)], capture_output=True, text=True)
         pdf = Path(tmp) / "fig.pdf"
         if r.returncode != 0 or not pdf.exists():
+            tail = "\n".join((r.stdout or "").strip().splitlines()[-8:])
+            print(f"xelatex failed for {dest.name}:\n{tail}", file=sys.stderr)
             return False
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(pdf, dest)
@@ -158,8 +163,11 @@ def build(entries: list[Entry], outdir: str | Path, jobs: set[tuple[str, str, st
         stem = snippet_name(ch, style, lang, rd)
         snippet, resolver = render_with(e, style, fonts, reading=rd, **kw)
         picts = lex.stage_picts(math_chars(e), outdir, pict_set) if base == "pictmath" and lex else []
+        bare = [c for c in dict.fromkeys(math_chars(e)) if lex.pict_name(c, pict_set) is None] if base == "pictmath" and lex else []
+        if bare:
+            res.no_pict.append(f"{style} {ch}: {' '.join(bare)}")
         record = {"char": ch, "codepoint": f"U+{ord(ch):04X}", "style": style, "lang": lang if base in LANG_STYLES else None,
-                  "reading": rd, "file": f"{stem}.pdf" if emit == "pdf" else f"{stem}.tex", "fallback_fonts": [], "images": [], "no_glyph": [], "picts": picts}
+                  "reading": rd, "file": f"{stem}.pdf" if emit == "pdf" else f"{stem}.tex", "fallback_fonts": [], "images": [], "no_glyph": [], "picts": picts, "parts_without_pict": bare}
         if resolver:
             record.update(fallback_fonts=sorted(resolver.fonts), images=sorted(Path(s).name for s in resolver.svgs),
                           no_glyph=sorted(resolver.missing))
@@ -178,6 +186,8 @@ def build(entries: list[Entry], outdir: str | Path, jobs: set[tuple[str, str, st
         if emit in ("pdf", "both"):
             p = outdir / f"{stem}.pdf"
             (res.pdf if compile_pdf(snippet, p, font, str(outdir.resolve())) else res.failed).append(p if p.exists() else Path(stem))
+    if lex:
+        res.pict_problems = sorted(lex.problems)
     write_manifest(res, outdir)
     return res
 
@@ -191,7 +201,7 @@ def write_manifest(res: BuildResult, outdir: str | Path) -> Path:
     build overwrites it."""
     from . import __version__
     doc = {"zitex_version": __version__, "snippets": res.manifest, "characters_not_in_data": res.missing,
-           "components_without_glyph": res.glyph_missing, "pdf_failed": [p.name for p in res.failed]}
+           "components_without_glyph": res.glyph_missing, "picture_problems": res.pict_problems, "pdf_failed": [p.name for p in res.failed]}
     path = Path(outdir) / "build_manifest.json"
     path.write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     return path

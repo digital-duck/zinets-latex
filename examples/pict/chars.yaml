@@ -7,7 +7,10 @@
     parts: [{c: 日, pos: L}, {c: 月, pos: R}]
   role: {日: semantic, 月: semantic}
 
-- char: 虹
-  pinyin: hóng
-  meaning: rainbow
-  shape: "⿰虫工"
+- char: 林
+  pinyin: lín
+  meaning: woods
+  shape: "⿰木木"
+  tree:
+    op: ⿰
+    parts: [{c: 木, pos: L}, {c: 木, pos: R}]

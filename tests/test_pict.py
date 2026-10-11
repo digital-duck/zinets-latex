@@ -7,6 +7,7 @@ import pytest
 from PIL import Image
 
 from zitex import Lexicon, load_yaml
+from zitex.loader import entry_from_dict
 from zitex.build import build, scan_tex, snippet_name
 from zitex.lexicon import emoji_font
 from zitex.render import document, math_chars, render
@@ -212,3 +213,83 @@ def test_zimath_pict_keys_pick_the_right_snippet_in_a_real_document(tmp_path):
                        capture_output=True, text=True, env=env)
     assert r.returncode == 0, r.stdout[-800:]
     assert "Missing" not in r.stdout and "[時?]" not in r.stdout
+
+
+def test_an_emoji_is_not_offered_when_pillow_is_missing(tmp_path, monkeypatch):
+    """Without Pillow the emoji cannot be drawn, so no picture is named: a snippet must not point at a file that staging
+    cannot write (XeLaTeX would stop on it)."""
+    import builtins
+    real_import = builtins.__import__
+
+    def no_pillow(name, *a, **k):
+        if name == "PIL" or name.startswith("PIL."):
+            raise ImportError("no Pillow here")
+        return real_import(name, *a, **k)
+
+    lex = _lex(tmp_path)
+    lex.pict["日"] = "☀"
+    monkeypatch.setattr(builtins, "__import__", no_pillow)
+    assert lex.get_pict("日") is None and lex.pict_name("日") is None
+    assert r"\zipict{" not in render(ENTRIES["時"], "pictmath", lex=lex)
+
+
+# ---- scanner and package must name the same files; unusable pictures are reported ----
+
+def test_scan_ignores_spaces_in_options(tmp_path):
+    from zitex.build import scan_tex
+    f = tmp_path / "a.tex"
+    f.write_text(r"\zimath[pict = obs, lang = zh]{明}", encoding="utf-8")
+    assert scan_tex(f) == {("明", "pictmath-obs", "zh", None)}
+
+
+def test_scan_without_lang_uses_en_even_when_l_is_zh(tmp_path):
+    from click.testing import CliRunner
+    from zitex.cli import main
+    (tmp_path / "chars.yaml").write_text("- {char: 明, shape: \"⿰日月\"}\n", encoding="utf-8")
+    (tmp_path / "a.tex").write_text(r"\zimath{明}", encoding="utf-8")
+    r = CliRunner().invoke(main, ["render", "-i", str(tmp_path / "chars.yaml"), "--scan", str(tmp_path / "a.tex"),
+                                  "-l", "zh", "-o", str(tmp_path / "out")])
+    names = {p.name for p in (tmp_path / "out").glob("*.tex")}
+    assert names == {"u660e-math-en.tex"}, (names, r.output)
+
+
+def test_a_plain_word_as_pict_is_reported_not_promised(tmp_path):
+    lex = _lex(tmp_path)
+    lex.pict["日"] = "sun"
+    assert lex.get_pict("日") is None and lex.pict_name("日") is None
+    assert any("neither an image file nor an emoji" in p for p in lex.problems)
+
+
+def test_a_missing_picture_file_is_reported(tmp_path):
+    lex = _lex(tmp_path)
+    lex.pict["日"] = "nosuch/u65e5.png"
+    assert lex.get_pict("日") is None
+    assert any("file not found" in p for p in lex.problems)
+
+
+def test_set_names_must_not_contain_a_hyphen(tmp_path):
+    import pytest
+    f = tmp_path / "l.yaml"
+    f.write_text("日: {pict_old-obs: x.png}\n", encoding="utf-8")
+    with pytest.raises(ValueError):
+        Lexicon().merge_file(f)
+
+
+def test_an_empty_lexicon_entry_is_skipped(tmp_path):
+    f = tmp_path / "l.yaml"
+    f.write_text("日:\n月: {pinyin: yuè}\n", encoding="utf-8")
+    assert Lexicon().merge_file(f).pinyin == {"月": "yuè"}
+
+
+def test_a_leaf_character_is_one_column(tmp_path):
+    lex = _lex(tmp_path)
+    for style in ("math", "pictmath"):
+        leaf = entry_from_dict({"char": "日", "tree": {"c": "日"}})
+        out = render(leaf, style, lex=lex)
+        body = out.split("\\[", 1)[-1] if style == "pictmath" else out
+        assert "=" not in body and "\\rightarrow" not in body, out
+
+
+def test_a_codepoint_above_ffff_names_the_same_file(tmp_path):
+    from zitex.build import snippet_name
+    assert snippet_name("\U00020000", "math", "en", None) == "u20000-math-en"

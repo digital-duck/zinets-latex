@@ -18,7 +18,7 @@
 \setlength{\emergencystretch}{2em}
 \newcommand{\cmd}[1]{\texttt{\textbackslash #1}}
 
-\title{Decomposing Chinese Characters:\\ \LaTeX{} Typesetting with \texttt{zitex}}
+\title{Data-Driven Typesetting of Chinese Character\\ Decompositions with \texttt{zitex}}
 \author{Wen G. Gong\\ \texttt{wen.gong.research@gmail.com}}
 \date{}
 
@@ -26,39 +26,46 @@
 \maketitle
 
 \begin{abstract}
-Chinese characters began as pictographs, as the oracle bone script shows, and every character has a sound, a shape and a meaning.
-Presenting the three together and consistently is manual work today: pinyin and glosses are placed by hand, pictures are pasted and
-aligned, decompositions are drawn in a graphics program, and none of it is tied to the data behind it. We present \texttt{zitex}, an
-extension for XeLaTeX that makes the figure a function of the data. A character is a short entry giving its decomposition and the position
-of each part in the eleven-position Zi-Matrix notation. A Python program validates the data and writes a self-contained snippet per
-character and view: a one-line formula, a typeset equation with pinyin and glosses, a nested-box matrix, or a tree. A further view adds a
-row of pictures under the meanings (an oracle bone glyph, an image or an emoji), so that each part shows its sound, its shape and its
-meaning in rows that line up. A short \LaTeX{} package only includes those snippets. We describe the notation, the design, the handling
-of fonts and of the source database, and the limits of the present version. \texttt{zitex} is released under the MIT licence at
-\url{https://github.com/digital-duck/zinets-latex}.
+Early Chinese writing, including the oracle bone script, contains many pictographs, and a character can be described by its sound,
+its shape and its meaning. Laying these out together in a document is repeated layout work: pinyin, glosses and pictures are
+positioned by hand, and decompositions are drawn in a graphics program. We present \texttt{zitex}, an extension for XeLaTeX that
+generates this layout from structured character records. A character is a short entry giving its decomposition and the position of each
+part in the eleven-position Zi-Matrix notation. A Python program validates the data and writes a self-contained snippet per character and
+view: a one-line formula, a typeset equation with pinyin and glosses, a nested-box matrix, or a tree. A further view adds a row of pictures
+under the meanings (an oracle bone glyph, an image or an emoji), so that each part shows its sound, its meaning and a picture in rows that
+line up. A short \LaTeX{} package includes those snippets. In a handout of 59 equations built from a database, correcting one gloss meant editing one
+line of data, and regenerating the 59 affected figures took under a second. The code is released under the MIT licence at
+\url{https://github.com/digital-duck/zinets-latex}; the bundled glyph images, glosses and fonts keep their own licences (see the repository's
+\texttt{NOTICE}).
 \end{abstract}
 
 \section{Introduction}
-Chinese characters originated as pictographs. The oracle bone script, carved on turtle shells and animal bones in the late Shang dynasty more than
-three thousand years ago, still shows the pictures: the sun is a circle, the moon a crescent, and a creature or a tool is drawn as what it is.
-Modern characters have kept the sound and the meaning but lost most of the picture, which is why teachers and researchers keep placing the ancient
-glyph next to the modern character.
+Early Chinese writing contains many pictographic signs. The oracle bone script of the late Shang dynasty, more than three thousand years
+ago, is the earliest substantial body of Chinese writing that survives, and the glyphs chosen in Section~\ref{sec:example} for 日 (sun) and
+月 (moon) look like a circle and a crescent. Modern characters differ greatly in form from such glyphs, and showing an ancient glyph next to
+the modern character is one way to present a character.
 
-Every character therefore has three dimensions: a sound (pinyin), a shape (the glyph, and how it is built from parts) and a meaning. Papers and teaching
-material on characters need to present all three together, for each part of a character and for the character itself. Today this is manual work.
-Pinyin and glosses are placed above and below the characters by hand, pictures are pasted and aligned one by one, and the decomposition is drawn in a graphics
-program or in TikZ. The result is slow to produce, differs from one figure to the next, and must be redone when the underlying analysis changes. The
-problem we address is a typesetting problem: to present Chinese characters with sound, shape and meaning in a consistent layout, generated and not made by hand.
+A character can be described along three dimensions: a sound (pinyin), a shape (the glyph, and how it is built from parts) and a meaning.
+Material about characters may present all three for each part of a character and for the character itself. In the author's experience this
+means manual layout: pinyin and glosses are placed above and below the characters, pictures are pasted and aligned, and the decomposition is
+drawn in a graphics program or in TikZ. The problem we address is a typesetting problem: to lay out sound, shape and meaning in a consistent
+way, generated from records and not positioned by hand. The records themselves (the decompositions, the glosses and the choice of glyphs)
+are still curated by people: \texttt{zitex} automates the layout, not the analysis.
 
-A Chinese character can be read as the product of a reaction in which its parts go in and the character comes out, for example
-\ziformula{佛}\unskip. This view is used to teach characters, to study how the writing system is organised, and to analyse its
-structure computationally~\cite{gong2025}. We build on it: a character is a record, and the figure, in any of several views, is generated from the record.
+Existing tools cover parts of this. LaTeX packages such as \texttt{xpinyin} add pinyin to Chinese text automatically~\cite{xpinyin},
+ideographic description sequences record how characters are composed~\cite{cjkviids}, and datasets of oracle bone characters provide glyph
+images~\cite{hustobc,evobc}. We are not aware of a tool that lays these out together in one aligned figure, but we did not survey the field
+systematically (Section~\ref{sec:limits}).
+
+A decomposition can be written as an equation in which the parts combine into the character, for example
+\ziformula{佛}\unskip. This is a representation of the chosen decomposition, used here for layout, and not a claim about how a character
+arose. The decompositions and the position codes used here follow~\cite{gong2025}.
 
 This paper describes \texttt{zitex}, which typesets decompositions directly from data. Its aims are: (i) a figure is generated
-from a record, so that revising the record revises the figure; (ii) the notation records \emph{where} each part sits, which
-a flat sequence of components does not; (iii) sound, shape and meaning are laid out the same way for every character, in rows that line up, with
-the shape given by an oracle bone glyph, an image or an emoji; (iv) the \LaTeX{} side stays small, and the data and layout logic live in
-a program that can be tested; and (v) the source database is never modified. Section~\ref{sec:example} shows the oracle bone glyphs of 日, 月, 明, 虫, 工 and 虹
+from a record, so that revising the record revises the figure; (ii) the notation gives a named position to every part, on top of the arrangement that an ideographic description sequence records,
+including levels with three or more parts; (iii) sound, shape and meaning are laid out the same way for every character, in rows that line up, with
+a picture that is an oracle bone glyph, an image or an emoji; (iv) the \LaTeX{} side stays small, and the data and layout logic live in
+a program that can be tested; and (v) the source database is read only, unless the user asks otherwise (\texttt{db-build --in-place}). Section~\ref{sec:example} shows glyphs for 日, 月, 明, 木 and 林
 set next to their sounds and meanings.
 
 \section{Notation}
@@ -85,16 +92,17 @@ The \emph{pattern} of a level is its position codes in reading order, such as \t
 for instance \texttt{L-M} and \texttt{L-R} map to the left--right operator, and the enclosing patterns \texttt{Mo-D},
 \texttt{Mo-U}, \texttt{Mo-R} and \texttt{Mo-M} map to the surrounding operators. Some arrangements have no single operator,
 for example four mouths around a dog in 器. For these \texttt{zitex} adds a few operators (such as ∴ ∵ ∷) and a general form
-that names the pattern. A \emph{radical rule} resolves the ambiguity of two-part levels: a Kangxi radical is peripheral, so the
-radical is placed at \texttt{L} and the other part at \texttt{M}, as in 佛 (亻 and 弗). Positions are stored on every level, so a
+that names the pattern. A \emph{radical rule} resolves the ambiguity of two-part levels in which exactly one part is a Kangxi radical: a radical is peripheral, so it
+is placed at \texttt{L} (or \texttt{R}, when it stands on the right) and the other part at \texttt{M}, as in 佛 (亻 and 弗). When both parts are radicals,
+as in 明 and 林, the rule does not apply and the level is \texttt{L-R}. Positions are stored on every level, so a
 part that is itself decomposed (澡 inside 藻) carries its own pattern.
 
-\section{Design}
+\section{Design}\label{sec:design}
 Python does the parsing and layout, and \LaTeX{} does the typesetting (Figure~\ref{fig:flow}). \texttt{zitex extract} selects characters
 from a database and writes \texttt{chars.yaml}, \texttt{lexicon.yaml}, a \texttt{main.tex}, and every snippet the document asks for.
 The only interface between the two halves is the file name of a snippet,
 \texttt{u<hex>-<style>[-<lang>][@reading].tex}, where \texttt{u<hex>} is the code point of the character in hex, so that file names are plain ASCII, and the package looks the file up and inputs it. A missing file gives a warning
-and a red mark, so a long build is not stopped.
+and a red mark, so a long build is not stopped. A language or picture-set name must not contain a hyphen, which separates the parts of the name.
 
 \begin{figure}[ht]
 \centering
@@ -110,13 +118,15 @@ and the tree are TikZ pictures with coordinates computed in Python, which allows
 (\cmd{zimath}\texttt{[pict]\{字\}}) lays the equation out as one grid: for every part, the pinyin, the character, a short meaning and a picture,
 in rows that line up across the parts, so that the pictures share one line and the meanings another. A row that no part fills is left out, and
 a part without a picture has an empty cell. A picture is an image file, or else an emoji, or else nothing. XeLaTeX cannot print colour emoji, so an
-emoji is drawn into a PNG when the snippets are built. Every picture is set in a box of the same size, which is a setting and not part of the
-data. The meaning is the gloss, or else the concept, or else the concept category, or else nothing. Pictures come in named sets
+emoji is drawn into a PNG when the snippets are built, so the picture depends on the installed emoji font; the PNGs of this paper come from Noto Color Emoji
+and are in the source. Every picture is set in a box of the same size, which is a setting and not part of the data. The meaning is the gloss, or else the concept, or else the concept category, or else nothing. Pictures come in named sets
 (\cmd{zimath}\texttt{[pict=obs]\{字\}}), so one document can show the same equations with emoji and with oracle bone glyphs.
-This view uses images, so it needs XeLaTeX and is not available in MathJax.
+A picture that was asked for and cannot be made (a missing file, a word that is neither a file nor an emoji, no emoji font) is reported when the snippets
+are built, together with the parts that have no picture; \texttt{--strict} turns these reports into an error.
 
-\paragraph{Readings.} Which part carries the meaning and which the sound is an interpretation. A character may store several named
-\emph{readings}, selected per call with \texttt{reading=}, so that two interpretations can be set in one document without duplicating the data.
+\paragraph{Readings and roles.} Which part carries the meaning and which the sound is an interpretation. A character may store several named
+\emph{readings}, selected per call with \texttt{reading=}, so that two interpretations can be set in one document without duplicating the data. With
+\texttt{--arrow role} the arrow of an equation is labelled with the part that is recorded as giving the sound.
 
 \paragraph{Validation.} \texttt{zitex check} reports unknown positions, patterns an operator does not allow, overlapping regions, and a radical placed
 at the centre. These are warnings and not errors, because the data being typeset is itself under review.
@@ -124,7 +134,7 @@ at the centre. These are warnings and not errors, because the data being typeset
 \paragraph{Fonts.} A component is resolved in a fixed order: an explicit override, the primary font, fallback fonts, an image, and finally a boxed code point
 with a warning. Components that have no Unicode code point can therefore be set like any other.
 
-\paragraph{Data.} Decompositions come from YAML files or from a SQLite database. The database is opened read only. \texttt{zitex} derives its own tables from it, and
+\paragraph{Data.} Decompositions come from YAML files or from a SQLite database. Every command opens the database read only, except the opt-in \texttt{db-build --in-place}. \texttt{zitex} derives its own tables from it, and
 a hand revision is stored together with what it replaced, so that it can be reverted and is re-applied when the tables are rebuilt.
 A Streamlit application reviews and revises decompositions, and generates a PDF for a list of characters.
 
@@ -164,7 +174,7 @@ The picture view adds the third dimension of a character. Each part carries its 
 The input is a lexicon entry per character (here the pictures are emoji), the decomposition of the result, and the call in the document:
 
 \begin{verbatim}
-# lexicon.yaml
+# lexicon.yaml   (pict is the emoji character itself, or an image file; <emoji: sun> stands for it here)
 日: {pinyin: rì,   gloss: {en: sun,    zh: 太阳}, pict: <emoji: sun>}
 月: {pinyin: yuè,  gloss: {en: moon,   zh: 月亮}, pict: <emoji: moon>}
 明: {pinyin: míng, gloss: {en: bright, zh: 明亮}, pict: <emoji: sparkles>}
@@ -173,48 +183,90 @@ The input is a lexicon entry per character (here the pictures are emoji), the de
 \zimath[pict,lang=zh]{明}    % Chinese meanings
 \end{verbatim}
 
-\noindent Reading 日 + 月 = 明 as \emph{sun} and \emph{moon} making \emph{bright}, and 虫 + 工 = 虹 in the same way, gives:
+\noindent The figures below juxtapose modern decompositions, dictionary glosses and selected oracle bone glyph images. These are separate
+records, and placing them side by side does not establish a historical relationship between the modern components and the ancient forms.
 
 \paragraph{Emoji as the picture.}
 \zimath[pict]{明}
 \zimath[pict,lang=zh]{明}
-\zimath[pict]{虹}
+\zimath[pict]{林}
 
 \noindent The meanings are in English in the first and third equation and in Chinese in the second: the language is a key of the call, and any language
-that the lexicon has can be used.
+that the lexicon has can be used. The equations show a chosen decomposition and the glosses of its parts. They do not say why a part is there, and
+they are not a sum of the glosses: whether a part contributes meaning or sound is a matter of analysis on which sources differ, and a character can store
+several named readings of it (Section~\ref{sec:design}).
 
 \paragraph{Oracle bone glyphs as the picture.}
-Chinese characters began as pictographs, so the picture row can show the ancient form of each part. The glyphs come from the HUST-OBC
-dataset of oracle bone characters~\cite{hustobc}, one chosen glyph per character, stored as \texttt{u<hex>.png} files and added to the lexicon as a
-second set of pictures, \texttt{pict\_obs}. A call names the set it wants:
+The picture row can also show an ancient form of each part. The glyphs come from the HUST-OBC dataset of oracle bone characters~\cite{hustobc},
+which is licensed CC BY-NC 4.0, one chosen glyph per character (Table~\ref{tab:glyphs}). They are stored as \texttt{u<hex>.png} files and added to
+the lexicon as a second set of pictures, \texttt{pict\_obs}. A call names the set it wants:
 
 \begin{verbatim}
 zitex render -i chars.yaml --scan main.tex \
     -x lexicon.yaml -x obs/lexicon.yaml -l en -l zh
 \zimath[pict=obs,lang=zh]{明}
-\zimath[pict=obs,lang=zh]{虹}
+\zimath[pict=obs,lang=zh]{林}
 \end{verbatim}
 
 \zimath[pict=obs,lang=zh]{明}
-\zimath[pict=obs,lang=zh]{虹}
+\zimath[pict=obs,lang=zh]{林}
 
-\noindent The pictures differ from the emoji in what they show. In the glyphs chosen here, 明 is a crescent next to a small box and not a sun and a moon,
-and 虹 is an arch with a head at each end. The figures show the data: a modern decomposition and an ancient glyph are separate records, and the
-picture row puts them side by side without interpreting either. In the same way the set is optional for each character: a part with no glyph in the set
-has an empty cell and is not replaced by an emoji.
+\begin{table}[ht]
+\centering\small
+\xeCJKsetup{CJKecglue={}}% file names are exact: no space between Chinese and Latin characters
+\begin{tabular}{@{}cll@{}}
+\toprule
+Character & HUST-OBC image (file name) & Kind of source \\
+\midrule
+日 & \texttt{G\_0773\_前1.22.2合36169黃組} & rubbing, Huangzu group \\
+月 & \texttt{H\_0815\_605E1\_12} & handwritten copy (HWOBC) \\
+明 & \texttt{G\_0824\_乙6672合11498賓組} & rubbing, Binzu group \\
+木 & \texttt{G\_0829\_乙4309合6477賓組} & rubbing, Binzu group \\
+林 & \texttt{G\_0849\_京都2308合34544歷組} & rubbing, Lizu group \\
+\bottomrule
+\end{tabular}
+\caption{The oracle bone glyph images shown above, from HUST-OBC~\cite{hustobc} (CC BY-NC 4.0), one per character. The file name is the
+dataset's, without the extension. The last column is inferred from the file name. Each glyph is one sample, chosen by the author,
+and not a canonical form; one equation can mix glyphs of different periods and kinds.}
+\label{tab:glyphs}
+\end{table}
 
-\section{Related work and limitations}
-The Unicode Standard defines ideographic description characters, and community projects distribute ideographic description sequences
-for large character sets~\cite{cjkviids}. These record a character as a string and do not give positions or figures. \texttt{zitex} reads this
-form and adds positions per level. Figures are produced with TikZ~\cite{tikz}, and Chinese text with \texttt{xeCJK}~\cite{xecjk}, which \texttt{zitex} builds on.
-We did not survey other tools for drawing character decompositions, and a comparison is future work.
+\noindent The pictures differ from the emoji in what they show. The glyph chosen for 明 shows a crescent beside a small box (we do not identify the
+box), and the glyph chosen for 林 shows two tree-like signs side by side, as the modern decomposition 木 + 木 does. The picture row displays these records
+next to the modern decomposition and does not interpret either. The agreement for 林 and the disagreement for 明 show that the ancient form of a whole
+character need not contain the ancient forms of its modern parts. The gloss of each part is that of the modern character and may not be what the ancient glyph
+depicted.
 
-The present version has these limits. It needs XeLaTeX, and has not been tried with other engines. The picture view is not available in MathJax, because it
-uses images, and a long equation with long meanings can be wider than the page: the width of a meaning and the number of senses shown are settings, and
-nothing scales the equation. The oracle bone glyphs are a handful chosen by the author for these examples, and most elemental characters have no chosen glyph yet. The snippet file names are ASCII, which
-should work on any file system, but we have only tried Linux. The decomposition database used for development is a first iteration under review:
-223 rows of about 6,200 cannot be converted yet, and warnings remain on some characters. Glosses are first senses from a dictionary and are not curated.
-We make no claim about the etymology of any character: the figures show the data.
+\subsection{Cost of a correction}
+The script \texttt{benchmarks/handout.py} builds a handout of equations, \cmd{zimath}\texttt{\{X\}} for the characters of the database that
+contain a chosen component (口), then changes one line of \texttt{lexicon.yaml}, the gloss of that component, and rebuilds. For 59 equations the
+first build took 0.08\,s for \texttt{zitex render --scan} and 0.41\,s for one XeLaTeX run, and the rebuild after the edit took the same time and
+changed 59 of 59 snippets (one Linux machine with an Intel i7-13700F; three runs gave the same figures to 0.02\,s). The same correction made by hand touches
+every equation that carries the gloss as text. The benchmark measures the cost of a correction and not the cost of writing the data, which remains with the
+author, and it uses only the equation view, which needs no pictures.
+
+\section{Related work and limitations}\label{sec:limits}
+\paragraph{Related work.} The Unicode Standard defines ideographic description characters, and community projects distribute ideographic description
+sequences for large character sets~\cite{cjkviids}. A sequence encodes the arrangement of the parts with operators (for example left--right), but not
+a named position for each part, and it does not produce a figure; \texttt{zitex} reads this form and adds positions per level. The package
+\texttt{xpinyin} annotates Chinese text with pinyin automatically~\cite{xpinyin}; \texttt{zitex} instead places pinyin, a gloss and a picture for each
+part of a decomposition, in one aligned figure. Oracle bone datasets such as HUST-OBC~\cite{hustobc} and EVOBC, which concerns the evolution of oracle bone
+characters~\cite{evobc}, provide the glyph images that the picture view can display; \texttt{zitex} does not classify or interpret them. Figures are
+produced with TikZ~\cite{tikz}, and Chinese text with \texttt{xeCJK}~\cite{xecjk}, which \texttt{zitex} builds on. We did not survey other tools for
+drawing character decompositions, and a comparison is future work.
+% TODO (author): candidates named by reviewers and NOT yet checked or cited: ruby (CTAN), Make Me a Hanzi, Hanzi Writer, CHISE IDS, GlyphWiki,
+% Academia Sinica Xiaoxuetang, hanziyuan.net, Unihan. Read them first; cite only what has been confirmed.
+
+\paragraph{Implementation limits.} The tool needs XeLaTeX and has not been tried with other engines. The picture view is not available in MathJax,
+because it uses images. A long equation with long meanings can be wider than the page: the width of a meaning and the number of senses shown are
+settings, and nothing scales the equation. Right-to-left text has not been tried. Snippets are produced by a Python program, which an online
+\LaTeX{} service does not run at compile time, so the snippet folder is built locally and uploaded with the document. The snippet file names are ASCII,
+which should work on any file system, but we have only tried Linux.
+
+\paragraph{Data limits.} The decompositions, glosses and the choice of glyphs are curated by hand and are not validated by the tool. The decomposition
+database used for development is a first iteration under review: about 220 rows of about 6,200 cannot be converted yet, and warnings remain on some
+characters. Glosses are first senses from a dictionary and are not curated. The oracle bone glyphs are a handful chosen by the author for these
+examples, and most elemental characters have no chosen glyph yet. We make no claim about the etymology of any character: the figures show the data.
 
 \section*{Acknowledgements}
 This work began as a conversation with Google Gemini, and the building, testing and writing phases were assisted by Claude Code of Anthropic. The character decompositions, solution design, and result validation are the author's.
@@ -226,7 +278,9 @@ attribution, and are not covered by the MIT licence of the code.
 \begin{thebibliography}{9}
 \bibitem{gong2025} Wen G. Gong. \emph{A New Exploration into Chinese Characters: from Simplification to Deeper Understanding}. arXiv:2502.19428, 2025.
 \bibitem{cjkviids} \emph{cjkvi-ids: Ideographic Description Sequences for CJKV characters}. \url{https://github.com/cjkvi/cjkvi-ids}.
-\bibitem{hustobc} Pengjie Wang et al. \emph{An open dataset for oracle bone character recognition and decipherment}. Scientific Data, 2024. arXiv:2401.15365.
+\bibitem{hustobc} Pengjie Wang et al. \emph{An open dataset for oracle bone script recognition and decipherment}. arXiv:2401.15365, 2024.
+\bibitem{evobc} Haisu Guan et al. \emph{An open dataset for the evolution of oracle bone characters: EVOBC}. arXiv:2401.12467, 2024.
+\bibitem{xpinyin} \emph{The xpinyin package}. CTAN, \url{https://ctan.org/pkg/xpinyin}.
 \bibitem{cedict} \emph{CC-CEDICT: a Chinese-English dictionary}. \url{https://cc-cedict.org}.
 \bibitem{tikz} Till Tantau. \emph{The TikZ and PGF Packages}. CTAN, \url{https://ctan.org/pkg/pgf}.
 \bibitem{xecjk} \emph{The xeCJK package}. CTAN, \url{https://ctan.org/pkg/xecjk}.
