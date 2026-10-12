@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Regenerate the snippets (zitex render --scan), then pack the arXiv source: zitex-arxiv-src.tar.gz with zitex-arxiv.tex, zitex.sty, flow.pdf, 00README.json (compiler: xelatex),
-# the snippets and pictures in zitex-out/, and the font subset in fonts/. Then compile it in a clean folder to check.
+# the snippets and pictures in zitex-out/, and the font subset in fonts/. Then compile it twice in a clean folder (no missing glyph, no undefined reference) and keep that PDF as zitex-arxiv.pdf.
 #   ./make-arxiv.sh
 # The font subset holds only the characters the paper uses. If Noto Serif CJK (the .ttc files) and Python with fontTools
 # are available, it is regenerated first, so it always matches the text. Set NOTO_DIR if the fonts are not in
@@ -53,4 +53,12 @@ if grep -q "Missing character" "$TMP/zitex-arxiv.log"; then
   grep "Missing character" "$TMP/zitex-arxiv.log" | sort -u | head >&2
   exit 1
 fi
+if grep -qE "undefined (references|citations)|Citation .* undefined|Reference .* undefined" "$TMP/zitex-arxiv.log"; then
+  echo "make-arxiv.sh: the packed source has undefined references or citations:" >&2
+  grep -E "undefined" "$TMP/zitex-arxiv.log" | sort -u | head >&2
+  exit 1
+fi
+# the PDF of the packed source, next to it: this is what arXiv should produce
+cp "$TMP/zitex-arxiv.pdf" zitex-arxiv.pdf
+echo "wrote $(pwd)/zitex-arxiv.pdf"
 echo "wrote $(pwd)/$OUT ($(du -h "$OUT" | cut -f1)); it compiles in a clean folder with no missing glyph: $(pdfinfo "$TMP/zitex-arxiv.pdf" | grep Pages)"

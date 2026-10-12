@@ -26,10 +26,9 @@
 \maketitle
 
 \begin{abstract}
-Early Chinese writing, including the oracle bone script, contains many pictographs, and a character can be described by its sound,
-its shape and its meaning. Laying these out together in a document is repeated layout work: pinyin, glosses and pictures are
-positioned by hand, and decompositions are drawn in a graphics program. We present \texttt{zitex}, an extension for XeLaTeX that
-generates this layout from structured character records. A character is a short entry giving its decomposition and the position of each
+Early Chinese writing, including the oracle bone script, contains many pictographs, and a character can be described by its sound, its shape and its meaning. 
+To streamline the typesetting process of a document with chinese characters of pinyin, glosses and pictures, we create \texttt{zitex}, an extension for XeLaTeX that
+generates this layout from structured character data records. A character is a short entry giving its decomposition and the position of each
 part in the eleven-position Zi-Matrix notation. A Python program validates the data and writes a self-contained snippet per character and
 view: a one-line formula, a typeset equation with pinyin and glosses, a nested-box matrix, or a tree. A further view adds a row of pictures
 under the meanings (an oracle bone glyph, an image or an emoji), so that each part shows its sound, its meaning and a picture in rows that
@@ -173,7 +172,9 @@ The picture view adds the third dimension of a character. Each part carries its 
 The input is a lexicon entry per character (here the pictures are emoji), the decomposition of the result, and the call in the document:
 
 \begin{verbatim}
-# lexicon.yaml   (pict is the emoji character itself, or an image file; <emoji: sun> stands for it here)
+# lexicon.yaml   
+# (pict is the emoji character itself, or an image file; 
+# <emoji: sun> stands for it here)
 日: {pinyin: rì,   gloss: {en: sun,    zh: 太阳}, pict: <emoji: sun>}
 月: {pinyin: yuè,  gloss: {en: moon,   zh: 月亮}, pict: <emoji: moon>}
 明: {pinyin: míng, gloss: {en: bright, zh: 明亮}, pict: <emoji: sparkles>}
