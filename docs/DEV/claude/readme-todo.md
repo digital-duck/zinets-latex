@@ -2,7 +2,11 @@
 
 Written 2026-10-11. State: `main` is pushed to GitHub. The arXiv source is `docs/paper/arxiv/zitex-arxiv-src.tar.gz`
 (8 pages, compiles clean); the abstract for the form is `docs/paper/arxiv/zitex-arxiv-abstract.txt` (ASCII).
-Not submitted yet.
+Submitted to arXiv on 2026-10-12 as `submit/8214143` (arXiv listed it under cs.CL; licence chosen: arXiv perpetual
+non-exclusive). arXiv's compiled PDF (downloaded copy: `dd-work/docs/zitex-arxiv.pdf`) matches the local build
+`docs/paper/arxiv/zitex-arxiv.pdf`: 8 pages, identical text apart from the arXiv stamp, only sub-pixel layout differences.
+This confirmed that arXiv builds the bundle with XeLaTeX from `00README.json` (TeX Live 2025, xdvipdfmx 20250410).
+arXiv limits submissions to 2 per month, so collect all corrections before sending a replacement.
 
 ## 1. Publish to PyPI (from another machine; this one has no token)
 
@@ -19,7 +23,12 @@ so the release needs a new number above 0.2.0 (for example 0.3.0).
 The `pyproject.toml` `Paper` URL still points to the earlier model paper (arXiv:2502.19428). Change it to this paper once it
 has an arXiv number.
 
-## 2. Before submitting the paper to arXiv
+## 2. arXiv: after submission
+
+When the paper has an arXiv ID: change the `Paper` URL in `pyproject.toml`, link the paper in the README, and cite it in the
+PyPI release notes. The items below are still open for a replacement version (the related-work reading above all).
+
+Before the submission (kept for reference):
 
 Author:
 - Proofread `zitex-arxiv.pdf`. Section 4 is the part to check (what the glyphs show, and what the equations do not claim).
@@ -35,8 +44,8 @@ Author:
 Upload (steps, in order):
 1. New submission, upload `zitex-arxiv-src.tar.gz`.
 2. Check that arXiv picks XeLaTeX from `00README.json` (key `process.compiler`); set it by hand if not.
-3. Compare arXiv's preview PDF with the local `zitex-arxiv.pdf` (fonts, picture rows, Chinese text). This also settles
-   TeX Live 2025 and the `sources` key, which were not tested.
+3. Compare arXiv's preview PDF with the local `zitex-arxiv.pdf` (fonts, picture rows, Chinese text). Done for
+   submit/8214143: it matches (TeX Live 2025 and the `00README.json` `sources` key work).
 4. Category: physics.soc-ph primary (the author's earlier paper is there); optional cross-list cs.CL or cs.DL. Moderators
    may reassign it.
 5. Paste the title and `zitex-arxiv-abstract.txt` into the form.
