@@ -137,10 +137,20 @@ def _mterm(n: Node, lex, lang: str, show_pos: bool, pinyin: bool, gloss: bool) -
     py = lex.get_pinyin(ch) if (lex and pinyin) else None
     if py:
         glyph = r"\overset{" + _t(py) + "}{" + glyph + "}"
-    g = lex.get_gloss(ch, lang) if (lex and gloss) else None
+    g = lex.get_meaning(ch, lang) if (lex and gloss) else None   # gloss, else concept, else category
     if g:
         glyph = r"\underbrace{" + glyph + "}_{" + _t(g) + "}"
     return glyph
+
+
+def _arrow(e: Entry, lex, lang: str, arrow: str) -> str:
+    roles = _roles(e)
+    if arrow == "role" and roles:
+        words = ARROW_WORDS.get(lang, ARROW_WORDS["en"])
+        label = ", ".join(f"{words.get(r, r)}: {(lex.get_pinyin(c) if lex else None) or c}"
+                          for c, r in roles.items() if "phonetic" in role_kinds(r))
+        return r"\xrightarrow{" + _t(label) + "}" if label else "="
+    return r"\longrightarrow" if arrow == "reaction" else "="
 
 
 def _collapse(parts: list[Node]) -> list[tuple[int, Node]]:
@@ -178,32 +188,127 @@ def render_math(e: Entry, lex=None, lang: str = "en", arrow: str = "=", collapse
         terms.append((f"{k}\\times " if k > 1 else "") + t)
     lhs = " + ".join(terms)
 
-    roles = _roles(e)
-    if arrow == "role" and roles:
-        words = ARROW_WORDS.get(lang, ARROW_WORDS["en"])
-        label = ", ".join(f"{words.get(r, r)}: {(lex.get_pinyin(c) if lex else None) or c}"
-                          for c, r in roles.items() if "phonetic" in role_kinds(r))
-        sym = r"\xrightarrow{" + _t(label) + "}" if label else "="
-    elif arrow == "reaction":
-        sym = r"\longrightarrow"
-    else:
-        sym = "="
+    sym = _arrow(e, lex, lang, arrow)
 
     res = _tg(e.char)
-    py = lex.get_pinyin(e.char) if lex and pinyin else e.pinyin
+    py = (lex.get_pinyin(e.char) if lex else e.pinyin) if pinyin else None
     if py:
         res = r"\overset{" + _t(py) + "}{" + res + "}"
-    g = (lex.get_gloss(e.char, lang) if lex else e.meaning) if gloss else None
+    g = (lex.get_meaning(e.char, lang) if lex else e.meaning) if gloss else None
     if g and result == "paren":
         rhs = res + r"\ (\textit{" + esc(g) + "})"
     elif g:
         rhs = r"\underbrace{" + res + "}_{" + _t(g) + "}"  # same style as the pieces on the left
     else:
         rhs = res
+<<<<<<< HEAD
     body = f"{lhs} {sym} {rhs}"
     size = cfg.MATH_FONT + " " if cfg.MATH_FONT and wrap in ("display", "inline") else ""
     shown = {"display": "\\[ " + body + " \\]", "inline": "\\( " + body + " \\)"}.get(wrap, body)
     return "{" + size + shown + "}" if size else shown          # a group, so the size does not leak into the text after it
+=======
+    body = rhs if e.tree.is_leaf else f"{lhs} {sym} {rhs}"     # an elemental character is one column, not 日 = 日
+    return {"display": "\\[ " + body + " \\]", "inline": "\\( " + body + " \\)"}.get(wrap, body)
+>>>>>>> 829d30ca8533db82106291e3b642c109e0eb0420
+
+
+# ---- pictmath: \zimath with a picture row, laid out as a grid -------------------
+# Horizontally  A + B + C = X ;  vertically, for every character:
+#     pinyin (sound)  /  the character  /  meaning  /  pict (shape: an oracle bone glyph, a small image or an emoji)
+# One array, so each row lines up across the terms (the picts share one line, the meanings another). A row nobody
+# fills is left out, and a character with no pict just has an empty cell: "pict" is optional.
+
+def math_chars(e: Entry) -> list[str]:
+    """Characters an equation for ``e`` shows: the result and each component, with the parts of anonymous composites."""
+    out = [e.char]
+
+    def walk(n: Node):
+        if n.is_leaf or n.c:
+            out.append(n.c or "")
+        else:
+            for p in n.parts:
+                walk(p)
+
+    if not e.tree.is_leaf:
+        for p in e.tree.parts:
+            walk(p)
+    return [c for c in dict.fromkeys(out) if c]
+
+
+def pict_prelude() -> str:
+    from . import config
+    return "\n".join([
+        r"\providecommand\zitexpath{zitex-out}",
+        r"\providecommand\zipictheight{" + config.pict_length("ZITEX_PICT_HEIGHT") + "}",
+        r"\providecommand\zipictwidth{" + config.pict_length("ZITEX_PICT_WIDTH") + "}",
+        r"\providecommand\zimeaningwidth{" + config.pict_length("ZITEX_MEANING_WIDTH") + "}",
+        r"\providecommand\zipict[1]{\makebox[\zipictwidth]{\includegraphics[height=\zipictheight,"
+        r"width=\zipictwidth,keepaspectratio]{\zitexpath/picts/#1}}}",
+    ])
+
+
+def _senses(text: str) -> str:
+    """The first few '/'-separated senses of a meaning, so a long dictionary entry does not widen the grid."""
+    from . import config
+    n = config.meaning_senses()
+    parts = text.split("/")
+    return "/".join(parts[:n]) if n and len(parts) > n else text
+
+
+def _pcell(ch: str, lex, lang: str, pinyin: bool, gloss: bool, pos: str | None = None, k: int = 1,
+           py_override: str | None = None, meaning_override: str | None = None, pict_set: str | None = None) -> dict:
+    py = py_override or (lex.get_pinyin(ch) if lex and pinyin else None)
+    mn = meaning_override or (lex.get_meaning(ch, lang) if lex and gloss else None)
+    name = lex.pict_name(ch, pict_set) if lex else None
+    return {
+        "py": _t(py) if py else "",
+        "ch": (f"{k}\\times " if k > 1 else "") + _tg(ch) + (r"_{" + _t(pos) + "}" if pos else ""),
+        "mn": r"\text{\parbox[t]{\zimeaningwidth}{\centering\footnotesize " + esc(_senses(mn)) + "}}" if mn else "",
+        "pc": r"\text{\zipict{" + name + "}}" if name else "",
+    }
+
+
+def render_pictmath(e: Entry, lex=None, lang: str = "en", arrow: str = "=", collapse: bool = False,
+                    show_pos: bool = False, pinyin: bool = True, gloss: bool = True,
+                    wrap: str = "display", result: str = "below", pict_set: str | None = None) -> str:
+    """``\\zimath`` as a grid with a picture row (``pict_set`` names an alternative set of pictures). Same options as render_math (``result`` is ignored: the result
+    is a column like the others)."""
+    if e.tree.is_leaf:
+        parts: list[tuple[int, Node]] = [(1, e.tree)]
+    elif collapse:
+        parts = _collapse(e.tree.parts)
+    else:
+        parts = [(1, p) for p in e.tree.parts]
+    cols: list[dict] = []
+
+    def add(n: Node, k: int = 1):
+        if not n.is_leaf and not n.c:        # anonymous composite: its parts between brackets, still one column each
+            cols.append({"ch": r"\Bigl(", "op": True})
+            for j, q in enumerate(n.parts):
+                if j:
+                    cols.append({"ch": "+", "op": True})
+                add(q)
+            cols.append({"ch": r"\Bigr)", "op": True})
+        else:
+            cols.append(_pcell(n.c or "", lex, lang, pinyin, gloss, n.pos if show_pos else None, k, pict_set=pict_set))
+
+    for k, p in parts:
+        add(p, k)
+        cols.append({"ch": "+", "op": True})
+    cols[-1] = {"ch": _arrow(e, lex, lang, arrow), "op": True}
+    if e.tree.is_leaf:
+        cols = []                            # an elemental character is a single column, not 日 = 日
+    cols.append(_pcell(e.char, lex, lang, pinyin, gloss,
+                       py_override=None if (lex or not pinyin) else e.pinyin,
+                       meaning_override=None if (lex or not gloss) else e.meaning, pict_set=pict_set))
+    rows = []
+    for key in ("py", "ch", "mn", "pc"):
+        cells = [c.get(key, "") for c in cols]
+        if any(cells):
+            rows.append(" & ".join(cells))
+    body = "\\begin{array}{" + r"@{\hspace{3pt}}c" * len(cols) + r"@{\hspace{3pt}}}" + "\n" + " \\\\[0.8ex]\n".join(rows) + "\n\\end{array}"
+    body = {"display": "\\[ " + body + " \\]", "inline": "\\( " + body + " \\)"}.get(wrap, body)
+    return pict_prelude() + "\n" + body
 
 
 # ---- tree -------------------------------------------------------------------
@@ -425,7 +530,17 @@ def render_matrix(e: Entry, size: float | None = None) -> str:
 
 # ---- dispatch and document wrapper ------------------------------------------
 
-STYLES = {"tree": render_tree, "formula": render_formula, "matrix": render_matrix, "math": render_math}
+STYLES = {"tree": render_tree, "formula": render_formula, "matrix": render_matrix, "math": render_math,
+          "pictmath": render_pictmath}
+LANG_STYLES = ("math", "formula", "pictmath")   # styles whose output depends on the language
+DEFAULT_STYLES = [s for s in STYLES if s != "pictmath"]   # pictmath is opt-in: \zimath[pict], or -s pictmath
+
+
+def split_style(style: str) -> tuple[str, str | None]:
+    """``pictmath-obs`` -> (``pictmath``, ``obs``): the pict grid with the named set of pictures ``obs``."""
+    if style.startswith("pictmath-") and len(style) > 9:
+        return "pictmath", style[9:]
+    return style, None
 
 
 def render_with(e: Entry, style: str = "tree", fonts: FontConfig | None = None, reading: str | None = None,
@@ -435,12 +550,15 @@ def render_with(e: Entry, style: str = "tree", fonts: FontConfig | None = None, 
 
     `reading` picks which named reading of the roles colours the pieces and labels the arrow
     (an entry without it uses its default reading)."""
-    if style not in STYLES:
+    base, pict_set = split_style(style)
+    if base not in STYLES:
         raise ValueError(f"unknown style {style!r}; choose from {sorted(STYLES)}")
+    if pict_set:
+        kw = {**kw, "pict_set": pict_set}
     resolver = Resolver(fonts) if fonts else None
     token, rtoken = CURRENT.set(resolver), READING.set(reading)
     try:
-        out = STYLES[style](e, **kw)
+        out = STYLES[base](e, **kw)
     finally:
         CURRENT.reset(token)
         READING.reset(rtoken)

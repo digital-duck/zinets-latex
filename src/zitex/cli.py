@@ -19,7 +19,7 @@ from .build import build as build_snippets, scan_tex, write_snippet
 from .fonts import FontConfig, coverage_report
 from . import zxdb, yamlio
 from .ops import op_for_pattern
-from .render import STYLES, render_with
+from .render import DEFAULT_STYLES, LANG_STYLES, STYLES, math_chars, render_with, split_style
 from .sources import ENV_DB, DB_RELATIVE, SqliteSource, find_default_database, is_sqlite, open_source
 from .tree import ParseError, to_shape
 from .validate import validate_entry
@@ -151,12 +151,12 @@ def fonts(input_, fonts_file, strict, depth) -> None:
         sys.exit(1)
 
 
-@main.command(short_help="Render characters from a decomposition YAML file or SQLite database to LaTeX snippets and PDF figures.")
+@main.command("render", short_help="Render characters from a decomposition YAML file or SQLite database to LaTeX snippets and PDF figures.")
 @input_option
 @click.option("-c", "--char", "--chars", "char_args", multiple=True, metavar="CHARS",
               help="characters to render, separated by commas or spaces, e.g. 叕,作 (default: every character in the input)")
 @click.option("-s", "--style", "--styles", default=None, metavar="STYLE[,STYLE]",
-              help=f"{', '.join(sorted(STYLES))} (default: all; tree for a single file)")
+              help=f"{', '.join(sorted(STYLES))}; pictmath-NAME uses the picture set NAME (default: all but pictmath; tree for a single file)")
 @click.option("-l", "--lang", "langs", multiple=True, help="gloss language, repeatable (default: en)")
 @click.option("-x", "--lexicon", "lexicons", multiple=True, type=FILE, help="lexicon YAML (pinyin, glosses), repeatable (default: ./lexicon.yaml, if it exists)")
 @click.option("--fonts", "fonts_file", type=FILE, help="fonts.yaml: primary font, fallbacks, per-component overrides")
@@ -167,9 +167,10 @@ def fonts(input_, fonts_file, strict, depth) -> None:
               help="tex = snippet, pdf = compiled figure (default: both; tex with --scan; from the -o suffix)")
 @click.option("--font", default=None, help="CJK font for PDF output (default: primary of --fonts, else Noto Serif CJK SC)")
 @click.option("--scan", "scan_file", type=FILE, help="render only what this .tex file asks for with its \\zi, \\zimath, \\zitree, \\zimatrix and \\ziformula commands")
+@click.option("--strict", is_flag=True, help="exit non-zero when a picture, glyph or character is missing")
 @depth_option
 @math_options
-def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, out, emit, font, scan_file, depth,
+def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, out, emit, font, scan_file, strict, depth,
                collapse, arrow, show_pos, result) -> None:
     """Render the characters of a decomposition YAML, or of a SQLite database, to LaTeX snippets and PDF figures.
 
@@ -197,10 +198,12 @@ def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, o
     lex = source.lexicon(lexicons)
     fonts = FontConfig.load(fonts_file) if fonts_file else None
     langs_list = list(dict.fromkeys(langs)) or ["en"]
+    if any("-" in l for l in langs_list):
+        raise click.BadParameter("a language name must not contain '-' (it is a separator in file names)", param_hint="--lang")
     math_opts = {"collapse": collapse, "arrow": arrow, "show_pos": show_pos, "result": result}
 
     styles = [s.strip() for s in style.split(",") if s.strip()] if style else None
-    bad = [s for s in styles or [] if s not in STYLES]
+    bad = [s for s in styles or [] if split_style(s)[0] not in STYLES]
     if bad:
         raise click.BadParameter(f"unknown style(s) {bad}; choose from {sorted(STYLES)}", param_hint="--style")
 
@@ -216,7 +219,7 @@ def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, o
             raise click.UsageError("--scan renders what the document asks for: do not combine it with --char, --style or --reading")
         if to_stdout or file_suffix:
             raise click.UsageError("--scan writes several files: -o must be a directory")
-        jobs = {(c, s, l or langs_list[0], rd) for c, s, l, rd in scan_tex(scan_file)}
+        jobs = {(c, s, l or "en", rd) for c, s, l, rd in scan_tex(scan_file)}
         if not jobs:
             click.echo(f"{scan_file}: no \\zi calls found")
             return
@@ -239,10 +242,10 @@ def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, o
             single = len(found) == 1 and n_styles == 1          # a bare name is a stem only for one named style
         else:
             single = False
-        styles = styles or (["tree"] if single else list(STYLES))
+        styles = styles or (["tree"] if single else list(DEFAULT_STYLES))
         if single and (len(found) > 1 or len(styles) > 1):
             raise click.UsageError("several outputs need a directory: use -o DIR (or no -o), or name one character and one style")
-        if single and len(langs_list) > 1 and styles[0] in ("math", "formula"):
+        if single and len(langs_list) > 1 and split_style(styles[0])[0] in LANG_STYLES:
             raise click.UsageError("one output has one language: give a single -l")
     user_emit = emit
     emit = emit or ("tex" if scan_file else "both")
@@ -251,9 +254,9 @@ def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, o
     if single:
         e, st, lang = found[0], styles[0], langs_list[0]
         kw: dict = {}
-        if st in ("math", "formula"):
+        if split_style(st)[0] in LANG_STYLES:
             kw.update(lang=lang, lex=lex)
-        if st == "math":
+        if split_style(st)[0] in ("math", "pictmath"):
             kw.update(math_opts)
         snippet, resolver = render_with(e, st, fonts, reading=reading, **kw)
         if resolver and resolver.missing:
@@ -264,6 +267,8 @@ def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, o
         path = Path(out)
         suffix = path.suffix.lower()
         stem = path.with_suffix("") if suffix in (".tex", ".pdf") else path
+        if split_style(st)[0] == "pictmath":       # the pictures the snippet names go next to it, in picts/
+            lex.stage_picts(math_chars(e), stem.parent, split_style(st)[1])
         how = user_emit or {".tex": "tex", ".pdf": "pdf"}.get(suffix, "both")   # an explicit --emit wins over the suffix
         try:
             tex, pdf, ok = write_snippet(snippet, resolver, fonts, stem, how, font)
@@ -298,13 +303,21 @@ def render_cmd(input_, char_args, style, langs, lexicons, fonts_file, reading, o
         click.echo(f"not in {data}: {' '.join(res.missing)}", err=True)
     if res.glyph_missing:
         click.echo(f"no glyph for: {' '.join(res.glyph_missing)} (drawn as a boxed label; see `zitex fonts`)", err=True)
+    for msg in res.pict_problems:
+        click.echo(f"picture: {msg}", err=True)
+    if res.no_pict:
+        click.echo(f"{len(res.no_pict)} picture snippet(s) have parts without a picture (an empty cell): "
+                   f"{'; '.join(res.no_pict[:5])}{' ...' if len(res.no_pict) > 5 else ''}", err=True)
     if res.failed:
         click.echo(f"failed to compile: {' '.join(str(p) for p in res.failed)}", err=True)
+        sys.exit(1)
+    if strict and (res.pict_problems or res.no_pict or res.missing or res.glyph_missing):
+        click.echo("--strict: some pictures, glyphs or characters are missing (see above)", err=True)
         sys.exit(1)
 
 
 @main.command("db-build", short_help="Copy what zitex needs from the ZiNets database into small zx_ tables, leaving the original untouched.")
-@input_option(required=True, help="the ZiNets working database to read (never changed). No default: it is not part of a checkout")
+@input_option(required=True, help="the ZiNets working database to read (opened read only, except with --in-place). No default: it is not part of a checkout")
 @click.option("-o", "--out", type=click.Path(dir_okay=False), default=None,
               help="the SQLite file to write (default: zitex.sqlite3 next to the input)")
 @click.option("--in-place", is_flag=True,
@@ -315,7 +328,7 @@ def db_build(input_, out, in_place, report_file) -> None:
     """Re-create the data zitex needs as four small tables (zx_meta, zx_char, zx_part, zx_quarantine).
 
     The input is the ZiNets working database (t_zi_part, t_zi, t_ele_zi, t_part). It is opened read only and
-    never changed, and the tables are written to a separate file, so a mistake here cannot damage it. Rows that
+    left unchanged by default: the tables are written to a separate file, so a mistake here cannot damage it. With --in-place the tables are added to the input itself, after a backup. Rows that
     cannot be converted safely are not guessed at: they go to zx_quarantine, and to --report. After the build,
     the command checks that the input is byte for byte what it was.
     """

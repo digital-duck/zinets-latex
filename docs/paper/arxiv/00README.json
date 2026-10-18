@@ -1,0 +1,8 @@
+{
+  "process": {
+    "compiler": "xelatex"
+  },
+  "sources": [
+    { "filename": "zitex-arxiv.tex", "usage": "toplevel" }
+  ]
+}

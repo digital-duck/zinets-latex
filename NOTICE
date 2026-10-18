@@ -1,0 +1,43 @@
+zitex: third-party material and licences
+========================================
+
+The zitex code (src/, tests/, scripts, docs written for this project) is licensed under the MIT licence: see LICENSE.
+That licence does NOT cover the data, images and fonts listed below, which keep their own licences. This notice is not
+legal advice.
+
+1. Oracle bone glyph images  -  CC BY-NC 4.0
+--------------------------------------------
+Where:  data/ele_chars/*.png, examples/pict/obs/*.png, docs/paper/arxiv/obs/*.png and
+        docs/paper/arxiv/zitex-out/picts/*-obs.png (copies made for the paper).
+What:   one glyph per character, chosen by the author from the HUST-OBC dataset.
+Source: HUST-OBC, https://github.com/Pengjie-W/HUST-OBC ; Pengjie Wang et al., "An open dataset for oracle bone character
+        recognition and decipherment", Scientific Data, 2024, arXiv:2401.15365. The dataset is a compilation of glyphs
+        cut from published oracle bone rubbings and copies (its file names carry the source and the sign number);
+        picts.csv next to each set records the source image of every glyph.
+Licence: Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0), as stated by the dataset authors,
+        https://creativecommons.org/licenses/by-nc/4.0/ . Reuse for non-commercial research is permitted with attribution.
+        Commercial use is not. Check the dataset's own terms before relying on this notice.
+Changes: converted to RGB PNG and renamed to u<hex>.png (<hex> is the code point of the character). Nothing else.
+
+2. Character data derived from the ZiNets database  -  CC BY-SA 4.0
+--------------------------------------------------------------------
+Where:  db/ (see db/NOTICE.md for the attribution, the changes made and what is asked of you), and the glosses written
+        at the top of YAML files produced by `zitex extract`.
+Source: CC-CEDICT, https://cc-cedict.org ; licence CC BY-SA 4.0.
+
+3. Fonts and emoji pictures  -  SIL Open Font License 1.1
+----------------------------------------------------------
+Where:  docs/paper/arxiv/fonts/NotoSerifCJKsc-Subset-*.otf (a subset of Noto Serif CJK SC, cut down to the characters
+        the paper uses; see docs/paper/arxiv/fonts/README.txt).
+        Emoji pictures in examples/pict and docs/paper/arxiv/zitex-out/picts/ (the files without "-obs") are drawn from
+        the Noto Color Emoji font by zitex when the snippets are built.
+Source: Google Noto fonts, https://github.com/googlefonts/noto-cjk and https://github.com/googlefonts/noto-emoji ;
+        licence SIL Open Font License 1.1, https://openfontlicense.org . Check the version you have installed: the licence
+        text that ships with the font applies.
+Copyright line carried by the font file: (c) 2017-2022 Adobe (http://www.adobe.com/). The licence text is in
+        docs/paper/arxiv/fonts/OFL.txt.
+Changes: the CJK fonts were subset (glyphs removed, none added).
+
+4. Names
+--------
+"Noto" is a trademark of Google LLC. Other names are used only to say where material comes from.

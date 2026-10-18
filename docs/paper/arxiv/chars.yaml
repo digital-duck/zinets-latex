@@ -44,3 +44,20 @@
   tree:
     op: ⿰
     parts: [{c: 亻, pos: L}, {c: 弗, pos: M}]
+
+# Added by hand for the picture-row examples (section 4).
+- char: 明
+  pinyin: "míng"
+  meaning: "bright"
+  shape: "⿰日月"
+  tree:
+    op: ⿰
+    parts: [{c: 日, pos: L}, {c: 月, pos: R}]
+
+- char: 林
+  pinyin: lín
+  meaning: woods
+  shape: "⿰木木"
+  tree:
+    op: ⿰
+    parts: [{c: 木, pos: L}, {c: 木, pos: R}]

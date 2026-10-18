@@ -1,0 +1,17 @@
+\documentclass{article}
+\usepackage{zitex}
+\usepackage[margin=2.5cm]{geometry}
+\setlength{\parindent}{0pt}
+\begin{document}
+
+\section*{1. Emoji as the pict}
+\zimath[pict]{明}                    % English meanings
+\zimath[pict,lang=zh]{明}            % Chinese meanings
+\zimath[pict]{林}                    % a third equation: 木 + 木 = 林
+
+\section*{2. Oracle bone glyphs as the pict}
+% pict=obs picks the set of pictures named obs: the glyphs in obs/, exported from Orascope
+\zimath[pict=obs,lang=zh]{明}
+\zimath[pict=obs,lang=zh]{林}
+
+\end{document}

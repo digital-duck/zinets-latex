@@ -1,6 +1,6 @@
 # zitex Tutorial
 
-This tutorial takes you from one hand-written character to a typeset paper page. About 20 minutes. The commands in sections 2 to 5 and 7 were run as written from an empty folder, and section 8 was run against the derived database in `db/`. The fallback example in section 6 uses a placeholder name (`qi-top`) and was not run.
+This tutorial takes you from one hand-written character to a typeset paper page. About 20 minutes. The commands in sections 2 to 5 and 7 were run as written from an empty folder, section 8 was run against the derived database in `db/`, and the pict example in section 4 (`日 + 月 = 明`) was built and compiled as written (its folder is `examples/pict/`). The fallback example in section 6 uses a placeholder name (`qi-top`) and was not run.
 
 Every command that reads data takes it with **`-i` / `--input`** (there are no positional file arguments). Without `-i`, the commands read `./chars.yaml`.
 
@@ -134,7 +134,7 @@ That is plain LaTeX math. In a document it shows pinyin above each piece, its gl
 - `--emit tex|pdf|both` overrides the format. If `xelatex` is missing, you get an error after the `.tex` is written.
 - `-s` takes one style or a comma list. `-l` can be repeated to render several languages.
 
-There are four styles (`-s`):
+There are four styles (`-s`) that `render` builds by default, and a fifth, `pictmath`, that you ask for (see *Add shape* below):
 
 | Style | What it draws |
 |---|---|
@@ -142,6 +142,7 @@ There are four styles (`-s`):
 | `formula` | one line: `女 + 子 → 好 (hǎo, good)` |
 | `tree` | a tree growing to the right, position on each edge |
 | `matrix` | nested boxes laid out by operator (the Zi-Matrix) |
+| `pictmath` | the equation as a grid with a picture row: pinyin, character, meaning, picture (opt-in) |
 
 Options for `math`:
 
@@ -185,6 +186,70 @@ zitex render -i chars.yaml -c 虹 -s math -x lexicon.yaml -o - --arrow role --re
 
 The first reading is the default. A reading changes the colours of the pieces and the label on the arrow, and nothing else. In a paper, write `\zimath[reading=dictionary]{虹}`, or `\zitexsetreading{dictionary}` to change the default for the rest of the document.
 
+### Add shape: the picture row (`pict`)
+
+A character has three dimensions: sound, meaning and shape. `math` shows the first two. The `pictmath` style adds the third, as a row of small pictures under the meanings, so that `日 + 月 = 明` carries pinyin, character, meaning and picture for every piece. Add a `pict` to each lexicon entry: a picture file, or an emoji. Chinese is just another language here: give each gloss in as many languages as you like.
+
+```yaml
+# lexicon.yaml
+日: {pinyin: rì,   gloss: {en: sun,    zh: 太阳}, pict: "☀️"}
+月: {pinyin: yuè,  gloss: {en: moon,   zh: 月亮}, pict: "🌙"}
+明: {pinyin: míng, gloss: {en: bright, zh: 明亮}, pict: "✨"}
+```
+
+```yaml
+# chars.yaml
+- char: 明
+  pinyin: míng
+  meaning: bright
+  shape: "⿰日月"
+```
+
+```latex
+% main.tex
+\documentclass{article}
+\usepackage{zitex}
+\begin{document}
+\zimath[pict]{明}
+\zimath[pict,lang=zh]{明}
+\end{document}
+```
+
+```bash
+zitex render -i chars.yaml --scan main.tex -x lexicon.yaml -l en -l zh
+xelatex main.tex
+```
+
+The result, once per language:
+
+```
+   rì          yuè          míng            rì          yuè          míng
+   日     +     月     =     明             日     +     月     =     明
+   sun         moon         bright          太阳        月亮         明亮
+   ☀️          🌙           ✨              ☀️          🌙           ✨
+```
+
+(In the PDF the bottom row is real pictures.) What to know:
+
+- **It is a grid.** Each row lines up across all the pieces, so the pictures sit on one line and the meanings on another. A row that nothing fills is left out, and a piece with no picture has an empty cell. Pieces inside brackets (木 + 目 inside 想) each keep their own column.
+- **`pict` is optional, and has an order of preference:** a picture file, else an emoji, else nothing. A picture file is the `pict:` value (relative to the lexicon file), or a file named `u<hex>.png` (日 is `u65e5.png`; `.jpg`, `.pdf` and `.svg` work too) in the folder named by `ZITEX_PICT_DIR`. A lexicon entry that is not an image file is taken as an emoji. XeLaTeX cannot print colour emoji, so zitex draws it into a PNG first (it needs Pillow and an emoji font, Noto Color Emoji by default). The files go next to the snippets, in `zitex-out/picts/`.
+- **The meaning has an order too:** the gloss (a concrete phrase), else the entry's `concept` (written in ALL CAPS, such as `HAND`), else its `category` (`HUMAN-BODY`), else nothing. Give an entry `concept:` and `category:` in the lexicon the same way as `gloss:`.
+- **The size is fixed**, so the picture row is regular. Set it in a `.env` file in the folder where you run `zitex` (or in the environment). `.env.example` lists every setting:
+
+  ```
+  ZITEX_PICT_HEIGHT=1.8em
+  ZITEX_PICT_WIDTH=1.8em
+  ZITEX_MEANING_WIDTH=6em      # meanings wrap here
+  ZITEX_MEANING_SENSES=3       # show at most 3 '/'-separated senses
+  ```
+
+- **Oracle bone glyphs.** The pictures can be oracle bone glyphs. Orascope's `scripts/export_picts.py` exports one starred glyph per elemental character, named `u<hex>.png`, with a matching `lexicon.yaml`, into `data/ele_chars/`. Then run `ZITEX_PICT_DIR=data/ele_chars zitex render -i chars.yaml --scan main.tex -x data/ele_chars/lexicon.yaml`. The glyphs come from HUST-OBC (CC BY-NC 4.0): keep the attribution.
+- **Several sets of pictures.** A pict comes from the lexicon key `pict`, which is the default set. A second set has its own key, `pict_obs: u65e5.png`, and you pick it with `\zimath[pict=obs]{明}`. So one document can show emoji in one equation and oracle bone glyphs in the next (`examples/pict/main.tex` does exactly that, for 明 and for 木 + 木 = 林). A set does not fall back to the default: a character with no picture in the set has an empty cell. A set can also be a folder, `<ZITEX_PICT_DIR>/obs/u<hex>.png`. Orascope's `export_picts.py --chars 日月明 --set obs` writes such a set.
+- **It needs XeLaTeX.** A snippet with pictures is not for MathJax; plain `\zimath` still is.
+- **It is opt-in.** `\zimath{明}` is unchanged. `zitex render` without `-s` does not build `pictmath`: either write `\zimath[pict]` and use `--scan`, or name the style, as in `zitex render -i chars.yaml -c 明 -s pictmath -x lexicon.yaml -l zh` (`-s pictmath-obs` for the set `obs`).
+
+The design and the reasons are in `docs/DEV/claude/readme-zimath.md`.
+
 ## 5. Use it in a paper
 
 zitex does the work in Python and leaves LaTeX only the last step. The flow is: write `\zi` commands, run `zitex render --scan` to make the snippets, then run XeLaTeX.
@@ -201,7 +266,7 @@ zitex does the work in Python and leaves LaTeX only the last step. The flow is: 
 \end{document}
 ```
 
-Commands: `\zi[style=…,lang=…]{字}`, and the shorthands `\zitree`, `\zimatrix`, `\ziformula` and `\zimath`. The argument is one character.
+Commands: `\zi[style=…,lang=…]{字}`, and the shorthands `\zitree`, `\zimatrix`, `\ziformula` and `\zimath`. The argument is one character. `\zimath[pict]{字}` is the equation with a picture row (see section 4).
 
 Render only what the document uses, then typeset:
 
@@ -322,6 +387,9 @@ How the adapters work, what was found in the database, and what is still open is
 | `W2` warnings | the positions of a level make a pattern the operator does not allow (see section 3). Fix the data, or ignore if it is intended |
 | a red `[字?]` in the page | the snippet was not built. Run `zitex render -i chars.yaml --scan main.tex` in the folder that holds `main.tex` |
 | `File 'zitex.sty' not found` | see section 5: `zitex setup -o .`, or `zitex install-sty` |
+| a picture row is empty, or a pict is missing | the picture was not found: put `u<hex>.png` in `ZITEX_PICT_DIR` or name the file in the lexicon. An emoji needs Pillow and a colour emoji font (`ZITEX_EMOJI_FONT`) |
+| `\zimath[pict]` shows a red `[字?]` | the `pictmath` snippet was not built. It is not in the default styles: use `--scan`, or `-s pictmath` |
+| the grid is wider than the page | lower `ZITEX_MEANING_WIDTH` or `ZITEX_MEANING_SENSES` in `.env` |
 | a box labelled `U+XXXXX` | no font draws that code point. Add a fallback font or an SVG in `fonts.yaml` |
 
 ## Where next
