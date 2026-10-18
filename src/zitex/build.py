@@ -13,30 +13,21 @@ from pathlib import Path
 from .lexicon import Lexicon
 from .loader import Entry
 from .fonts import FontConfig, svg_to_pdf
-from .render import DEFAULT_STYLES, LANG_STYLES, document, math_chars, render_with, split_style
+from .render import DEFAULT_STYLES, LANG_STYLES, document, math_chars, pict_sets, render_with, split_style
 
 MATH_STYLES = ("math", "pictmath")
 
 
 def snippet_name(char: str, style: str, lang: str = "en", reading: str | None = None) -> str:
-    """File stem used for a snippet: ``u85fb-藻-tree``, ``u85fb-藻-math-fr``, ``u8679-虹-math-en@author``.
+    """File stem used for a snippet: ``u85fb-tree`` (藻 is U+85FB), ``u85fb-math-fr``, ``u8679-math-en@author``.
 
-<<<<<<< HEAD
     The name is ``<unicode>-<char>-<style>[-<lang>][@<reading>]``. The code point (lower-case hex after a ``u``) comes first
-    so the files sort by code point, and the character itself follows so a person can see which character a file is
-    for. The language is part of the name only for the styles that print glosses, and ``@reading`` only when a named
-    reading was asked for. zitex.sty uses the same rule (``\\zitex@name``). Note that the character makes the name
-    non-ASCII: ``build_manifest.json`` lists the pairs of names and characters."""
+    so the files sort by code point and a tool that only wants ASCII can use it, and the character itself follows so a
+    person can see which character a file is for. The language is part of the name only for the styles that print
+    glosses, and ``@reading`` only when a named reading was asked for. zitex.sty uses the same rule
+    (``\\zitex@name``). ``build_manifest.json`` maps the names back to the characters."""
     head = f"u{ord(char):x}-{char}"
-    stem = f"{head}-{style}-{lang}" if style in LANG_STYLES else f"{head}-{style}"
-=======
-    The character is named by its code point in lower-case hex, so every file name is plain ASCII and works on any
-    file system, in any archive, and with any TeX engine. ``build_manifest.json`` maps the names back to the
-    characters. The language is part of the name only for the styles that print glosses, and ``@reading`` only when
-    a named reading was asked for. zitex.sty uses the same rule (``\\zitex@name``)."""
-    cp = f"u{ord(char):x}"
-    stem = f"{cp}-{style}-{lang}" if split_style(style)[0] in LANG_STYLES else f"{cp}-{style}"
->>>>>>> 829d30ca8533db82106291e3b642c109e0eb0420
+    stem = f"{head}-{style}-{lang}" if split_style(style)[0] in LANG_STYLES else f"{head}-{style}"
     return f"{stem}@{reading}" if reading else stem
 
 
@@ -70,9 +61,11 @@ def scan_tex(path: str | Path) -> set[tuple[str, str, str | None, str | None]]:
         else:
             style, opts, ch = m.group(3), m.group(4) or "", m.group(5)
             items = [x.strip() for x in opts.split(",") if x.strip()]
-            kv = {k.strip(): v.strip() for k, v in (p.split("=", 1) for p in items if "=" in p)}
+            pairs = [(k.strip(), v.strip()) for k, v in (p.split("=", 1) for p in items if "=" in p)]
+            kv = dict(pairs)
             st = style or kv.get("style", "tree")
-            pict = kv.get("pict", "true" if "pict" in items else "false")
+            sets = [v for k, v in pairs if k == "pict"]      # pict=obs,pict=seal: a picture row for each, in order
+            pict = "+".join(sets) if sets else "true" if "pict" in items else "false"
             if st == "math" and pict != "false":     # \zimath[pict]{字}: the grid with a picture row
                 st = "pictmath" if pict == "true" else f"pictmath-{pict}"   # [pict=obs]: the set of pictures obs
             found.add((ch, st, kv.get("lang", lang), kv.get("reading", reading)))
@@ -172,10 +165,14 @@ def build(entries: list[Entry], outdir: str | Path, jobs: set[tuple[str, str, st
             kw["lang"], kw["lex"] = lang, lex
         stem = snippet_name(ch, style, lang, rd)
         snippet, resolver = render_with(e, style, fonts, reading=rd, **kw)
-        picts = lex.stage_picts(math_chars(e), outdir, pict_set) if base == "pictmath" and lex else []
-        bare = [c for c in dict.fromkeys(math_chars(e)) if lex.pict_name(c, pict_set) is None] if base == "pictmath" and lex else []
-        if bare:
-            res.no_pict.append(f"{style} {ch}: {' '.join(bare)}")
+        picts, bare = [], []
+        if base == "pictmath" and lex:
+            for s in pict_sets(pict_set):
+                picts += lex.stage_picts(math_chars(e), outdir, s)
+                miss = [c for c in dict.fromkeys(math_chars(e)) if lex.pict_name(c, s) is None]
+                if miss:
+                    res.no_pict.append(f"{style} {ch}" + (f" [{s}]" if s else "") + f": {' '.join(miss)}")
+                bare += [c for c in miss if c not in bare]
         record = {"char": ch, "codepoint": f"U+{ord(ch):04X}", "style": style, "lang": lang if base in LANG_STYLES else None,
                   "reading": rd, "file": f"{stem}.pdf" if emit == "pdf" else f"{stem}.tex", "fallback_fonts": [], "images": [], "no_glyph": [], "picts": picts, "parts_without_pict": bare}
         if resolver:

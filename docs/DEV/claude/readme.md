@@ -262,7 +262,7 @@ Tick them off here. The worklists are in `db/` (`zitex-quarantine*.csv`) and in 
 
 - The Streamlit app **in a browser**. The pages run headless and the server starts (health check and home page return OK), but nobody has looked at the layout.
 - The `math` output in **MathJax or KaTeX**. It uses only commands both support, but it was only compiled with XeLaTeX.
-- **Windows**: snippet file names are `u85fb-藻-tree.tex` (code point, then the character). The code point helps, but the character still makes the name non-ASCII, so Windows (and arXiv's file name rules) are untested and may need the character dropped from the name. Nothing has been run on Windows. Linux works.
+- **Windows**: snippet file names are now ASCII code points (`u85fb-tree.tex`), which removes the UTF-8 file name risk, but nothing has been run on Windows. Linux works.
 - **LuaLaTeX**: only XeLaTeX is supported.
 - The `qi-top` example in tutorial section 6 is a placeholder.
 - One full test run showed 5 failures that could not be explained or reproduced (several later runs were green).

@@ -10,7 +10,9 @@
    "file": "u54ed-哭-matrix.tex",
    "fallback_fonts": [],
    "images": [],
-   "no_glyph": []
+   "no_glyph": [],
+   "picts": [],
+   "parts_without_pict": []
   },
   {
    "char": "國",
@@ -21,7 +23,9 @@
    "file": "u570b-國-matrix.tex",
    "fallback_fonts": [],
    "images": [],
-   "no_glyph": []
+   "no_glyph": [],
+   "picts": [],
+   "parts_without_pict": []
   },
   {
    "char": "悔",
@@ -32,7 +36,9 @@
    "file": "u6094-悔-math-fr.tex",
    "fallback_fonts": [],
    "images": [],
-   "no_glyph": []
+   "no_glyph": [],
+   "picts": [],
+   "parts_without_pict": []
   },
   {
    "char": "愛",
@@ -43,7 +49,9 @@
    "file": "u611b-愛-tree.tex",
    "fallback_fonts": [],
    "images": [],
-   "no_glyph": []
+   "no_glyph": [],
+   "picts": [],
+   "parts_without_pict": []
   },
   {
    "char": "時",
@@ -54,7 +62,9 @@
    "file": "u6642-時-math-en.tex",
    "fallback_fonts": [],
    "images": [],
-   "no_glyph": []
+   "no_glyph": [],
+   "picts": [],
+   "parts_without_pict": []
   },
   {
    "char": "森",
@@ -65,7 +75,9 @@
    "file": "u68ee-森-math-en.tex",
    "fallback_fonts": [],
    "images": [],
-   "no_glyph": []
+   "no_glyph": [],
+   "picts": [],
+   "parts_without_pict": []
   },
   {
    "char": "氢",
@@ -76,7 +88,9 @@
    "file": "u6c22-氢-formula-en.tex",
    "fallback_fonts": [],
    "images": [],
-   "no_glyph": []
+   "no_glyph": [],
+   "picts": [],
+   "parts_without_pict": []
   },
   {
    "char": "藻",
@@ -87,7 +101,9 @@
    "file": "u85fb-藻-math-en.tex",
    "fallback_fonts": [],
    "images": [],
-   "no_glyph": []
+   "no_glyph": [],
+   "picts": [],
+   "parts_without_pict": []
   },
   {
    "char": "藻",
@@ -98,7 +114,9 @@
    "file": "u85fb-藻-matrix.tex",
    "fallback_fonts": [],
    "images": [],
-   "no_glyph": []
+   "no_glyph": [],
+   "picts": [],
+   "parts_without_pict": []
   },
   {
    "char": "藻",
@@ -109,10 +127,13 @@
    "file": "u85fb-藻-tree.tex",
    "fallback_fonts": [],
    "images": [],
-   "no_glyph": []
+   "no_glyph": [],
+   "picts": [],
+   "parts_without_pict": []
   }
  ],
  "characters_not_in_data": [],
  "components_without_glyph": [],
+ "picture_problems": [],
  "pdf_failed": []
 }

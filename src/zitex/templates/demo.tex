@@ -5,7 +5,7 @@
 %       xelatex main.tex          (run it twice for the cross-references)
 %
 %   How the pieces fit together
-%       chars.yaml + lexicon.yaml  --zitex extract-->  zitex-out/u<hex>-<char>-<style>[-<lang>][@reading].tex
+%       chars.yaml + lexicon.yaml  --zitex extract-->  zitex-out/u<hex>-<style>[-<lang>][@reading].tex
 %       main.tex  --\zi... commands-->  \input of exactly those files   (zitex.sty is a thin wrapper)
 %   So LaTeX never parses a decomposition: Python wrote the TikZ / amsmath snippet beforehand.
 %   A character with no snippet shows as a red [字?] and gives a "Missing zitex-out/..." warning in
@@ -161,7 +161,7 @@ Equations and formulas print glosses, so they depend on a language. Set a defaul
 
 \note{A \emph{reading} is a named interpretation of the roles of the parts (semantic, phonetic, force), so two schools of
 thought can sit in the same data and a paper can choose. In the file system they appear as
-\texttt{u<hex>-<char>-<style>[-<lang>][@reading].tex}, where \texttt{u<hex>} is the code point of the character in hex and \texttt{<char>} the character itself (\texttt{u85fb-藻} for 藻); \texttt{build\_manifest.json} maps them back. These lines are not run here, because the lexicon of this folder has
+\texttt{u<hex>-<style>[-<lang>][@reading].tex}, where \texttt{u<hex>} is the code point of the character in hex (\texttt{u85fb} for 藻), so the file names are plain ASCII; \texttt{build\_manifest.json} maps them back. These lines are not run here, because the lexicon of this folder has
 English only and no readings.}
 
 \subsection{Where the snippets are}
@@ -288,8 +288,8 @@ Python writes the snippets and the package reads them, and the only interface be
 
 \begin{syntax}
 \begin{verbatim}
-zitex-out/u<hex>-<char>-<style>[-<lang>][@<reading>].tex     (u<hex>: the code point in hex)
-\zimath[lang=fr, reading=dictionary]{虹}   ->   zitex-out/u8679-虹-math-fr@dictionary.tex
+zitex-out/u<hex>-<style>[-<lang>][@<reading>].tex     (u<hex>: the code point in hex)
+\zimath[lang=fr, reading=dictionary]{虹}   ->   zitex-out/u8679-math-fr@dictionary.tex
 \end{verbatim}
 \end{syntax}
 

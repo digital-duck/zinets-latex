@@ -1,5 +1,5 @@
 {
- "zitex_version": "0.1.0",
+ "zitex_version": "0.3.0",
  "snippets": [
   {
    "char": "明",
@@ -7,7 +7,7 @@
    "style": "pictmath",
    "lang": "en",
    "reading": null,
-   "file": "u660e-pictmath-en.tex",
+   "file": "u660e-明-pictmath-en.tex",
    "fallback_fonts": [],
    "images": [],
    "no_glyph": [],
@@ -24,7 +24,7 @@
    "style": "pictmath",
    "lang": "zh",
    "reading": null,
-   "file": "u660e-pictmath-zh.tex",
+   "file": "u660e-明-pictmath-zh.tex",
    "fallback_fonts": [],
    "images": [],
    "no_glyph": [],
@@ -41,7 +41,7 @@
    "style": "pictmath-obs",
    "lang": "zh",
    "reading": null,
-   "file": "u660e-pictmath-obs-zh.tex",
+   "file": "u660e-明-pictmath-obs-zh.tex",
    "fallback_fonts": [],
    "images": [],
    "no_glyph": [],
@@ -53,12 +53,37 @@
    "parts_without_pict": []
   },
   {
+   "char": "明",
+   "codepoint": "U+660E",
+   "style": "pictmath-obs+bronze+seal+kaiti",
+   "lang": "zh",
+   "reading": null,
+   "file": "u660e-明-pictmath-obs+bronze+seal+kaiti-zh.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": [],
+   "picts": [
+    "u660e-obs.png",
+    "u65e5-obs.png",
+    "u6708-obs.png",
+    "u65e5-bronze.png",
+    "u6708-bronze.png",
+    "u65e5-seal.png",
+    "u6708-seal.png",
+    "u65e5-kaiti.png",
+    "u6708-kaiti.png"
+   ],
+   "parts_without_pict": [
+    "明"
+   ]
+  },
+  {
    "char": "林",
    "codepoint": "U+6797",
    "style": "pictmath",
    "lang": "en",
    "reading": null,
-   "file": "u6797-pictmath-en.tex",
+   "file": "u6797-林-pictmath-en.tex",
    "fallback_fonts": [],
    "images": [],
    "no_glyph": [],
@@ -74,7 +99,7 @@
    "style": "pictmath-obs",
    "lang": "zh",
    "reading": null,
-   "file": "u6797-pictmath-obs-zh.tex",
+   "file": "u6797-林-pictmath-obs-zh.tex",
    "fallback_fonts": [],
    "images": [],
    "no_glyph": [],
@@ -83,6 +108,27 @@
     "u6728-obs.png"
    ],
    "parts_without_pict": []
+  },
+  {
+   "char": "林",
+   "codepoint": "U+6797",
+   "style": "pictmath-obs+bronze+seal+kaiti",
+   "lang": "zh",
+   "reading": null,
+   "file": "u6797-林-pictmath-obs+bronze+seal+kaiti-zh.tex",
+   "fallback_fonts": [],
+   "images": [],
+   "no_glyph": [],
+   "picts": [
+    "u6797-obs.png",
+    "u6728-obs.png",
+    "u6728-bronze.png",
+    "u6728-seal.png",
+    "u6728-kaiti.png"
+   ],
+   "parts_without_pict": [
+    "林"
+   ]
   }
  ],
  "characters_not_in_data": [],

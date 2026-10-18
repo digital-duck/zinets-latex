@@ -199,8 +199,8 @@ class Lexicon:
                 self.pict_base[ch] = Path(path).resolve().parent
             for key, val in v.items():             # pict_<set>: the same, for a named set of pictures
                 if key.startswith("pict_") and len(key) > 5 and val:
-                    if "-" in key[5:]:             # file names are style-set-lang: a hyphen would be ambiguous
-                        raise ValueError(f"{path}: picture set name {key[5:]!r} must not contain '-'")
+                    if "-" in key[5:] or "+" in key[5:]:   # file names are style-set-lang, and + joins sets: both are ambiguous
+                        raise ValueError(f"{path}: picture set name {key[5:]!r} must not contain '-' or '+'")
                     self.sets.setdefault(key[5:], {})[ch] = str(val)
                     self.set_base[(key[5:], ch)] = Path(path).resolve().parent
         return self

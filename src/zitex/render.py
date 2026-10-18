@@ -18,12 +18,22 @@ from .loader import Entry, role_kinds
 from .ops import FLAT_OPS, is_general
 from .tree import Node
 
-# sizes, spacings and colours are in config.py (edit them there)
-from . import config as cfg
-from .config import ACCENT, BORDER, DEFAULT_FILL, MUTED, PT_PER_CM, ROLE_FILL  # noqa: F401  (kept importable from here)
+PT_PER_CM = 28.4528
+
+# role -> (fill rgb, text rgb); roles come from an entry's `role` mapping
+ROLE_FILL = {
+    "semantic": (214, 234, 248),
+    "phonetic": (252, 228, 214),
+    "force": (226, 240, 217),
+    "both": (232, 222, 245),      # a component that is both semantic and phonetic
+}
 
 # which reading of an entry's roles is being rendered (None: the entry's default)
 READING: contextvars.ContextVar[str | None] = contextvars.ContextVar("zitex_reading", default=None)
+DEFAULT_FILL = (248, 249, 250)
+BORDER = (44, 62, 80)
+ACCENT = (231, 76, 60)
+MUTED = (127, 140, 141)
 
 _ESCAPES = {
     "\\": r"\textbackslash{}", "&": r"\&", "%": r"\%", "$": r"\$", "#": r"\#",
@@ -93,7 +103,7 @@ def _term(n: Node, show_pos: bool) -> str:
     else:  # anonymous composite: show its parts in brackets
         t = "(" + " + ".join(_term(p, show_pos) for p in n.parts) + ")"
     if show_pos and n.pos:
-        t += r"\textsubscript{" + cfg.FORMULA_POS_FONT + " " + n.pos + "}"
+        t += r"\textsubscript{\scriptsize " + n.pos + "}"
     return t
 
 
@@ -108,7 +118,7 @@ def render_formula(e: Entry, show_pos: bool = False, info: bool = True, lex=None
         py = (lex.get_pinyin(e.char) if lex else None) or e.pinyin
         mean = (lex.get_gloss(e.char, lang) if lex else None) or e.meaning
         if py or mean:
-            out += " {" + cfg.FORMULA_INFO_FONT + "(" + ", ".join(esc(x) for x in (py, mean) if x) + ")}"
+            out += " {\\small(" + ", ".join(esc(x) for x in (py, mean) if x) + ")}"
     return out
 
 
@@ -201,15 +211,8 @@ def render_math(e: Entry, lex=None, lang: str = "en", arrow: str = "=", collapse
         rhs = r"\underbrace{" + res + "}_{" + _t(g) + "}"  # same style as the pieces on the left
     else:
         rhs = res
-<<<<<<< HEAD
-    body = f"{lhs} {sym} {rhs}"
-    size = cfg.MATH_FONT + " " if cfg.MATH_FONT and wrap in ("display", "inline") else ""
-    shown = {"display": "\\[ " + body + " \\]", "inline": "\\( " + body + " \\)"}.get(wrap, body)
-    return "{" + size + shown + "}" if size else shown          # a group, so the size does not leak into the text after it
-=======
     body = rhs if e.tree.is_leaf else f"{lhs} {sym} {rhs}"     # an elemental character is one column, not 日 = 日
     return {"display": "\\[ " + body + " \\]", "inline": "\\( " + body + " \\)"}.get(wrap, body)
->>>>>>> 829d30ca8533db82106291e3b642c109e0eb0420
 
 
 # ---- pictmath: \zimath with a picture row, laid out as a grid -------------------
@@ -233,6 +236,12 @@ def math_chars(e: Entry) -> list[str]:
         for p in e.tree.parts:
             walk(p)
     return [c for c in dict.fromkeys(out) if c]
+
+
+def pict_sets(spec: str | None) -> list[str | None]:
+    """The picture sets a ``pictmath`` style asks for, in row order: ``None`` is the default set, ``"obs+seal"``
+    is the two sets obs and seal (one picture row each)."""
+    return [s or None for s in spec.split("+")] if spec else [None]
 
 
 def pict_prelude() -> str:
@@ -259,19 +268,21 @@ def _pcell(ch: str, lex, lang: str, pinyin: bool, gloss: bool, pos: str | None =
            py_override: str | None = None, meaning_override: str | None = None, pict_set: str | None = None) -> dict:
     py = py_override or (lex.get_pinyin(ch) if lex and pinyin else None)
     mn = meaning_override or (lex.get_meaning(ch, lang) if lex and gloss else None)
-    name = lex.pict_name(ch, pict_set) if lex else None
-    return {
+    cell = {
         "py": _t(py) if py else "",
         "ch": (f"{k}\\times " if k > 1 else "") + _tg(ch) + (r"_{" + _t(pos) + "}" if pos else ""),
         "mn": r"\text{\parbox[t]{\zimeaningwidth}{\centering\footnotesize " + esc(_senses(mn)) + "}}" if mn else "",
-        "pc": r"\text{\zipict{" + name + "}}" if name else "",
     }
+    for i, s in enumerate(pict_sets(pict_set)):         # one picture row per set: pc0, pc1 ...
+        name = lex.pict_name(ch, s) if lex else None
+        cell[f"pc{i}"] = r"\text{\zipict{" + name + "}}" if name else ""
+    return cell
 
 
 def render_pictmath(e: Entry, lex=None, lang: str = "en", arrow: str = "=", collapse: bool = False,
                     show_pos: bool = False, pinyin: bool = True, gloss: bool = True,
                     wrap: str = "display", result: str = "below", pict_set: str | None = None) -> str:
-    """``\\zimath`` as a grid with a picture row (``pict_set`` names an alternative set of pictures). Same options as render_math (``result`` is ignored: the result
+    """``\\zimath`` as a grid with a picture row (``pict_set`` names an alternative set of pictures, or several joined by ``+``: ``obs+seal+kaiti`` is one picture row for each). Same options as render_math (``result`` is ignored: the result
     is a column like the others)."""
     if e.tree.is_leaf:
         parts: list[tuple[int, Node]] = [(1, e.tree)]
@@ -302,7 +313,7 @@ def render_pictmath(e: Entry, lex=None, lang: str = "en", arrow: str = "=", coll
                        py_override=None if (lex or not pinyin) else e.pinyin,
                        meaning_override=None if (lex or not gloss) else e.meaning, pict_set=pict_set))
     rows = []
-    for key in ("py", "ch", "mn", "pc"):
+    for key in ("py", "ch", "mn", *(f"pc{i}" for i in range(len(pict_sets(pict_set))))):
         cells = [c.get(key, "") for c in cols]
         if any(cells):
             rows.append(" & ".join(cells))
@@ -313,10 +324,8 @@ def render_pictmath(e: Entry, lex=None, lang: str = "en", arrow: str = "=", coll
 
 # ---- tree -------------------------------------------------------------------
 
-def render_tree(e: Entry, dx: float | None = None, dy: float | None = None) -> str:
+def render_tree(e: Entry, dx: float = 2.4, dy: float = 0.85) -> str:
     """Horizontal tree: root on the left, leaves on the right, position label on each edge."""
-    dx = cfg.TREE_LEVEL_DX_CM if dx is None else dx
-    dy = cfg.TREE_LEAF_DY_CM if dy is None else dy
     nodes: list[tuple[str, Node, float, float, str | None]] = []  # name, node, x, y, parent
     leaf_row = [0]
 
@@ -340,30 +349,29 @@ def render_tree(e: Entry, dx: float | None = None, dy: float | None = None) -> s
     out = [
         _defs(),
         r"\begin{tikzpicture}[",
-        rf"  zinode/.style={{draw={border}, rounded corners={cfg.TREE_NODE_ROUNDING_PT}pt, inner sep={cfg.TREE_NODE_INNER_SEP_PT}pt, "
-        rf"minimum height={cfg.TREE_NODE_MIN_CM}cm, minimum width={cfg.TREE_NODE_MIN_CM}cm, font={cfg.TREE_NODE_FONT}}},",
-        rf"  zipos/.style={{font={cfg.TREE_POS_FONT}, text={_rgb(MUTED)}, fill=white, inner sep={cfg.TREE_POS_INNER_SEP_PT}pt}}",
+        rf"  zinode/.style={{draw={border}, rounded corners=1.5pt, inner sep=3pt, minimum height=0.65cm, minimum width=0.65cm, font=\large}},",
+        rf"  zipos/.style={{font=\tiny, text={_rgb(MUTED)}, fill=white, inner sep=1pt}}",
         r"]",
     ]
     for name, n, x, y, parent in nodes:
         if parent is None:
-            style = rf"zinode, line width={cfg.TREE_ROOT_LINE_PT}pt, draw={_rgb(ACCENT)}, fill={_rgb(DEFAULT_FILL)}, font={cfg.TREE_ROOT_FONT}"
+            style = rf"zinode, line width=0.9pt, draw={_rgb(ACCENT)}, fill={_rgb(DEFAULT_FILL)}, font=\LARGE\bfseries"
             label = _g(e.char)
         else:
             style = f"zinode, fill={_rgb(_fill(n.c, _roles(e)))}"
             if n.is_leaf:
                 label = _g(n.c or "")
             elif n.c:
-                label = _g(n.c) + r"\,{" + cfg.TREE_OP_FONT + " " + _op_text(n.op or "") + "}"
+                label = _g(n.c) + r"\,{\small " + _op_text(n.op or "") + "}"
             else:
-                label = "{" + cfg.TREE_OP_ALONE_FONT + " " + _op_text(n.op or "") + "}"
+                label = r"{\large " + _op_text(n.op or "") + "}"
         out.append(rf"  \node[{style}] ({name}) at ({x:.2f},{y:.2f}) {{{label}}};")
     for name, n, x, y, parent in nodes:
         if parent is None:
             continue
         out.append(rf"  \draw[draw={border}!60] ({parent}.east) -- ++({(dx - 0.9) / 2:.2f},0) |- ({name}.west);")
         if n.pos:
-            out.append(rf"  \node[zipos, anchor=east] at ([xshift=-{cfg.TREE_POS_GAP_CM}cm]{name}.west) {{{n.pos}}};")
+            out.append(rf"  \node[zipos, anchor=east] at ([xshift=-0.06cm]{name}.west) {{{n.pos}}};")
     out.append(r"\end{tikzpicture}")
     return "\n".join(out)
 
@@ -421,22 +429,19 @@ def _grid_rects(labels: list[str]) -> list[tuple[float, float, float, float]]:
 def _op_text(op: str) -> str:
     """Operator as shown in a tree: the symbol, or the pattern when the symbol has no glyph."""
     if op == "⁙":
-        return "{" + cfg.TREE_PATTERN_FONT + " LU-RU-M-LD-RD}"
+        return r"{\scriptsize LU-RU-M-LD-RD}"
     if is_general(op):
-        return "{" + cfg.TREE_PATTERN_FONT + " " + op[1:-1] + "}"
+        return r"{\scriptsize " + op[1:-1] + "}"
     return op
 
 
-def _size_pt(w: float, h: float, k: float | None = None) -> str:
-    pt = max(cfg.MATRIX_MIN_FONT_PT, (cfg.MATRIX_GLYPH_RATIO if k is None else k) * min(w, h) * PT_PER_CM)
+def _size_pt(w: float, h: float, k: float = 0.62) -> str:
+    pt = max(4.0, k * min(w, h) * PT_PER_CM)
     return rf"\fontsize{{{pt:.1f}pt}}{{{pt:.1f}pt}}\selectfont"
 
 
-def render_matrix(e: Entry, size: float | None = None) -> str:
-    """Zi-Matrix: nested boxes laid out by operator. Enclosures nest, they are not grid cells.
-
-    `size` is the side of the square in cm (default: config.MATRIX_SIZE_CM)."""
-    size = cfg.MATRIX_SIZE_CM if size is None else size
+def render_matrix(e: Entry, size: float = 4.4) -> str:
+    """Zi-Matrix: nested boxes laid out by operator. Enclosures nest, they are not grid cells."""
     out = [_defs(), r"\begin{tikzpicture}[every node/.style={inner sep=0pt, outer sep=0pt, align=center}]"]
     border = _rgb(BORDER)
 
@@ -444,16 +449,16 @@ def render_matrix(e: Entry, size: float | None = None) -> str:
         f = f"fill={_rgb(fill)}, " if fill else ""
         out.append(rf"  \draw[draw={border}!70, {f}{style}] ({x:.3f},{y:.3f}) rectangle ({x + w:.3f},{y + h:.3f});")
 
-    def glyph(text, cx, cy, w, h, k=None, extra=""):
+    def glyph(text, cx, cy, w, h, k=0.62, extra=""):
         out.append(rf"  \node[{extra}] at ({cx:.3f},{cy:.3f}) {{{_size_pt(w, h, k)} {text}}};")
 
     def tag(n: Node, x, y, w, h):
         """Name of a composite, as a small label in its top-left corner."""
         if n.c and not n.is_leaf:
-            out.append(rf"  \node[anchor=north west, text={_rgb(MUTED)}] at ({x + cfg.MATRIX_TAG_INSET[0] * size:.3f},{y + h - cfg.MATRIX_TAG_INSET[1] * size:.3f}) {{\fontsize{{{cfg.MATRIX_TAG_FONT_PT}pt}}{{{cfg.MATRIX_TAG_FONT_PT}pt}}\selectfont {_g(n.c)}}};")
+            out.append(rf"  \node[anchor=north west, text={_rgb(MUTED)}] at ({x + 0.03:.3f},{y + h - 0.02:.3f}) {{\fontsize{{5pt}}{{5pt}}\selectfont {_g(n.c)}}};")
 
     def box(n: Node, x, y, w, h, opacity: float | None = None):
-        g = cfg.MATRIX_GAP_RATIO * size  # gap between neighbours
+        g = 0.03  # gap between neighbours
         x, y, w, h = x + g, y + g, w - 2 * g, h - 2 * g
         if opacity is not None:
             out.append(rf"  \begin{{scope}}[opacity={opacity}, text opacity={opacity}]")
@@ -479,7 +484,7 @@ def render_matrix(e: Entry, size: float | None = None) -> str:
 
     def surround(n, x, y, w, h):
         outer, inner = n.parts
-        t = cfg.MATRIX_SURROUND_BAND * min(w, h)
+        t = 0.28 * min(w, h)
         op = n.op
         # inner region and where the outer component's label goes
         if op == "⿴":   ir, lab = (x + t, y + t, w - 2 * t, h - 2 * t), (x + t / 2, y + h - t / 2)
@@ -490,13 +495,13 @@ def render_matrix(e: Entry, size: float | None = None) -> str:
         elif op == "⿹": ir, lab = (x, y, w - t, h - t), (x + w - t / 2, y + h - t / 2)
         else:           ir, lab = (x + t, y + t, w - t, h - t), (x + t / 2, y + t / 2)  # ⿺
         rect(x, y, w, h, _fill(outer.c, _roles(e)), "thin")
-        glyph(_flat(outer), lab[0], lab[1], t, t, cfg.MATRIX_SURROUND_GLYPH_RATIO)
+        glyph(_flat(outer), lab[0], lab[1], t, t, 0.8)
         box(inner, *ir)
 
     def overlay(n, x, y, w, h):
         a, b = n.parts
         box(a, x, y, w, h)
-        box(b, x, y, w, h, opacity=cfg.MATRIX_OVERLAY_OPACITY)
+        box(b, x, y, w, h, opacity=0.55)
 
     def flat(n, x, y, w, h):
         """Any flat pattern (∴ ∵ ∷ ⁙ and <pattern>): place each child by its position label."""
@@ -537,7 +542,8 @@ DEFAULT_STYLES = [s for s in STYLES if s != "pictmath"]   # pictmath is opt-in: 
 
 
 def split_style(style: str) -> tuple[str, str | None]:
-    """``pictmath-obs`` -> (``pictmath``, ``obs``): the pict grid with the named set of pictures ``obs``."""
+    """``pictmath-obs`` -> (``pictmath``, ``obs``): the pict grid with the named set of pictures ``obs``.
+    ``pictmath-obs+seal+kaiti`` -> (``pictmath``, ``obs+seal+kaiti``): one picture row per set."""
     if style.startswith("pictmath-") and len(style) > 9:
         return "pictmath", style[9:]
     return style, None
@@ -573,7 +579,7 @@ def render(e: Entry, style: str = "tree", fonts: FontConfig | None = None, readi
 
 def document(body: str, font: str = "Noto Serif CJK SC", standalone: bool = True, zitexpath: str | None = None) -> str:
     """Wrap snippets in a minimal XeLaTeX document (for PDF output)."""
-    cls = rf"\documentclass[border={cfg.STANDALONE_BORDER_PT}pt,varwidth]{{standalone}}" if standalone else r"\documentclass{article}"
+    cls = r"\documentclass[border=6pt,varwidth]{standalone}" if standalone else r"\documentclass{article}"
     return "\n".join([
         cls,
         r"\usepackage{fontspec}",

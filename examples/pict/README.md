@@ -21,4 +21,10 @@ What `main.tex` shows (`./build.sh` writes `main.pdf`):
    `python scripts/export_picts.py --dest ../zinets-latex/examples/pict/obs --chars 日月明木林 --set obs`.
    `build.sh` passes `obs/lexicon.yaml` after `lexicon.yaml`, so it adds the set without touching the glosses.
 
+3. **Several forms**: `\zimath[pict=obs,pict=bronze,pict=seal,pict=kaiti,lang=zh]{明}`. Each `pict=` adds a picture row, in the order
+   written (the style is `pictmath-obs+bronze+seal+kaiti`). `obs/` also holds `bronze/`, `seal/` and `kaiti/` (images from
+   hanziyuan.net, taken from the hanziyuan-app data), written by the same export with `--forms bronze,seal,kaiti`:
+   `python scripts/export_picts.py --dest ../zinets-latex/examples/pict/obs --chars 日月明木林 --set obs --forms bronze,seal,kaiti`.
+   hanziyuan-app holds radicals and components, so 明 and 林 have no bronze, seal or kaiti image and their cell stays empty.
+
 HUST-OBC is CC BY-NC 4.0: keep the attribution. Note that most oracle bone forms of 明 show a moon and a window (囧), not a sun.

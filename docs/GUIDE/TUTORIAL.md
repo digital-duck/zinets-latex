@@ -118,7 +118,7 @@ zitex render -i chars.yaml -c 好 -s math -x lexicon.yaml -o -
 
 That is plain LaTeX math. In a document it shows pinyin above each piece, its gloss below, and the result as an equation, like a chemical reaction. The same string works in MathJax or KaTeX on a web page.
 
-`render` reads the file you name with `-i` (`--input`), or `./chars.yaml` when you leave `-i` out. By default it renders **every character** in the file, in every style, as `u<hex>-<char>-<style>.tex` and `.pdf` (the code point in hex, then the character, so 藻 is `u85fb-藻-tree.tex`; `build_manifest.json` in the same folder lists every snippet), into a `zitex-out/` folder (the folder `zitex.sty` reads). Choose characters with `--char` (`-c`) and say where the output goes with `-o`:
+`render` reads the file you name with `-i` (`--input`), or `./chars.yaml` when you leave `-i` out. By default it renders **every character** in the file, in every style, as `u<hex>-<style>.tex` and `.pdf` (`<hex>` is the character's code point, so 藻 is `u85fb-tree.tex`; `build_manifest.json` in the same folder maps names back to characters), into a `zitex-out/` folder (the folder `zitex.sty` reads). Choose characters with `--char` (`-c`) and say where the output goes with `-o`:
 
 | Command | Result |
 |---|---|
@@ -246,6 +246,7 @@ The result, once per language:
 - **Oracle bone glyphs.** The pictures can be oracle bone glyphs. Orascope's `scripts/export_picts.py` exports one starred glyph per elemental character, named `u<hex>.png`, with a matching `lexicon.yaml`, into `data/ele_chars/`. Then run `ZITEX_PICT_DIR=data/ele_chars zitex render -i chars.yaml --scan main.tex -x data/ele_chars/lexicon.yaml`. The glyphs come from HUST-OBC (CC BY-NC 4.0): keep the attribution.
 - **Several sets of pictures.** A pict comes from the lexicon key `pict`, which is the default set. A second set has its own key, `pict_obs: u65e5.png`, and you pick it with `\zimath[pict=obs]{明}`. So one document can show emoji in one equation and oracle bone glyphs in the next (`examples/pict/main.tex` does exactly that, for 明 and for 木 + 木 = 林). A set does not fall back to the default: a character with no picture in the set has an empty cell. A set can also be a folder, `<ZITEX_PICT_DIR>/obs/u<hex>.png`. Orascope's `export_picts.py --chars 日月明 --set obs` writes such a set.
 - **It needs XeLaTeX.** A snippet with pictures is not for MathJax; plain `\zimath` still is.
+- **Several forms in one equation.** Repeat the key: `\zimath[pict=obs,pict=bronze,pict=seal,pict=kaiti,lang=zh]{明}` prints one picture row per set, in the order written, each aligned under the characters (a character with nothing in a set has an empty cell). Orascope's `export_picts.py --forms bronze,seal,kaiti` adds the hanziyuan.net forms (from hanziyuan-app) as the sets `bronze`, `seal` and `kaiti`. Set names must not contain `-` or `+`.
 - **It is opt-in.** `\zimath{明}` is unchanged. `zitex render` without `-s` does not build `pictmath`: either write `\zimath[pict]` and use `--scan`, or name the style, as in `zitex render -i chars.yaml -c 明 -s pictmath -x lexicon.yaml -l zh` (`-s pictmath-obs` for the set `obs`).
 
 The design and the reasons are in `docs/DEV/claude/readme-zimath.md`.
@@ -275,7 +276,7 @@ zitex render -i chars.yaml --scan main.tex -x lexicon.yaml -l en -l fr --collaps
 xelatex main.tex
 ```
 
-`--scan` reads `main.tex` and writes just those snippets (`.tex` only, since LaTeX typesets them) into `zitex-out/` (here `u597d-好-math-en.tex`, `u68ee-森-math-fr.tex` and `u68ee-森-matrix.tex`). XeLaTeX must be able to find `zitex.sty`. There are three ways, and the first is the simplest:
+`--scan` reads `main.tex` and writes just those snippets (`.tex` only, since LaTeX typesets them) into `zitex-out/` (here `u597d-math-en.tex`, `u68ee-math-fr.tex` and `u68ee-matrix.tex`). XeLaTeX must be able to find `zitex.sty`. There are three ways, and the first is the simplest:
 
 - **Put it next to your document.** `zitex setup -o .` copies `zitex.sty` into the folder (and writes a `fonts.yaml` for your computer, see section 8). The folder is then self-contained, and you can zip it or upload it to Overleaf.
 - **Install it once for every document.** `zitex install-sty` copies it into your personal TeX folder (`TEXMFHOME`, usually `~/texmf`), and plain `xelatex main.tex` works from then on. Run it again after upgrading zitex. `zitex install-sty --dir DIR` installs into another TeX tree.

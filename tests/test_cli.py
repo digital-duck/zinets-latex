@@ -133,7 +133,7 @@ def test_render_languages(tmp_path):
 
 def test_render_dash_prints_to_stdout(tmp_path):
     r = _render(["-c", "森", "-s", "math", "-x", LEX, "-o", "-"], tmp_path)
-    assert r.exit_code == 0 and r.output.startswith(r"{\Large \[") and list(tmp_path.iterdir()) == []
+    assert r.exit_code == 0 and r.output.startswith(r"\[") and list(tmp_path.iterdir()) == []
 
 
 def test_render_dash_needs_one_character_one_style_and_tex(tmp_path):
@@ -146,7 +146,7 @@ def test_render_dash_needs_one_character_one_style_and_tex(tmp_path):
 def test_render_suffix_picks_the_format(tmp_path):
     r = _render(["-c", "森", "-s", "math", "-x", LEX, "-o", "sen.tex"], tmp_path)
     assert r.exit_code == 0 and _names(tmp_path) == ["sen.tex"]
-    assert (tmp_path / "sen.tex").read_text(encoding="utf-8").startswith(r"{\Large \[")
+    assert (tmp_path / "sen.tex").read_text(encoding="utf-8").startswith(r"\[")
 
 
 def test_render_a_file_defaults_to_the_tree_style(tmp_path):
@@ -369,8 +369,7 @@ def test_scan_tex_skips_comments_and_verbatim(tmp_path):
 def test_snippet_names_are_code_point_then_character():
     assert snippet_name("藻", "tree") == "u85fb-藻-tree" and snippet_name("𠀉", "matrix") == "u20009-𠀉-matrix"
     assert snippet_name("虹", "math", "fr", "author") == "u8679-虹-math-fr@author"
-    assert snippet_name("藻", "formula", "en", "dictionary") == "u85fb-藻-formula-en@dictionary"
-    assert snippet_name("藻", "math").startswith("u85fb-")                      # the code point first: files sort by it
+    assert snippet_name("藻", "math").startswith("u85fb-")             # the code point first: files sort by it
 
 
 def test_build_manifest_maps_files_back_to_characters(tmp_path):

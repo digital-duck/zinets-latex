@@ -112,7 +112,7 @@ def test_scan_finds_zimath_pict(tmp_path):
                  "\\zitree[pict]{日}\n", encoding="utf-8")
     assert scan_tex(t) == {("時", "math", None, None), ("時", "pictmath", None, None), ("日", "pictmath", "fr", None),
                            ("寺", "math", None, None), ("日", "tree", None, None)}
-    assert snippet_name("時", "pictmath", "en") == "u6642-pictmath-en"
+    assert snippet_name("時", "pictmath", "en") == "u6642-時-pictmath-en"
 
 
 def test_build_stages_the_pictures_next_to_the_snippets(tmp_path):
@@ -122,7 +122,7 @@ def test_build_stages_the_pictures_next_to_the_snippets(tmp_path):
     res = build(list(ENTRIES.values()), out, {("時", "pictmath", "en", None)}, lex=lex)
     assert (out / "picts" / "u65e5.png").is_file() and not (out / "picts" / "u5bfa.png").exists()
     assert res.manifest[0]["picts"] == ["u65e5.png"]
-    assert (out / "u6642-pictmath-en.tex").is_file()
+    assert (out / "u6642-時-pictmath-en.tex").is_file()
     assert math_chars(ENTRIES["時"]) == ["時", "日", "寺"]
 
 
@@ -169,7 +169,7 @@ def test_pictmath_with_a_set_uses_that_sets_pictures_and_the_style_name_carries_
     _png(tmp_path / "picts" / "obs" / f"u{ord('日'):x}.png")
     s = render(ENTRIES["時"], "pictmath-obs", lex=lex)
     assert r"\zipict{u65e5-obs.png}" in s
-    assert snippet_name("時", "pictmath-obs", "zh") == "u6642-pictmath-obs-zh"
+    assert snippet_name("時", "pictmath-obs", "zh") == "u6642-時-pictmath-obs-zh"
 
 
 def test_scan_finds_a_named_set(tmp_path):
@@ -185,7 +185,37 @@ def test_build_stages_a_named_set_next_to_the_default_one(tmp_path):
     out = tmp_path / "out"
     build(list(ENTRIES.values()), out, {("時", "pictmath", "en", None), ("時", "pictmath-obs", "en", None)}, lex=lex)
     assert (out / "picts" / "u65e5.png").is_file() and (out / "picts" / "u65e5-obs.png").is_file()
-    assert (out / "u6642-pictmath-en.tex").is_file() and (out / "u6642-pictmath-obs-en.tex").is_file()
+    assert (out / "u6642-時-pictmath-en.tex").is_file() and (out / "u6642-時-pictmath-obs-en.tex").is_file()
+
+
+def test_several_sets_make_one_picture_row_each_in_the_order_given(tmp_path):
+    lex = _lex(tmp_path)
+    for name in ("obs", "seal", "kaiti"):
+        _png(tmp_path / "picts" / name / f"u{ord('日'):x}.png")
+    s = render(ENTRIES["時"], "pictmath-obs+seal+kaiti", lex=lex)
+    rows = [r for r in s.split("\\\\[0.8ex]") if "\\zipict{" in r]
+    assert [("u65e5-obs.png" in r, "u65e5-seal.png" in r, "u65e5-kaiti.png" in r) for r in rows] == [
+        (True, False, False), (False, True, False), (False, False, True)]
+    assert snippet_name("時", "pictmath-obs+seal+kaiti", "zh") == "u6642-時-pictmath-obs+seal+kaiti-zh"
+    # a set that has nothing for any term leaves its row out; a set with a picture for some terms leaves the others empty
+    assert s.count("zipict{") == 3 and render(ENTRIES["時"], "pictmath-obs+bronze", lex=lex).count("zipict{") == 1
+
+
+def test_scan_collects_repeated_pict_keys_into_one_style(tmp_path):
+    t = tmp_path / "m.tex"
+    t.write_text("\\zimath[pict=obs,pict=seal,pict=kaiti,lang=zh]{日}\n", encoding="utf-8")
+    assert scan_tex(t) == {("日", "pictmath-obs+seal+kaiti", "zh", None)}
+
+
+def test_build_stages_every_set_and_reports_the_ones_missing_for_a_term(tmp_path):
+    lex = _lex(tmp_path)
+    for name in ("obs", "seal"):
+        _png(tmp_path / "picts" / name / f"u{ord('日'):x}.png")
+    out = tmp_path / "out"
+    res = build(list(ENTRIES.values()), out, {("時", "pictmath-obs+seal", "en", None)}, lex=lex)
+    assert (out / "picts" / "u65e5-obs.png").is_file() and (out / "picts" / "u65e5-seal.png").is_file()
+    assert (out / "u6642-時-pictmath-obs+seal-en.tex").is_file()
+    assert any("[seal]" in x and "寺" in x for x in res.no_pict)
 
 
 def test_unknown_style_still_fails_with_a_set_name(tmp_path):
@@ -200,12 +230,15 @@ def test_zimath_pict_keys_pick_the_right_snippet_in_a_real_document(tmp_path):
     _png(tmp_path / "picts" / f"u{ord('日'):x}.png")
     _png(tmp_path / "picts" / "obs" / f"u{ord('日'):x}.png")
     out = tmp_path / "zitex-out"
-    jobs = {("時", "math", "en", None), ("時", "pictmath", "en", None), ("時", "pictmath-obs", "en", None)}
+    _png(tmp_path / "picts" / "seal" / f"u{ord('日'):x}.png")
+    jobs = {("時", "math", "en", None), ("時", "pictmath", "en", None), ("時", "pictmath-obs", "en", None),
+            ("時", "pictmath-obs+seal", "en", None)}
     build(list(ENTRIES.values()), out, jobs, lex=lex)
     sty = Path(__file__).parents[1] / "src" / "zitex"
     (tmp_path / "t.tex").write_text(
         "\\documentclass{article}\\usepackage{zitex}\\begin{document}\n"
-        "\\zimath{時}\\zimath[pict]{時}\\zimath[pict=obs]{時}\\zimath[lang=en,pict=false]{時}\n\\end{document}\n",
+        "\\zimath{時}\\zimath[pict]{時}\\zimath[pict=obs]{時}\\zimath[lang=en,pict=false]{時}"
+        "\\zimath[pict=obs,pict=seal]{時}\n\\end{document}\n",
         encoding="utf-8")
     import os
     env = {**os.environ, "TEXINPUTS": f"{sty}:"}
@@ -250,7 +283,7 @@ def test_scan_without_lang_uses_en_even_when_l_is_zh(tmp_path):
     r = CliRunner().invoke(main, ["render", "-i", str(tmp_path / "chars.yaml"), "--scan", str(tmp_path / "a.tex"),
                                   "-l", "zh", "-o", str(tmp_path / "out")])
     names = {p.name for p in (tmp_path / "out").glob("*.tex")}
-    assert names == {"u660e-math-en.tex"}, (names, r.output)
+    assert names == {"u660e-明-math-en.tex"}, (names, r.output)
 
 
 def test_a_plain_word_as_pict_is_reported_not_promised(tmp_path):
@@ -275,6 +308,13 @@ def test_set_names_must_not_contain_a_hyphen(tmp_path):
         Lexicon().merge_file(f)
 
 
+def test_set_names_must_not_contain_a_plus(tmp_path):
+    f = tmp_path / "l.yaml"
+    f.write_text("日: {pict_a+b: x.png}\n", encoding="utf-8")
+    with pytest.raises(ValueError):
+        Lexicon().merge_file(f)
+
+
 def test_an_empty_lexicon_entry_is_skipped(tmp_path):
     f = tmp_path / "l.yaml"
     f.write_text("日:\n月: {pinyin: yuè}\n", encoding="utf-8")
@@ -292,4 +332,4 @@ def test_a_leaf_character_is_one_column(tmp_path):
 
 def test_a_codepoint_above_ffff_names_the_same_file(tmp_path):
     from zitex.build import snippet_name
-    assert snippet_name("\U00020000", "math", "en", None) == "u20000-math-en"
+    assert snippet_name("\U00020000", "math", "en", None) == "u20000-𠀀-math-en"

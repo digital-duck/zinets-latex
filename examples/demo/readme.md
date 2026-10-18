@@ -47,11 +47,11 @@ What the first command does:
 It writes 9 snippets and a `build_manifest.json` into `zitex-out/`:
 
 ```
-u54ed-哭-matrix.tex   u570b-國-matrix.tex   u6094-悔-math-fr.tex   u611b-愛-tree.tex   u6642-時-math-en.tex
-u68ee-森-math-en.tex  u6c22-氢-formula-en.tex  u85fb-藻-math-en.tex  u85fb-藻-matrix.tex
+u54ed-matrix.tex   u570b-matrix.tex   u6094-math-fr.tex   u611b-tree.tex   u6642-math-en.tex
+u68ee-math-en.tex  u6c22-formula-en.tex  u85fb-math-en.tex  u85fb-matrix.tex
 ```
 
-A snippet's name is `u<hex>-<char>-<style>[-<language>].tex`, the character's code point in hex and then the character itself (藻 is `u85fb-藻`), and `zitex.sty` looks for exactly that name. `zitex-out/build_manifest.json` maps the names back to the characters.
+A snippet's name is `u<hex>-<style>[-<language>].tex`, where `u<hex>` is the character's code point in hex (藻 is `u85fb`), and `zitex.sty` looks for exactly that name. `zitex-out/build_manifest.json` maps the names back to the characters.
 
 ## The shortcut
 
