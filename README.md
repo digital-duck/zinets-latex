@@ -68,7 +68,8 @@ An early sketch of a LaTeX package for this lives in `docs/DEV/gemini/readme.md`
 ## Install
 
 ```bash
-pip install -e .          # Python 3.10+, installs the `zitex` command
+pip install zitex         # from PyPI: Python 3.10+, installs the `zitex` command
+pip install -e .          # or from a checkout, to work on the code
 ```
 
 You also need XeLaTeX with `tikz`, `xeCJK` (on Debian or Ubuntu: `texlive-xetex`, `texlive-lang-chinese`, `texlive-pictures`), `fontspec`, `amsmath` and `graphicx`, and a CJK font (Noto Serif CJK SC by default; `zitex.sty` falls back to FandolSong from TeX Live). Inkscape is needed only for SVG glyphs or SVG pictures. Emoji pictures need Pillow and a colour emoji font (Noto Color Emoji): `pip install -e ".[pict]"`.

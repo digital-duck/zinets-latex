@@ -3,7 +3,8 @@
 %   zitex setup -o . ; zitex extract -c 器,藻,佛 -o .     and this file replaces the generated main.tex.
 % The picture-row examples (section 4) were added with
 %   zitex render -i chars.yaml --scan zitex-arxiv.tex -x lexicon.yaml -x obs/lexicon.yaml -l en -l zh
-% where obs/ holds the oracle bone glyphs (exported from Orascope; HUST-OBC, CC BY-NC 4.0).
+% where obs/ holds the oracle bone glyphs (exported from Orascope; HUST-OBC, CC BY-NC 4.0) and, in obs/bronze, obs/seal and
+% obs/kaiti, the later forms (hanziyuan.net, via hanziyuan-app: export_picts.py --forms bronze,seal,kaiti).
 \documentclass[11pt]{article}
 \usepackage[margin=2.4cm]{geometry}
 \usepackage{zitex}% sets a CJK font: Noto Serif CJK SC, or FandolSong from TeX Live if that is not installed
@@ -99,8 +100,12 @@ part that is itself decomposed (澡 inside 藻) carries its own pattern.
 Python does the parsing and layout, and \LaTeX{} does the typesetting (Figure~\ref{fig:flow}). \texttt{zitex extract} selects characters
 from a database and writes \texttt{chars.yaml}, \texttt{lexicon.yaml}, a \texttt{main.tex}, and every snippet the document asks for.
 The only interface between the two halves is the file name of a snippet,
-\texttt{u<hex>-<style>[-<lang>][@reading].tex}, where \texttt{u<hex>} is the code point of the character in hex, so that file names are plain ASCII, and the package looks the file up and inputs it. A missing file gives a warning
-and a red mark, so a long build is not stopped. A language or picture-set name must not contain a hyphen, which separates the parts of the name.
+\texttt{u<hex>-<char>-<style>[-<lang>][@reading].tex}, where \texttt{u<hex>} is the code point of the character in hex (so the files sort by code point) and \texttt{<char>} is the character itself, and the package looks the file up and inputs it. A missing file gives a warning
+and a red mark, so a long build is not stopped. A language or picture-set name must not contain a hyphen, which separates the parts of the name, or a plus sign, which joins several picture sets (\texttt{pict=obs,pict=seal} is the style \texttt{pictmath-obs+seal}).
+
+Installing it takes one command, \texttt{pip install zitex}, from the Python Package Index (it needs Python 3.10 or later and, for typesetting, XeLaTeX). The command
+\texttt{zitex setup} then writes a working folder with \texttt{zitex.sty}, a font configuration detected from the installed fonts, and the fallback files, and
+\texttt{zitex extract -c 器,藻 -o work/} fills it with a document that \texttt{xelatex main.tex} builds, so a first page needs no manual configuration.
 
 \begin{figure}[ht]
 \centering
@@ -231,6 +236,21 @@ and not a canonical form; one equation can mix glyphs of different periods and k
 \label{tab:glyphs}
 \end{table}
 
+\paragraph{Several forms in one equation.}
+A picture row is one set, and a call can name more than one: each \texttt{pict=} key adds a row, in the order written, so the glyph of
+each part can be followed down the page from the oracle bone form to the modern one. The bronze, seal and kaiti sets come from
+hanziyuan.net~\cite{hanziyuan}, added to the lexicon in the same way as \texttt{pict\_obs} (here \texttt{pict\_bronze}, \texttt{pict\_seal}
+and \texttt{pict\_kaiti}). The rows line up under the same characters, and a part with no picture in a set leaves that cell empty.
+
+\begin{verbatim}
+\zimath[pict=obs,pict=bronze,pict=seal,pict=kaiti,lang=zh]{明}
+\end{verbatim}
+
+\zimath[pict=obs,pict=bronze,pict=seal,pict=kaiti,lang=zh]{明}
+
+The sets are independent: \texttt{\char`\\zimath[pict=obs,pict=kaiti]\{明\}} shows just the oracle bone and kaiti rows. The pictures are samples, one per
+form, and not canonical glyphs. Like the HUST-OBC images, they are shown only to demonstrate the layout and are not redistributed with the code.
+
 \noindent The pictures differ from the emoji in what they show. The glyph chosen for 明 shows a crescent beside a small box (we do not identify the
 box), and the glyph chosen for 林 shows two tree-like signs side by side, as the modern decomposition 木 + 木 does. The picture row displays these records
 next to the modern decomposition and does not interpret either. The agreement for 林 and the disagreement for 明 show that the ancient form of a whole
@@ -245,6 +265,28 @@ changed 59 of 59 snippets (one Linux machine with an Intel i7-13700F; three runs
 every equation that carries the gloss as text. The benchmark measures the cost of a correction and not the cost of writing the data, which remains with the
 author, and it uses only the equation view, which needs no pictures.
 
+\section{Use cases}\label{sec:uses}
+We see three uses. The first is in daily use by the author; the other two are plans, and we have not measured them.
+
+\paragraph{Typesetting a book.} A book about Chinese characters repeats the same figures: the equation of a character, its tree, its matrix. With
+\texttt{zitex} each is one command, \cmd{zimath}\texttt{\{X\}}, that reads the data and nothing else, so a correction to a gloss or a position is made
+once, in \texttt{chars.yaml} or \texttt{lexicon.yaml}, and every figure that shows it is rebuilt (Section~\ref{sec:example}, cost of a correction). The
+snippet folder is built locally and uploaded with the source, so the book compiles with plain XeLaTeX. The picture row takes an image per part, which a
+book can fill with emoji, oracle bone, bronze, seal or kaiti glyphs, as in Section~\ref{sec:example}. We have typeset only short documents so far, and not a
+full book.
+
+\paragraph{Education.} A teacher or a learner can make a handout that shows how a character is built from parts, with pinyin above each part and a
+gloss below it, and with the older forms of the parts in rows under them. The language of the gloss is a setting (\texttt{lang=zh} or
+\texttt{lang=fr}, besides English), and the example in this paper changes language without any change to the figure. A set of pictures can be
+swapped for another by naming it (\texttt{pict=kaiti} for learners of the modern form, \texttt{pict=obs} for the oldest). We have not tested handouts with
+students, so we make no claim about learning.
+
+\paragraph{A dataset for vision models.} For each part, the tool joins a decomposition (the operator and a named position for each part, in the
+database), a reading, a gloss, and an image of the part in several historical forms. Each image has a recorded source (the HUST-OBC file or the
+hanziyuan.net form), and every snippet is listed in a manifest with its character and style. This is the structure that a dataset of image and structure pairs
+for a vision-language model would need: for example, an oracle bone glyph paired with the decomposition and the modern form it is later written as. We have
+not built or released such a dataset, and we have not trained a model on one.
+
 \section{Related work and limitations}\label{sec:limits}
 \paragraph{Related work.} The Unicode Standard defines ideographic description characters, and community projects distribute ideographic description
 sequences for large character sets~\cite{cjkviids}. A sequence encodes the arrangement of the parts with operators (for example left--right), but not
@@ -258,8 +300,8 @@ drawing character decompositions, and a comparison is future work.
 \paragraph{Implementation limits.} The tool needs XeLaTeX and has not been tried with other engines. The picture view is not available in MathJax,
 because it uses images. A long equation with long meanings can be wider than the page: the width of a meaning and the number of senses shown are
 settings, and nothing scales the equation. Right-to-left text has not been tried. Snippets are produced by a Python program, which an online
-\LaTeX{} service does not run at compile time, so the snippet folder is built locally and uploaded with the document. The snippet file names are ASCII,
-which should work on any file system, but we have only tried Linux.
+\LaTeX{} service does not run at compile time, so the snippet folder is built locally and uploaded with the document. The snippet file names are the code point and
+the character (\texttt{u85fb-藻-math-fr.tex}), so they are not ASCII; they work on Linux, and we have not tried Windows or other file systems.
 
 \paragraph{Data limits.} The decompositions, glosses and the choice of glyphs are curated by hand and are not validated by the tool. The decomposition
 database used for development is a first iteration under review: about 220 rows of about 6,200 cannot be converted yet, and warnings remain on some
@@ -271,12 +313,14 @@ This work began as a conversation with Google Gemini, and the building, testing 
 
 The English glosses are derived from CC-CEDICT (CC BY-SA 4.0)~\cite{cedict} and are attributed in the data. The oracle bone glyph images in
 Section~\ref{sec:example} are from HUST-OBC~\cite{hustobc}, which is licensed CC BY-NC 4.0: they may be reused for non-commercial research with
-attribution, and are not covered by the MIT licence of the code. The font subset in the source is cut from Noto Serif CJK SC (SIL Open Font License 1.1). The repository's \texttt{NOTICE} lists all third-party material and its licences.
+attribution, and are not covered by the MIT licence of the code. The bronze, seal and kaiti images are from hanziyuan.net~\cite{hanziyuan}, which
+states no licence (the rights stay with the site and its own sources); they are shown for demonstration only. The font subset in the source is cut from Noto Serif CJK SC (SIL Open Font License 1.1). The repository's \texttt{NOTICE} lists all third-party material and its licences.
 
 \begin{thebibliography}{9}
 \bibitem{gong2025} Wen G. Gong. \emph{A New Exploration into Chinese Characters: from Simplification to Deeper Understanding}. arXiv:2502.19428, 2025.
 \bibitem{cjkviids} \emph{cjkvi-ids: Ideographic Description Sequences for CJKV characters}. \url{https://github.com/cjkvi/cjkvi-ids}.
 \bibitem{hustobc} Pengjie Wang et al. \emph{An open dataset for oracle bone script recognition and decipherment}. arXiv:2401.15365, 2024.
+\bibitem{hanziyuan} \emph{Hanzi Yuan (hanziyuan.net): the origin and evolution of Chinese characters}. \url{https://hanziyuan.net}.
 \bibitem{evobc} Haisu Guan et al. \emph{An open dataset for the evolution of oracle bone characters: EVOBC}. arXiv:2401.12467, 2024.
 \bibitem{xpinyin} \emph{The xpinyin package}. CTAN, \url{https://ctan.org/pkg/xpinyin}.
 \bibitem{cedict} \emph{CC-CEDICT: a Chinese-English dictionary}. \url{https://cc-cedict.org}.

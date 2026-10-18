@@ -10,9 +10,15 @@ You need Python 3.10+, XeLaTeX with the `tikz`, `xeCJK`, `fontspec` and `amsmath
 
 ```bash
 conda activate zinets2          # or any env with Python 3.10+
-cd zinets-latex
-pip install -e .                # installs the `zitex` command
+pip install zitex               # from PyPI: installs the `zitex` command
 zitex --version
+```
+
+Or, to work on the code, from a checkout:
+
+```bash
+cd zinets-latex
+pip install -e .
 ```
 
 ## 2. Describe a character

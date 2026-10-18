@@ -1,6 +1,6 @@
 [project]
 name = "zitex"
-version = "0.3.0"
+version = "0.3.1"
 description = "Typeset Chinese character decompositions in XeLaTeX: equations, matrices and trees from data"
 readme = "README.md"
 requires-python = ">=3.10"
